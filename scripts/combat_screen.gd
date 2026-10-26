@@ -150,6 +150,9 @@ func _elan(v: CreatureVue) -> void:
 # 0 cavalier, 1 monture, 2 reactions (voile, esquive, renaissance).
 func _texte(v: CreatureVue, ligne: int, texte: String, couleur: Color) -> void:
 	var pos := v.position + Vector2(v.size.x / 2, 30 + ligne * 26)
+	# deux textes au meme endroit en meme temps : le nouveau monte d'un cran
+	while effets.any(func(e): return e["type"] == "texte" and e["pos"].distance_to(pos) < 1.0 and lecture - e["t0"] < 0.4):
+		pos.y -= 22
 	effets.append({"type": "texte", "pos": pos, "texte": texte, "couleur": couleur,
 		"t0": lecture, "duree": DUREE_TEXTE})
 
