@@ -22,13 +22,14 @@ static func nid_nuit() -> Nid:
 	n.placer(Vector2i(2, 1), "ruban")
 	return n
 
+# Fossile au milieu : il renforce les Briques, la Truelle et la Cale autour de lui.
 static func nid_terre() -> Nid:
 	var n := Nid.new()
-	n.placer(Vector2i(0, 0), "pierre")
-	n.placer(Vector2i(1, 0), "pierre")
-	n.placer(Vector2i(0, 1), "ecaille")
-	n.placer(Vector2i(1, 1), "rempart")
-	n.placer(Vector2i(2, 1), "socle")
+	n.placer(Vector2i(0, 0), "brique")
+	n.placer(Vector2i(1, 0), "fossile")
+	n.placer(Vector2i(2, 0), "truelle")
+	n.placer(Vector2i(1, 1), "cale")
+	n.placer(Vector2i(0, 1), "brique")
 	return n
 
 # Fer entre le Grelot et le Ruban (Elan renforce).

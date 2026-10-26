@@ -204,6 +204,16 @@ func _decrire(cr: Dictionary) -> String:
 		effets.append("%d renaissances" % cr["renaissances"])
 	if cr["givre_attaque"] > 0.0:
 		effets.append("%.1f givre par attaque" % cr["givre_attaque"])
+	if cr["reduction"] + cr["cale"] > 0.0:
+		effets.append("réduit les coups de %d %% (%d %% avec du bouclier)" % [roundi(minf(cr["reduction"], Data.REDUCTION_MAX) * 100), roundi(minf(cr["reduction"] + cr["cale"], Data.REDUCTION_MAX) * 100)])
+	if cr["fil_plomb"] > 0.0:
+		effets.append("bouclier tenu %d s : +%d" % [Data.FIL_PLOMB_DELAI, cr["fil_plomb"]])
+	if cr["sablier_ensable"] > 0.0:
+		effets.append("sa fatigue commence %d s plus tard" % cr["sablier_ensable"])
+	for d in [["tuile", "premier coup après un nouveau bouclier réduit"], ["clef", "garde la moitié du mortier renouvelé"],
+			["urne", "les dégâts évités le soignent au début de sa fatigue"], ["borne", "survit une fois à la fatigue"]]:
+		if cr[d[0]]:
+			effets.append(d[1])
 	if cr["elan"]:
 		effets.append("Foudre de %d tous les %d d'Élan" % [Data.FOUDRE_DEGATS + cr["eventail"], maxf(Data.ELAN_SEUIL - cr["manche"], Data.ELAN_SEUIL_MIN)])
 	for d in [["ruban_criniere", "une esquive accélère"], ["etrier", "les séries d'attaques chargent plus"],
@@ -336,6 +346,16 @@ func _decrire(cr: Dictionary) -> String:
 			d += (" %s (%.1f)" % [verbes[s["transfert"]], s["puissance"]])
 			if s["transfert_tous"] > 0:
 				d += " tous les %d tirs" % s["transfert_tous"]
+		if s["mortier"] > 0.0:
+			d += " bouclier de mortier %d (renouvelé)" % roundi(s["mortier"])
+		if s["schiste"]:
+			d += ", la cible frappe moins fort"
+		if s["rempart"]:
+			d += ", renforce la réduction tant que le bouclier tient"
+		if s["fondations"]:
+			d += ", bouclier selon les dégâts"
+		if s["ages"]:
+			d += ", soigne plus pendant la fatigue"
 		if s["elan"] > 0.0:
 			d += ", +%.1f Élan" % s["elan"]
 		if s["riposte_esquive"]:

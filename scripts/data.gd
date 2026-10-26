@@ -66,6 +66,20 @@ const INVERSION_T := 12.0
 # Tortue : veut des combats longs, joue sur la fatigue (mort subite).
 const TORTUE_AVANCE_FATIGUE := 10.0
 const TORTUE_FATIGUE_MULT := 0.5
+# Reduction de degats : retiree a chaque coup recu (pas au poison, a la brulure,
+# a la fatigue), avant le bouclier, plafonnee.
+const REDUCTION_MAX := 0.5
+const FIL_PLOMB_DELAI := 3.0       # bouclier tenu sans bris : renforce
+const TUILE := 0.5                 # premier coup apres un nouveau bouclier
+const CLEF := 0.5                  # part du bouclier garde au renouvellement
+const BORNE_DUREE := 4.0           # fatigue suspendue
+const SCHISTE := 0.25              # Hachette de schiste : degats infliges en moins
+const SCHISTE_DUREE := 3.0
+const REMPART_PAS := 0.05
+const REMPART_MAX := 0.2
+const FONDATIONS := 0.6            # bouclier selon les degats infliges
+const AGES_PAR_SECONDE := 0.5      # soin du Baton des ages par seconde de fatigue
+const AGES_MAX := 15.0
 # Cheval : esquive au hasard (tirage deterministe par combat). Attaques et esquives
 # chargent l'Elan ; a pleine jauge, la Foudre frappe l'adversaire.
 const ESQUIVE_CHEVAL := 0.15
@@ -175,15 +189,28 @@ const RELIQUES := {
 		"grimoire": 40.0},
 	"pacte":          {"nom": "Pacte de la Nuit profonde","element": "nuit", "affinite": 2, "type": "essence", "rarete": "legendaire",
 		"pacte": 5.0},
-	# terre : encaisser, durer, laisser la fatigue faire le reste
-	"pierre":         {"nom": "Pierre",         "element": "terre", "affinite": 2, "type": "essence",
-		"pv": 40.0},
-	"ecaille":        {"nom": "Écaille",        "element": "terre", "affinite": 1, "type": "essence",
-		"bouclier": 30.0},
-	"rempart":        {"nom": "Rempart",        "element": "terre", "affinite": 1, "type": "sort",
-		"recharge": 6.0, "bouclier": 15.0, "par_affinite": 3.0},
-	"socle":          {"nom": "Socle",          "element": "terre", "affinite": 1, "type": "catalyseur",
-		"effet": "bouclier", "valeur": 0.4},
+	# terre : un bouclier qui tient, la reduction de degats, et la fatigue.
+	# Fossile spirale renforce bouclier et reduction de ses voisins.
+	"brique":         {"nom": "Brique d'argile","element": "terre", "affinite": 2, "type": "essence",
+		"reduction": 0.06},
+	"truelle":        {"nom": "Truelle de mortier","element": "terre", "affinite": 1, "type": "sort",
+		"sort": "Mortier", "recharge": 5.0, "mortier": 15.0, "par_affinite": 1.5, "echelle": "mortier"},
+	"cale":           {"nom": "Cale de chêne",  "element": "terre", "affinite": 2, "type": "essence",
+		"cale": 0.08},
+	"fossile":        {"nom": "Fossile spiralé","element": "terre", "affinite": 1, "type": "catalyseur",
+		"effet": "terre", "valeur": 0.5},
+	"fil_plomb":      {"nom": "Fil à plomb",    "element": "terre", "affinite": 1, "type": "essence", "rarete": "rare",
+		"fil_plomb": 8.0},
+	"tuile":          {"nom": "Tuile vernissée","element": "terre", "affinite": 1, "type": "essence", "rarete": "rare",
+		"tuile": true},
+	"sablier_ensable":{"nom": "Sablier ensablé","element": "terre", "affinite": 1, "type": "essence", "rarete": "rare",
+		"sablier_ensable": 5.0},
+	"clef":           {"nom": "Clef de voûte",  "element": "terre", "affinite": 1, "type": "essence", "rarete": "epique",
+		"clef": true},
+	"urne":           {"nom": "Urne des siècles","element": "terre", "affinite": 1, "type": "essence", "rarete": "epique",
+		"urne": true},
+	"borne":          {"nom": "Borne de l'Éternité","element": "terre", "affinite": 2, "type": "essence", "rarete": "legendaire",
+		"borne": true},
 	# vent : Elan et Foudre. Fer allege renforce l'Elan des voisins.
 	"fer":            {"nom": "Fer allégé",     "element": "vent",  "affinite": 1, "type": "catalyseur",
 		"effet": "elan", "valeur": 0.5},
@@ -369,6 +396,17 @@ const RELIQUES := {
 		"sort": "Bourrasque", "recharge": 4.0, "degats": 10.0, "coups": 1, "apres_foudre": true},
 	"rapiere":        {"nom": "Rapière des vents libres","element": "vent", "affinite": 2, "type": "arme", "famille": "lame", "rarete": "legendaire",
 		"sort": "Vents libres", "recharge": 2.0, "degats": 6.0, "coups": 1, "elan": 6.0, "rapiere": true},
+	# armes de la Tortue : Hache et Baton
+	"hachette_schiste": {"nom": "Hachette de schiste","element": "terre", "affinite": 1, "type": "arme", "famille": "hache",
+		"sort": "Schiste", "recharge": 5.0, "degats": 12.0, "coups": 1, "schiste": true},
+	"baton_glaise":   {"nom": "Bâton de glaise","element": "terre", "affinite": 1, "type": "arme", "famille": "baton",
+		"sort": "Glaise", "recharge": 3.0, "degats": 4.0, "coups": 1, "bouclier": 5.0, "par_affinite": 1.0, "echelle": "bouclier"},
+	"baton_rempart":  {"nom": "Bâton du rempart","element": "terre", "affinite": 1, "type": "arme", "famille": "baton", "rarete": "rare",
+		"sort": "Rempart", "recharge": 3.0, "degats": 4.0, "coups": 1, "rempart": true},
+	"hache_fondations": {"nom": "Hache des fondations","element": "terre", "affinite": 1, "type": "arme", "famille": "hache", "rarete": "epique",
+		"sort": "Fondations", "recharge": 7.0, "degats": 18.0, "coups": 1, "fondations": true},
+	"baton_ages":     {"nom": "Bâton des âges enfouis","element": "terre", "affinite": 2, "type": "arme", "famille": "baton", "rarete": "legendaire",
+		"sort": "Âges enfouis", "recharge": 3.0, "degats": 5.0, "coups": 1, "soin": 4.0, "ages": true},
 	"arc_jardin":     {"nom": "Arc du Jardin interdit","element": "nature", "affinite": 2, "type": "arme", "famille": "tir", "rarete": "legendaire",
 		"sort": "Flèche-graine", "recharge": 6.0, "degats": 12.0, "coups": 1, "graine": true},
 }

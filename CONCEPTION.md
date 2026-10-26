@@ -79,9 +79,9 @@ Sans élimination, le joueur simple gagne 49 à 54 % de ses combats à chaque ma
 difficulté est plate. Le fantôme n'est jamais meilleur que le joueur automatique simple,
 d'où un joueur aléatoire encore trop à l'aise.
 
-Par élément (joueur simple, **1 000 parties**, avec le nouveau Vent) : Terre 3,7, Crépuscule 3,6,
-Vent 3,1, Aube 3,0, Feu 2,9, Nature 2,9, Glace 2,9, Nuit 2,7. Joueur simple : 3,0 victoires en
-moyenne, 20 % de parties gagnées. (Sur 300 parties, chaque élément n'a qu'une trentaine de
+Par élément (joueur simple, **1 000 parties**, avec la nouvelle Terre) : Terre 3,8, Vent 3,7,
+Nature 3,4, Crépuscule 3,3, Feu 3,0, Glace 3,0, Aube 3,0, Nuit 2,7. Joueur simple : 3,2 victoires
+en moyenne, 23 % de parties gagnées. (Sur 300 parties, chaque élément n'a qu'une trentaine de
 parties et les moyennes bougent de ±0,5 d'une mesure à l'autre.)
 
 ### Fusion
@@ -169,7 +169,7 @@ tactique pur. L'arme garde la couleur de son élément, pas celle de la monture.
 
 - **Feu** : Braise, Plume de cendre, Souffle ardent, Foyer (ancien lot, remplacé par le set du Phénix ci-dessous)
 - **Nuit** : Croc noir, Nuée, Voile, Lune creuse (ancien lot, remplacé par le set de la Chauve-souris ci-dessous)
-- **Terre** : Pierre (+PV), Écaille (bouclier de départ), Rempart (sort de bouclier), Socle (les sorts voisins donnent du bouclier) (fait)
+- **Terre** : Pierre, Écaille, Rempart, Socle (ancien lot, remplacé par le set de la Tortue ci-dessous)
 - **Vent** : Sabot, Crin, Rafale, Girouette (ancien lot, remplacé par le set du Cheval ci-dessous)
 - **Glace** : Éclat, Carapace gelée, Prison de glace, Cœur d'hiver
 - **Nature** : Racine, Ronces, Sève, Graine mère
@@ -259,15 +259,15 @@ croisés, objets neutres utiles sans être universels, style lisible quel que so
 | Tir | Rapide, plusieurs petits coups | armes du Cerf, armes du Papillon |
 | Lame | Rapide, riposte, **coups critiques** | Dague d'épine, Serpe de ronces, armes de la Nuit |
 | Hast | Allonge, perce l'esquive | Lance du guet (neutre), armes du Loup, armes du Papillon |
-| Hache | Lent, gros coup | armes du Loup, armes du Lion |
-| Bâton | Magie, grandit avec l'affinité | armes du Phénix, armes du Lion |
+| Hache | Lent, gros coup | armes du Loup, du Lion, de la Tortue |
+| Bâton | Magie, grandit avec l'affinité | armes du Phénix, du Lion, de la Tortue |
 | Faux | Achève les cibles affaiblies | Faux de tison, Faux des cendres, armes de la Nuit |
 
 Familles par élément : **Cerf : Tir et Lame. Loup : Hast et Hache. Phénix : Bâton et Faux. Nuit : Faux et Lame.
-Lion : Bâton et Hache. Papillon : Tir et Hast. Cheval : Lame et Hast.**
+Lion : Bâton et Hache. Papillon : Tir et Hast. Cheval : Lame et Hast. Tortue : Hache et Bâton.**
 
 Avec 9 éléments à 2 familles, il y a 18 places pour 6 familles : **l'idéal est 3 éléments par
-famille**. Après le Cheval, il reste **Tir, Hache, Bâton et Faux pour la Terre et la Lumière**.
+famille**. Après la Tortue, il reste **Tir et Faux pour la Lumière**, ce qui complète la grille.
 
 **Coups critiques** : identité de la famille Lame. Un crit fait **x1,75** de dégâts ; les chances
 viennent des armes Lame et de certains objets (aucune chance de base). Les Lames du Cerf
@@ -589,6 +589,53 @@ Règles :
 | Épique | Lance de bourrasque | Hast | Après chaque Foudre, le prochain coup perce l'esquive et fait double dégâts |
 | Légendaire | Rapière des vents libres | Lame | Pendant le Galop libre, chaque attaque frappe deux fois ; la seconde touche fait moins de dégâts et génère aussi de l'Élan |
 
+### Terre (Tortue) : tenir, réduire, survivre à la fatigue
+
+**Fait** (images de `images/`). Chiffres : Brique 6 % de réduction, Cale +8 % avec du bouclier,
+Fossile +50 % aux voisins ; Truelle (Mortier) 15 + 1,5 par point de Terre toutes les 5 s ; Fil à
+plomb +8 toutes les 3 s de bouclier tenu ; Tuile -50 % sur le premier coup après un nouveau
+bouclier ; Sablier ensablé +5 s ; Borne : 4 s de répit. Les combats de la Tortue durent 32 à 38 s.
+
+**La Terre veut que son bouclier tienne**, à l'opposé exact du Loup qui veut qu'il se brise. Le Fil
+à plomb et la Clef de voûte récompensent un bouclier qui dure, la réduction de dégâts amortit, et
+la fatigue devient un moment fort (Urne, Borne). Familles d'armes : **Hache et Bâton**. Ce set
+remplace l'ancienne Terre (Pierre, Écaille, Rempart, Socle).
+
+Règles :
+- **Passif de la Tortue** (inchangé) : la fatigue de l'adversaire commence 10 s plus tôt, la sienne
+  est réduite de moitié.
+- **Réduction de dégâts** : un pourcentage retiré à chaque coup reçu (attaques et sorts), avant le
+  bouclier, **plafonné à 50 %**. Le poison, la brûlure et la fatigue passent à travers : la Nature
+  et le Feu restent ses contres.
+- **Renouvellement** : le bouclier de la Truelle **remplace** celui de la Truelle précédente au lieu
+  de s'y ajouter (pas de bouclier qui gonfle à l'infini). La Clef de voûte en garde la moitié.
+- À surveiller : la monture n'a presque aucun dégât, la Tortue gagne par la fatigue adverse.
+
+#### Monture (10)
+
+| Rareté | Objet | Apparence | Effet |
+|---|---|---|---|
+| Commun | Brique d'argile | Une brique ocre aux angles arrondis | Réduit légèrement les dégâts des coups reçus |
+| Commun | Truelle de mortier | Une truelle sombre portant une couche de mortier crème | **Sort** : un petit bouclier à intervalles réguliers (renouvelé, pas ajouté) |
+| Commun | Cale de chêne | Un coin de bois épais, maintenu par une bande de fer | Tant que tu as du bouclier, renforce ta réduction de dégâts |
+| Commun | Fossile spiralé | Une empreinte de coquille dans une plaque d'argile | **Catalyseur** : les objets voisins donnent 50 % de bouclier et de réduction en plus |
+| Rare | Fil à plomb | Un poids d'ardoise suspendu à une corde épaisse | Si ton bouclier tient plusieurs secondes sans être brisé, il se renforce |
+| Rare | Tuile vernissée | Une tuile courbe en terre cuite, émaillée de brun sombre | Réduit les dégâts du premier coup reçu après chaque création de bouclier |
+| Rare | Sablier ensablé | Un sablier trapu en pierre, presque rempli de sable ocre | Retarde le début de ta propre fatigue |
+| Épique | Clef de voûte | Une pierre trapézoïdale gravée d'une arche simple | À chaque renouvellement, garde la moitié du bouclier restant |
+| Épique | Urne des siècles | Une urne de céramique ancienne, réparée par de larges joints crème | Accumule les dégâts évités par ta réduction ; au début de ta fatigue, te soigne de cette réserve |
+| Légendaire | Borne de l'Éternité | Une borne de pierre arrondie, traversée de strates ocre et d'un anneau gravé | Au premier coup de fatigue qui devrait te tuer, reste à 1 PV et suspends ta fatigue quelques secondes. Une fois par combat |
+
+#### Armes du cavalier (5, Hache et Bâton)
+
+| Rareté | Arme | Famille | Effet | Apparence |
+|---|---|---|---|---|
+| Commun | Hachette de schiste | Hache | Coup lent qui réduit brièvement les dégâts infligés par la cible | Une lame d'ardoise large, fixée sur un manche de bois épais |
+| Commun | Bâton de glaise | Bâton | Chaque tir accorde un petit bouclier, renforcé par l'affinité Terre | Un bâton noueux coiffé d'une coupelle d'argile |
+| Rare | Bâton du rempart | Bâton | Tant que ton bouclier tient, ses tirs renforcent ta réduction de dégâts, jusqu'à une limite ; le bonus disparaît si le bouclier est brisé | Deux plaques de pierre dressées au sommet d'un bâton |
+| Épique | Hache des fondations | Hache | Coup très lent qui accorde un bouclier selon les dégâts infligés, renforcé sous la moitié de ta vie | Une lourde lame de pierre taillée en arche, avec un manche cerclé de fer |
+| Légendaire | Bâton des âges enfouis | Bâton | Chaque tir te soigne légèrement ; une fois la fatigue commencée, il soigne davantage selon son intensité, avec un plafond | Une borne miniature au sommet d'un long bâton, gravée d'anneaux et de strates ocre |
+
 ## 5. Pas d'avantage élémentaire
 
 **Aucun élément ne bat un autre.** Pas de triangle, pas de multiplicateur caché.
@@ -617,8 +664,9 @@ On adapte son Nid à ce qu'on affronte, pas à une couleur.
 
 ## 7. Prototype (périmètre actuel)
 
-- 8 éléments : Terre (4 objets), Feu, Nature, Glace, Nuit, Aube, Crépuscule et Vent
-  (15 objets chacun), 1 arme neutre (Lance du guet).
+- 8 éléments au format 15 objets : Feu, Nature, Glace, Nuit, Aube, Crépuscule, Vent, Terre ;
+  1 arme neutre (Lance du guet). Reste la Lumière (Raie), avec les familles Tir et Faux.
+- Arène : vitesse x1, x2 ou x3.
 - Nid 4 x 4, reliques d'une case. **Les formes de reliques (2 x 1, L...) viendront après.**
 - Pas d'hybride, pas de réseau. Rareté en place.
 - Boutique, manches, combat animé contre un adversaire généré, fin de partie.

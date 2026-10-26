@@ -153,6 +153,14 @@ func eclore() -> Dictionary:
 		"voile_cavale": 0.0,
 		"girouette": 0.0,
 		"bride": false,
+		"reduction": 0.0,
+		"cale": 0.0,
+		"fil_plomb": 0.0,
+		"tuile": false,
+		"sablier_ensable": 0.0,
+		"clef": false,
+		"urne": false,
+		"borne": false,
 		"rapiere": false,
 		"riposte_esquive": false,
 		"bouclier": 0.0,
@@ -250,6 +258,12 @@ func eclore() -> Dictionary:
 				cr["poudre"] += r.get("poudre", 0.0) * m * _renfort(c, "transfert")
 				cr["etrier"] += r.get("etrier", 0.0) * m * _renfort(c, "elan")
 				cr["bride"] = cr["bride"] or r.get("bride", false)
+				# Fossile spirale renforce bouclier et reduction de ses voisines
+				for champ in ["reduction", "cale", "fil_plomb"]:
+					cr[champ] += r.get(champ, 0.0) * m * _renfort(c, "terre")
+				cr["sablier_ensable"] += r.get("sablier_ensable", 0.0) * m
+				for drapeau in ["tuile", "clef", "urne", "borne"]:
+					cr[drapeau] = cr[drapeau] or r.get(drapeau, false)
 				cr["cocon"] += r.get("cocon", 0.0) * m
 				for drapeau in ["mue", "brume", "phalene", "chrysalide", "aile_lune", "inversion"]:
 					cr[drapeau] = cr[drapeau] or r.get(drapeau, false)
@@ -324,6 +338,11 @@ func _sort(c: Vector2i, r: Dictionary, aff: Dictionary) -> Dictionary:
 		"alize": r.get("alize", false),
 		"riposte_esquive": r.get("riposte_esquive", false),
 		"apres_foudre": r.get("apres_foudre", false),
+		"mortier": _puissance(r, "mortier", aff) * m * _renfort(c, "terre"),
+		"schiste": r.get("schiste", false),
+		"rempart": r.get("rempart", false),
+		"fondations": r.get("fondations", false),
+		"ages": r.get("ages", false),
 		"par_epine": r.get("par_epine", 0.0) * m,
 		"degats": _puissance(r, "degats", aff) * m,
 		"bouclier": _puissance(r, "bouclier", aff) * m,

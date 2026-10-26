@@ -55,7 +55,7 @@ func _draw() -> void:
 		"nuit":
 			_sprite("nuit")
 		"terre":
-			_tortue(c)
+			_sprite("terre")
 		"vent":
 			_sprite("vent")
 		"nature":
@@ -72,36 +72,18 @@ func _draw() -> void:
 	draw_set_transform(Vector2.ZERO)
 
 # Monture dessinee par un artiste : centree sur le meme repere que les formes.
+# La Tortue, toute en largeur, a droit a plus de place.
 const SPRITE_LARGEUR := 260.0
+const LARGEUR_FORME := {"terre": 320.0}
 
 func _sprite(nom: String) -> void:
 	var tex := Palette.image("res://images/montures/%s.png" % nom)
 	if tex == null:
 		_informe(Palette.ELEMENTS[forme])
 		return
-	var taille := Vector2(SPRITE_LARGEUR, SPRITE_LARGEUR * tex.get_height() / tex.get_width())
+	var largeur: float = LARGEUR_FORME.get(nom, SPRITE_LARGEUR)
+	var taille := Vector2(largeur, largeur * tex.get_height() / tex.get_width())
 	draw_texture_rect(tex, Rect2(Vector2(-taille.x / 2, 95 - taille.y), taille), false)
-
-func _tortue(c: Dictionary) -> void:
-	var pas := sin(t * 2.0) * 4.0
-	# pattes courtes et tete qui sort de la carapace
-	for x in [-55, -20, 25, 55]:
-		draw_rect(Rect2(x - 12, 30 + (pas if x < 0 else -pas) * 0.5, 24, 40), c["fond"].lightened(0.3))
-	draw_circle(Vector2(95 + pas, 10), 24, c["fond"].lightened(0.3))
-	draw_circle(Vector2(104 + pas, 4), 4, Color.WHITE)
-	# carapace en dome, avec ses plaques
-	var dome := PackedVector2Array()
-	for i in 17:
-		var a := PI + PI * i / 16.0
-		dome.append(Vector2(cos(a) * 90, sin(a) * 70 + 40))
-	draw_colored_polygon(dome, c["vif"].darkened(0.2))
-	draw_polyline(dome, c["clair"], 3.0)
-	for p in [Vector2(-40, 5), Vector2(0, -15), Vector2(40, 5), Vector2(-15, 25), Vector2(25, 25)]:
-		var hexa := PackedVector2Array()
-		for k in 7:
-			hexa.append(p + Vector2(cos(TAU * k / 6.0), sin(TAU * k / 6.0)) * 16)
-		draw_polyline(hexa, c["clair"].darkened(0.2), 2.0)
-	draw_line(Vector2(-92, 40), Vector2(92, 40), c["clair"], 4.0)
 
 func _informe(c: Dictionary) -> void:
 	var pts := PackedVector2Array()
@@ -120,7 +102,7 @@ func _cavalier(c: Dictionary) -> void:
 		"nuit":
 			dos = Vector2(15, -10)
 		"terre":
-			dos = Vector2(-10, -78)
+			dos = Vector2(-20, -75)
 		"nature", "glace":
 			dos = Vector2(-22, -38)
 		"aube":

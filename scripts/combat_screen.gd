@@ -62,7 +62,7 @@ func _ready() -> void:
 	boutons.offset_top = -110
 	boutons.offset_bottom = -60
 	boutons.alignment = BoxContainer.ALIGNMENT_CENTER
-	bouton_vitesse = _bouton("Vitesse x2", _changer_vitesse)
+	bouton_vitesse = _bouton("Vitesse x1", _changer_vitesse)
 	boutons.add_child(bouton_vitesse)
 	boutons.add_child(_bouton("Rejouer", _rejouer))
 	boutons.add_child(_bouton("Retour au Nid", func(): retour.emit()))
@@ -82,9 +82,12 @@ func _placer() -> void:
 	vues[0].position = Vector2(size.x * 0.27 - 220, milieu - 190)
 	vues[1].position = Vector2(size.x * 0.73 - 220, milieu - 190)
 
+# x1, x2, x3, puis retour a x1. Le bouton affiche la vitesse en cours.
+const VITESSES := [1.0, 2.0, 3.0]
+
 func _changer_vitesse() -> void:
-	vitesse = 2.0 if vitesse == 1.0 else 1.0
-	bouton_vitesse.text = "Vitesse x1" if vitesse > 1.0 else "Vitesse x2"
+	vitesse = VITESSES[(VITESSES.find(vitesse) + 1) % VITESSES.size()]
+	bouton_vitesse.text = "Vitesse x%d" % vitesse
 
 func _rejouer() -> void:
 	lecture = 0.0
@@ -196,6 +199,10 @@ func _jouer(e: Dictionary) -> void:
 			# un eclair turquoise et blanc qui tombe du ciel sur moi
 			effets.append({"type": "foudre", "pos": moi.position + moi.size / 2 + Vector2(0, 30), "t0": lecture, "duree": 0.45})
 			_texte(moi, 2, "Foudre %d" % roundi(e["valeur"]), Palette.ELEMENTS["vent"]["clair"])
+		"urne":
+			_texte(moi, 1, "Urne : +%d" % roundi(e["valeur"]), Palette.ELEMENTS["terre"]["clair"])
+		"borne":
+			_texte(moi, 1, "Borne de l'Éternité !", Palette.ELEMENTS["terre"]["vif"])
 		"galop":
 			_texte(moi, 1, "Galop libre !", Palette.ELEMENTS["vent"]["vif"])
 		"esquive":

@@ -25,7 +25,7 @@ func _init(a: Dictionary, b: Dictionary) -> void:
 	for i in 2:
 		var moi: Dictionary = cotes[i]
 		var autre: Dictionary = cotes[1 - i]
-		moi["fatigue_debut"] = Data.MORT_SUBITE - (Data.TORTUE_AVANCE_FATIGUE if autre["cr"]["tortue"] else 0.0)
+		moi["fatigue_debut"] = Data.MORT_SUBITE - (Data.TORTUE_AVANCE_FATIGUE if autre["cr"]["tortue"] else 0.0) + moi["cr"]["sablier_ensable"]
 		moi["fatigue_mult"] = Data.TORTUE_FATIGUE_MULT if moi["cr"]["tortue"] else 1.0
 
 func _etat(cr: Dictionary, i: int) -> Dictionary:
@@ -64,6 +64,16 @@ func _etat(cr: Dictionary, i: int) -> Dictionary:
 		"esquive_bonus_jusqu": 0.0,
 		"galop_jusqu": 0.0,
 		"foudre_prete": false,     # Lance de bourrasque
+		"mortier": 0.0,            # part du bouclier venant de la Truelle (renouvelee)
+		"bouclier_avant": cr["bouclier"],
+		"fil_temps": 0.0,          # Fil a plomb : bouclier tenu sans bris
+		"tuile_prete": cr["bouclier"] > 0.0,
+		"urne_reserve": 0.0,
+		"urne_faite": false,
+		"borne_faite": false,
+		"fatigue_suspendue_jusqu": 0.0,
+		"schiste_jusqu": 0.0,      # Hachette de schiste : degats infliges reduits
+		"rempart_bonus": 0.0,
 		"bouclier": cr["bouclier"],
 		"poison": 0.0,             # doses
 		"epines_bonus": 1.0,       # Coeur de roncier, Graine
@@ -179,6 +189,15 @@ func _lancer(moi: Dictionary, cible: Dictionary, s: Dictionary, renfort := 1.0) 
 	if s["bouclier"] > 0.0:
 		moi["bouclier"] += s["bouclier"]
 		_evenement(moi, {"type": "bouclier", "valeur": s["bouclier"]})
+	# Truelle : le bouclier de mortier remplace le precedent (la Clef en garde la moitie)
+	if s["mortier"] > 0.0:
+		var ancien := minf(moi["bouclier"], moi["mortier"])
+		var garde: float = ancien * Data.CLEF if moi["cr"]["clef"] else 0.0
+		moi["bouclier"] += s["mortier"] - (ancien - garde)
+		moi["mortier"] = s["mortier"] + garde
+		_evenement(moi, {"type": "bouclier", "valeur": s["mortier"]})
+	if s["rempart"] and moi["bouclier"] > 0.0:
+		moi["rempart_bonus"] = minf(moi["rempart_bonus"] + Data.REMPART_PAS, Data.REMPART_MAX)
 	var touche := false
 	# Faux de la Nuit profonde : consume les maledictions de la cible
 	var festin := 0.0
@@ -213,7 +232,12 @@ func _lancer(moi: Dictionary, cible: Dictionary, s: Dictionary, renfort := 1.0) 
 			degats *= 4.0
 			cible["gele_jusqu"] = t
 			_evenement(cible, {"type": "brise_gel"})
-		touche = _frapper(moi, cible, degats, s["vol_de_vie"] + (0.5 if festin > 0.0 else 0.0), perce) or touche
+		var touche_coup := _frapper(moi, cible, degats, s["vol_de_vie"] + (0.5 if festin > 0.0 else 0.0), perce)
+		touche = touche_coup or touche
+		if touche_coup and s["fondations"]:
+			var b: float = degats * Data.FONDATIONS * (1.5 if moi["pv"] < moi["cr"]["pv_max"] * 0.5 else 1.0)
+			moi["bouclier"] += b
+			_evenement(moi, {"type": "bouclier", "valeur": b})
 	s.erase("bonus_fracas")
 	if s["coups"] == 0 or touche:
 		if s["poison"] > 0.0:
@@ -226,8 +250,12 @@ func _lancer(moi: Dictionary, cible: Dictionary, s: Dictionary, renfort := 1.0) 
 			_bruler(moi, cible, s["brulure"])
 		if s["malediction"] != "":
 			_maudire(moi, cible, s["malediction"])
+		if s["schiste"]:
+			cible["schiste_jusqu"] = t + Data.SCHISTE_DUREE
 		if s["soin"] > 0.0:
-			_soigner(moi, cible, s["soin"])
+			# Baton des ages : soigne plus fort une fois la fatigue commencee
+			var bonus := minf((t - moi["fatigue_debut"]) * Data.AGES_PAR_SECONDE, Data.AGES_MAX) if s["ages"] and t > moi["fatigue_debut"] else 0.0
+			_soigner(moi, cible, s["soin"] + bonus)
 		if s["charge_eclat"] > 0.0 and moi["cr"]["eclat"]:
 			_charger_eclat(moi, cible, s["charge_eclat"])
 		if s["transfert"] != "":
@@ -578,15 +606,36 @@ func _empoisonner(cible: Dictionary, doses: float) -> void:
 # Le bouclier encaisse avant les PV. Brulure et fatigue passent a travers.
 # source : qui frappe ; un bouclier brise par un coup declenche les effets de bris.
 func _blesser(cible: Dictionary, degats: float, source = null) -> void:
+	# Hachette de schiste : un attaquant affaibli frappe moins fort
+	if source != null and t < source["schiste_jusqu"]:
+		degats *= 1.0 - Data.SCHISTE
+	# Reduction de degats (l'Urne garde ce qui est evite), puis la Tuile
+	var reduit := degats * _reduction(cible)
+	cible["urne_reserve"] += reduit if cible["cr"]["urne"] else 0.0
+	degats -= reduit
+	if cible["tuile_prete"] and cible["cr"]["tuile"]:
+		degats *= 1.0 - Data.TUILE
+	cible["tuile_prete"] = false
 	var avant: float = cible["bouclier"]
 	var absorbe := minf(avant, degats)
 	cible["bouclier"] -= absorbe
+	cible["mortier"] = minf(cible["mortier"], cible["bouclier"])
 	cible["pv"] -= degats - absorbe
+	if avant > 0.0 and cible["bouclier"] <= 0.0:
+		cible["fil_temps"] = 0.0
+		cible["rempart_bonus"] = 0.0
 	# Poupee cousue : renvoie une part des degats a un adversaire maudit
 	if source != null and cible["cr"]["renvoi"] > 0.0 and _nb_maledictions(source) > 0:
 		source["pv"] -= degats * cible["cr"]["renvoi"]
 	if avant > 0.0 and cible["bouclier"] <= 0.0 and source != null:
 		_briser(cible, source)
+
+# Brique, Cale (tant que le bouclier tient), Baton du rempart ; plafond 50 %.
+func _reduction(moi: Dictionary) -> float:
+	var r: float = moi["cr"]["reduction"] + moi["rempart_bonus"]
+	if moi["bouclier"] > 0.0:
+		r += moi["cr"]["cale"]
+	return minf(r, Data.REDUCTION_MAX)
 
 # Bouclier brise : Eclat de givre, Cristal fele, Ecorce, Rose des neiges, Noyau.
 # Ces ripostes peuvent briser le bouclier adverse a leur tour : la chaine
@@ -666,8 +715,30 @@ func _subir(moi: Dictionary, adverse: Dictionary) -> void:
 		# Graine : tant que l'adversaire est empoisonne, les epines poussent
 		if adverse["cr"]["graine"]:
 			adverse["epines_bonus"] = minf(adverse["epines_bonus"] + Data.GRAINE_POUSSE * Data.PAS, Data.EPINES_BONUS_MAX)
-	if t > moi["fatigue_debut"]:
-		moi["pv"] -= (t - moi["fatigue_debut"]) * Data.FATIGUE_RAMPE * moi["fatigue_mult"] * Data.PAS
+	# Terre : Fil a plomb (bouclier tenu), Tuile (nouveau bouclier), Urne (au debut de la fatigue)
+	if moi["bouclier"] > moi["bouclier_avant"]:
+		moi["tuile_prete"] = true
+	moi["bouclier_avant"] = moi["bouclier"]
+	if moi["bouclier"] > 0.0 and moi["cr"]["fil_plomb"] > 0.0:
+		moi["fil_temps"] += Data.PAS
+		if moi["fil_temps"] >= Data.FIL_PLOMB_DELAI:
+			moi["fil_temps"] = 0.0
+			moi["bouclier"] += moi["cr"]["fil_plomb"]
+			moi["bouclier_avant"] = moi["bouclier"]
+	if moi["cr"]["urne"] and not moi["urne_faite"] and t >= moi["fatigue_debut"]:
+		moi["urne_faite"] = true
+		_soigner(moi, adverse, moi["urne_reserve"])
+		_evenement(moi, {"type": "urne", "valeur": moi["urne_reserve"]})
+	if t > moi["fatigue_debut"] and t >= moi["fatigue_suspendue_jusqu"]:
+		var fatigue: float = (t - moi["fatigue_debut"]) * Data.FATIGUE_RAMPE * moi["fatigue_mult"] * Data.PAS
+		# Borne de l'Eternite : une fois, la fatigue qui tuerait laisse a 1 PV et s'arrete un moment
+		if moi["cr"]["borne"] and not moi["borne_faite"] and moi["pv"] - fatigue <= 0.0:
+			moi["borne_faite"] = true
+			moi["pv"] = 1.0
+			moi["fatigue_suspendue_jusqu"] = t + Data.BORNE_DUREE
+			_evenement(moi, {"type": "borne"})
+		else:
+			moi["pv"] -= fatigue
 
 # Renaissance : l'Oeuf en ajoute une et la fait suivre d'une combustion totale ;
 # le Baton du Premier Brasier tire aussitot, renforce.

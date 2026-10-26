@@ -23,6 +23,8 @@ func _ready() -> void:
 	ok = _aube() and ok
 	ok = _crepuscule() and ok
 	ok = _vent() and ok
+	ok = _vitesses() and ok
+	ok = _terre() and ok
 	print("SMOKE: ", "OK" if ok else "ECHEC")
 	get_tree().quit(0 if ok else 1)
 
@@ -97,7 +99,7 @@ func _armes() -> bool:
 	ok = _verifier(n.accepte(Vector2i(0, 0), "faux_lunaire", null), "remplacer l'arme en place") and ok
 	ok = _verifier(n.accepte(Vector2i(2, 2), "lance_guet", Vector2i(0, 0)), "deplacer l'arme") and ok
 	ok = _verifier(n.affinites().is_empty(), "la lance n'a pas d'element") and ok
-	n.placer(Vector2i(1, 0), "socle")
+	n.placer(Vector2i(1, 0), "fourrure")
 	var s: Dictionary = n.eclore()["sorts"][0]
 	ok = _verifier(s["cavalier"] and s["nom"] == "Estoc" and s["bouclier"] > 0.0, "sort du cavalier + catalyseur voisin") and ok
 	# Estoc perce le Voile : la chauve-souris ne doit jamais esquiver un Estoc.
@@ -196,10 +198,11 @@ func _terre_vent() -> bool:
 	var t := Exemples.nid_terre().eclore()
 	var v := Exemples.nid_vent().eclore()
 	var ok := _verifier(t["nom"] == "Tortue" and v["nom"] == "Cheval", "terre -> tortue, vent -> cheval")
-	ok = _verifier(is_equal_approx(t["pv_max"], Data.PV_BASE + 80.0) and is_equal_approx(t["bouclier"], 30.0), "pierre +PV, ecaille bouclier") and ok
-	var rempart: Dictionary = t["sorts"][0]
-	# rempart : 15 + 3 x terre (2+2+1+1+1 = 7) = 36, socle voisin +40 % = 50,4 ; aucun degat
-	ok = _verifier(is_equal_approx(rempart["bouclier"], 36.0 * 1.4) and rempart["degats"] == 0.0, "rempart : bouclier selon affinite, socle") and ok
+	# briques : 0,06 chacune, celle a cote du fossile x1,5 ; cale (a cote du fossile) 0,08 x1,5
+	ok = _verifier(is_equal_approx(t["reduction"], 0.06 * 1.5 + 0.06) and is_equal_approx(t["cale"], 0.12), "brique, cale et fossile") and ok
+	var mortier: Dictionary = t["sorts"][0]
+	# truelle : (15 + 1,5 x terre 8) x 1,5 (fossile voisin) ; aucun degat
+	ok = _verifier(is_equal_approx(mortier["mortier"], (15.0 + 1.5 * 8) * 1.5) and mortier["degats"] == 0.0, "truelle : mortier selon affinite, fossile") and ok
 	ok = _verifier(is_equal_approx(v["esquive"], Data.ESQUIVE_CHEVAL + 0.06), "cheval : esquive passive + duvet") and ok
 	# combat : le bouclier encaisse, le cheval charge l'Elan et lance la Foudre
 	var c := Combat.new(t, v)
@@ -222,6 +225,7 @@ func _nature() -> bool:
 	# poison : s'empile, plafonne, passe le bouclier ; epines : ripostent
 	var tortue := Exemples.nid_terre().eclore()
 	var c := Combat.new(cr, tortue)
+	c.cotes[1]["bouclier"] = 30.0
 	c._empoisonner(c.cotes[1], 150.0)
 	ok = _verifier(c.cotes[1]["poison"] == Data.POISON_MAX, "poison plafonne a 100") and ok
 	var pv: float = c.cotes[1]["pv"]
@@ -751,3 +755,95 @@ func _vent() -> bool:
 	var avant: float = j.cotes[0]["prochaine_attaque"]
 	j._lancer(j.cotes[0], j.cotes[1], j.cotes[0]["sorts"][0])
 	return _verifier(is_equal_approx(j.cotes[0]["prochaine_attaque"], avant - Data.ALIZE_AVANCE), "javelot des alizes") and ok
+
+func _vitesses() -> bool:
+	var e := CombatScreen.new(Exemples.nid_feu().eclore(), Exemples.nid_nuit().eclore())
+	add_child(e)
+	var vues := []
+	for i in 4:
+		vues.append([e.vitesse, e.bouton_vitesse.text])
+		e._changer_vitesse()
+	e.queue_free()
+	return _verifier(vues == [[1.0, "Vitesse x1"], [2.0, "Vitesse x2"], [3.0, "Vitesse x3"], [1.0, "Vitesse x1"]], "vitesse x1, x2, x3 puis x1")
+
+func _terre() -> bool:
+	var vide := Nid.new().eclore()
+	var cr := Exemples.nid_terre().eclore()
+	# reduction : sur les coups, avant le bouclier ; la cale ne compte qu'avec du bouclier
+	var c := Combat.new(vide, cr)
+	var pv: float = c.cotes[1]["pv"]
+	c._blesser(c.cotes[1], 100.0, c.cotes[0])
+	var ok_reduc := is_equal_approx(pv - c.cotes[1]["pv"], 100.0 * (1.0 - cr["reduction"]))
+	var ok := _verifier(ok_reduc, "reduction de degats")
+	c.cotes[1]["bouclier"] = 500.0
+	ok = _verifier(is_equal_approx(c._reduction(c.cotes[1]), cr["reduction"] + cr["cale"]), "cale : seulement avec du bouclier") and ok
+	var plein := Nid.new()
+	for i in 12:
+		plein.placer(Vector2i(i % 4, i / 4), "brique")
+	var d := Combat.new(plein.eclore(), vide)
+	ok = _verifier(d._reduction(d.cotes[0]) == Data.REDUCTION_MAX, "reduction plafonnee a 50 %") and ok
+	# truelle : renouvelle, la clef garde la moitie
+	var e := Combat.new(cr, vide)
+	var truelle: Dictionary = e.cotes[0]["sorts"][0]
+	e._lancer(e.cotes[0], e.cotes[1], truelle)
+	var b1: float = e.cotes[0]["bouclier"]
+	e._lancer(e.cotes[0], e.cotes[1], truelle)
+	ok = _verifier(is_equal_approx(e.cotes[0]["bouclier"], b1), "truelle : renouvelle au lieu d'ajouter") and ok
+	var k := Exemples.nid_terre()
+	k.placer(Vector2i(3, 3), "clef")
+	var f := Combat.new(k.eclore(), vide)
+	var tr: Dictionary = f.cotes[0]["sorts"][0]
+	f._lancer(f.cotes[0], f.cotes[1], tr)
+	f._lancer(f.cotes[0], f.cotes[1], tr)
+	ok = _verifier(is_equal_approx(f.cotes[0]["bouclier"], tr["mortier"] * 1.5), "clef de voute : garde la moitie") and ok
+	# fil a plomb, tuile, sablier
+	var n := Nid.new()
+	n.placer(Vector2i(0, 0), "fil_plomb")
+	n.placer(Vector2i(1, 0), "tuile")
+	n.placer(Vector2i(2, 0), "sablier_ensable")
+	var g := Combat.new(n.eclore(), vide)
+	g.cotes[0]["bouclier"] = 20.0
+	for i in 31:
+		g._subir(g.cotes[0], g.cotes[1])
+	ok = _verifier(g.cotes[0]["bouclier"] == 28.0, "fil a plomb : bouclier tenu renforce") and ok
+	pv = g.cotes[0]["pv"] + g.cotes[0]["bouclier"]
+	g._blesser(g.cotes[0], 10.0, g.cotes[1])
+	ok = _verifier(is_equal_approx(pv - g.cotes[0]["pv"] - g.cotes[0]["bouclier"], 5.0), "tuile : premier coup reduit") and ok
+	ok = _verifier(g.cotes[0]["fatigue_debut"] == Data.MORT_SUBITE + 5.0, "sablier ensable : fatigue retardee") and ok
+	# urne : soigne au debut de la fatigue ; borne : survit une fois a 1 PV
+	var u := Nid.new()
+	u.placer(Vector2i(0, 0), "urne")
+	u.placer(Vector2i(1, 0), "brique")
+	u.placer(Vector2i(2, 0), "borne")
+	var h := Combat.new(u.eclore(), vide)
+	h._blesser(h.cotes[0], 100.0, h.cotes[1])
+	pv = h.cotes[0]["pv"]
+	h.t = h.cotes[0]["fatigue_debut"]
+	h._subir(h.cotes[0], h.cotes[1])
+	ok = _verifier(h.cotes[0]["pv"] > pv, "urne : soin au debut de la fatigue") and ok
+	h.cotes[0]["pv"] = 0.1
+	h.t += 1.0
+	h._subir(h.cotes[0], h.cotes[1])
+	ok = _verifier(h.cotes[0]["pv"] == 1.0 and h.cotes[0]["fatigue_suspendue_jusqu"] > h.t, "borne : reste a 1 PV") and ok
+	# armes : schiste affaiblit, fondations donne du bouclier, rempart monte la reduction
+	var hs := Nid.new()
+	hs.placer(Vector2i(0, 0), "hachette_schiste")
+	var m := Combat.new(hs.eclore(), vide)
+	m._lancer(m.cotes[0], m.cotes[1], m.cotes[0]["sorts"][0])
+	pv = m.cotes[0]["pv"]
+	m._blesser(m.cotes[0], 10.0, m.cotes[1])
+	ok = _verifier(is_equal_approx(pv - m.cotes[0]["pv"], 7.5), "hachette de schiste : la cible frappe moins fort") and ok
+	var hf := Nid.new()
+	hf.placer(Vector2i(0, 0), "hache_fondations")
+	var q := Combat.new(hf.eclore(), vide)
+	q._lancer(q.cotes[0], q.cotes[1], q.cotes[0]["sorts"][0])
+	ok = _verifier(is_equal_approx(q.cotes[0]["bouclier"], 18.0 * Data.FONDATIONS), "hache des fondations : bouclier") and ok
+	var br := Nid.new()
+	br.placer(Vector2i(0, 0), "baton_rempart")
+	var r := Combat.new(br.eclore(), vide)
+	r.cotes[0]["bouclier"] = 50.0
+	for i in 6:
+		r._lancer(r.cotes[0], r.cotes[1], r.cotes[0]["sorts"][0])
+	ok = _verifier(r.cotes[0]["rempart_bonus"] == Data.REMPART_MAX, "baton du rempart : reduction plafonnee") and ok
+	r._blesser(r.cotes[0], 100.0, r.cotes[1])
+	return _verifier(r.cotes[0]["rempart_bonus"] == 0.0, "baton du rempart : perdu au bris") and ok
