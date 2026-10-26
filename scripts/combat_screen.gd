@@ -255,12 +255,14 @@ func _dessiner() -> void:
 		var part := clampf(img[i] / cr["pv_max"], 0.0, 1.0)
 		calque.draw_rect(Rect2(x, y, 300, 16), Palette.CASE)
 		calque.draw_rect(Rect2(x, y, 300 * part, 16), Palette.ELEMENTS[cr["forme"]]["vif"])
-		# bouclier : bande claire au bout des PV
-		var bouclier := clampf(img[4 + i] / cr["pv_max"], 0.0, 1.0 - part)
-		if bouclier > 0.0:
-			calque.draw_rect(Rect2(x + 300 * part, y, 300 * bouclier, 16), Color("#cfe3f2"))
 		calque.draw_rect(Rect2(x, y, 300, 16), Palette.CASE_BORD, false, 1.0)
-		calque.draw_string(police, Vector2(x, y + 13), "%d / %d" % [maxi(ceili(img[i]), 0), cr["pv_max"]],
+		# bouclier : fine barre sous les PV, visible meme quand les PV sont pleins
+		var bouclier: float = img[4 + i]
+		var texte := "%d / %d" % [maxi(ceili(img[i]), 0), cr["pv_max"]]
+		if bouclier > 0.0:
+			calque.draw_rect(Rect2(x, y + 17, 300 * clampf(bouclier / cr["pv_max"], 0.0, 1.0), 4), Color("#cfe3f2"))
+			texte += "  +%d" % roundi(bouclier)
+		calque.draw_string(police, Vector2(x, y + 13), texte,
 			HORIZONTAL_ALIGNMENT_CENTER, 300, 13, Palette.TEXTE)
 		if img[2 + i]:
 			_brulure(v)
