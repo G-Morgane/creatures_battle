@@ -58,14 +58,18 @@ func _agir(moi: Dictionary, cible: Dictionary) -> void:
 			moi["esquive"] = true
 			_noter("%s se voile." % moi["cr"]["nom"])
 			continue
-		_noter("%s lance %s." % [moi["cr"]["nom"], s["nom"]])
+		var qui: String = moi["cr"]["nom"] + (" : le cavalier" if s["cavalier"] else "")
+		_noter("%s lance %s." % [qui, s["nom"]])
 		for k in s["coups"]:
-			_frapper(moi, cible, s["degats"], s["vol_de_vie"])
+			var degats: float = s["degats"]
+			if s["execution"] and cible["pv"] < cible["cr"]["pv_max"] * Data.SEUIL_EXECUTION:
+				degats *= 2.0
+			_frapper(moi, cible, degats, s["vol_de_vie"], s["perce"])
 		if s["brulure"]:
 			cible["brulure"] = Data.BRULURE_DUREE
 
-func _frapper(moi: Dictionary, cible: Dictionary, degats: float, vol: float) -> void:
-	if cible["esquive"]:
+func _frapper(moi: Dictionary, cible: Dictionary, degats: float, vol: float, perce := false) -> void:
+	if cible["esquive"] and not perce:
 		cible["esquive"] = false
 		_noter("%s esquive." % cible["cr"]["nom"])
 		return

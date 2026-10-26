@@ -10,6 +10,7 @@ func _ready() -> void:
 	ok = _deterministe() and ok
 	ok = _renaissance() and ok
 	ok = _ecran() and ok
+	ok = _armes() and ok
 	print("SMOKE: ", "OK" if ok else "ECHEC")
 	get_tree().quit(0 if ok else 1)
 
@@ -71,3 +72,30 @@ func _ecran() -> bool:
 	ok = _verifier(e.vue.forme == "ombre" and e.nid.cases.size() == 2, "vider une case") and ok
 	e.queue_free()
 	return ok
+
+func _armes() -> bool:
+	var n := Nid.new()
+	var ok := _verifier(n.placer(Vector2i(0, 0), "lance_guet"), "poser une arme")
+	ok = _verifier(not n.placer(Vector2i(1, 0), "faux_lunaire"), "une seule arme") and ok
+	ok = _verifier(n.accepte(Vector2i(0, 0), "faux_lunaire", null), "remplacer l'arme en place") and ok
+	ok = _verifier(n.accepte(Vector2i(2, 2), "lance_guet", Vector2i(0, 0)), "deplacer l'arme") and ok
+	ok = _verifier(n.affinites().is_empty(), "la lance n'a pas d'element") and ok
+	n.placer(Vector2i(1, 0), "foyer")
+	var s: Dictionary = n.eclore()["sorts"][0]
+	ok = _verifier(s["cavalier"] and s["nom"] == "Estoc" and s["brulure"], "sort du cavalier + catalyseur voisin") and ok
+	# Estoc perce le Voile : la chauve-souris ne doit jamais esquiver un Estoc.
+	var lance := Nid.new()
+	lance.placer(Vector2i(0, 0), "lance_guet")
+	var c := Combat.new(lance.eclore(), Exemples.nid_ombre().eclore())
+	c.simuler()
+	ok = _verifier(c.journal.any(func(l): return "Estoc" in l), "le cavalier lance Estoc") and ok
+	# Moisson double sous le seuil
+	var faux := Nid.new()
+	faux.placer(Vector2i(0, 0), "faux_lunaire")
+	var cible := Nid.new().eclore()
+	var m := Combat.new(faux.eclore(), cible)
+	m.cotes[1]["pv"] = 30.0
+	m.cotes[0]["sorts"][0]["prochain"] = 0.0
+	m._agir(m.cotes[0], m.cotes[1])
+	var attendu: float = 30.0 - 2.0 * faux.eclore()["sorts"][0]["degats"]
+	return _verifier(is_equal_approx(m.cotes[1]["pv"], attendu), "moisson double sous 40 %% (pv %s, attendu %s)" % [m.cotes[1]["pv"], attendu]) and ok

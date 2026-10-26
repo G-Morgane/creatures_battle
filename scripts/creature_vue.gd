@@ -6,13 +6,15 @@ extends Control
 
 var forme := ""
 var affinite := 0
+var arme = null   # id de relique ou null
 var t := 0.0
 var pulse := 1.0
 
-func montrer(f: String, a: int) -> void:
-	var change := f != forme or a != affinite
+func montrer(f: String, a: int, ar = null) -> void:
+	var change: bool = f != forme or a != affinite or ar != arme
 	forme = f
 	affinite = a
+	arme = ar
 	if change and is_inside_tree():
 		pulse = 1.15
 		create_tween().tween_property(self, "pulse", 1.0, 0.35).set_trans(Tween.TRANS_BACK)
@@ -101,3 +103,26 @@ func _cavalier(c: Dictionary) -> void:
 	draw_circle(dos + Vector2(0, -47), 2.5, Color.WHITE)
 	draw_circle(dos + Vector2(9, -47), 2.5, Color.WHITE)
 	draw_colored_polygon(PackedVector2Array([dos + Vector2(-8, -64), dos + Vector2(0, -84), dos + Vector2(10, -64)]), c["vif"])
+	if arme != null:
+		_arme(dos)
+
+# L'arme suit la couleur de son propre element, pas celle de la monture.
+func _arme(dos: Vector2) -> void:
+	var c: Dictionary = Palette.ELEMENTS[Data.RELIQUES[arme]["element"]]
+	var bois := Color("#7a5236")
+	var main := dos + Vector2(18, -14)
+	match arme:
+		"baton_braise":
+			draw_line(main + Vector2(0, 40), main + Vector2(0, -80), bois, 5)
+			var f := sin(t * 9.0) * 3.0
+			draw_colored_polygon(PackedVector2Array([main + Vector2(-10, -80), main + Vector2(f, -112), main + Vector2(10, -80)]), c["vif"])
+			draw_circle(main + Vector2(0, -84), 7, c["clair"])
+		"lance_guet":
+			draw_line(main + Vector2(-60, 40), main + Vector2(70, -50), bois, 4)
+			draw_colored_polygon(PackedVector2Array([main + Vector2(64, -58), main + Vector2(92, -66), main + Vector2(76, -42)]), c["clair"])
+		"faux_lunaire":
+			draw_line(main + Vector2(0, 40), main + Vector2(0, -85), bois, 4)
+			var lame := PackedVector2Array()
+			for p in [Vector2(0, -85), Vector2(-22, -100), Vector2(-56, -96), Vector2(-80, -72), Vector2(-52, -86), Vector2(-22, -90)]:
+				lame.append(main + p)
+			draw_colored_polygon(lame, c["clair"])

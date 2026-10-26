@@ -55,7 +55,7 @@ func _reliquaire() -> Control:
 		g.add_child(Tuile.new(self, id))
 	col.add_child(g)
 	var aide := Label.new()
-	aide.text = "Glisse une relique dans le Nid.\nClic droit sur une case pour la vider."
+	aide.text = "Glisse une relique dans le Nid.\nClic droit sur une case pour la vider.\nUne seule arme pour le cavalier."
 	aide.add_theme_color_override("font_color", Palette.TEXTE_DOUX)
 	col.add_child(aide)
 	return col
@@ -113,7 +113,7 @@ func _texte() -> RichTextLabel:
 
 # depuis : case d'origine si on deplace une relique deja posee, null sinon.
 func deposer(c: Vector2i, id: String, depuis) -> void:
-	if depuis == c:
+	if depuis == c or not nid.accepte(c, id, depuis):
 		return
 	var ancien = nid.cases.get(c)
 	nid.retirer(c)
@@ -132,7 +132,7 @@ func rafraichir() -> void:
 	for c in cases_ui:
 		cases_ui[c].queue_redraw()
 	var cr := nid.eclore()
-	vue.montrer(cr["forme"], _affinite_totale())
+	vue.montrer(cr["forme"], _affinite_totale(), cr["arme"])
 	infos.text = _decrire(cr)
 	journal.text = ""
 
@@ -151,11 +151,15 @@ func _decrire(cr: Dictionary) -> String:
 			cr["pv_max"], cr["attaque"], cr["intervalle"], roundi(cr["vol_de_vie"] * 100)],
 	]
 	for s in cr["sorts"]:
-		var d := "[b]%s[/b] (toutes les %.0f s)" % [s["nom"], s["recharge"]]
+		var d := "[b]%s%s[/b] (toutes les %.1f s)" % ["Cavalier, " if s["cavalier"] else "", s["nom"], s["recharge"]]
 		if s["esquive"]:
 			d += " : esquive la prochaine attaque"
 		else:
 			d += " : %d x %.1f dégâts" % [s["coups"], s["degats"]]
+		if s["perce"]:
+			d += ", ignore l'esquive"
+		if s["execution"]:
+			d += ", double sous %d %% de PV" % roundi(Data.SEUIL_EXECUTION * 100)
 		if s["brulure"]:
 			d += ", brûle"
 		if s["vol_de_vie"] > 0.0 and not s["esquive"]:
@@ -249,7 +253,7 @@ class CaseNid extends Control:
 		set_drag_preview(NidScreen.apercu(_id()))
 		return {"id": _id(), "depuis": position_nid}
 	func _can_drop_data(_p: Vector2, data: Variant) -> bool:
-		return data is Dictionary and data.has("id")
+		return data is Dictionary and data.has("id") and ecran.nid.accepte(position_nid, data["id"], data["depuis"])
 	func _drop_data(_p: Vector2, data: Variant) -> void:
 		ecran.deposer(position_nid, data["id"], data["depuis"])
 	func _gui_input(ev: InputEvent) -> void:

@@ -52,4 +52,15 @@ const RELIQUES := {
 		"recharge": 6.0, "esquive": true},
 	"lune_creuse":    {"nom": "Lune creuse",    "element": "ombre", "affinite": 1, "type": "catalyseur",
 		"effet": "vol_de_vie", "valeur": 0.30},
+	# armes : le cavalier en tient une seule et lance son propre sort.
+	# Les catalyseurs voisins s'appliquent aussi a ce sort.
+	"baton_braise":   {"nom": "Bâton de braise","element": "feu",   "affinite": 1, "type": "arme",
+		"sort": "Boule de feu", "recharge": 3.0, "degats": 6.0, "par_affinite": 1.5, "coups": 1},
+	"lance_guet":     {"nom": "Lance du guet",  "element": "",      "affinite": 0, "type": "arme",
+		"sort": "Estoc", "recharge": 2.5, "degats": 8.0, "coups": 1, "perce": true},
+	"faux_lunaire":   {"nom": "Faux lunaire",   "element": "ombre", "affinite": 1, "type": "arme",
+		"sort": "Moisson", "recharge": 6.0, "degats": 6.0, "par_affinite": 1.0, "coups": 1, "execution": true},
 }
+
+# Estoc ignore l'esquive. Moisson double ses degats sous ce seuil de PV.
+const SEUIL_EXECUTION := 0.4
