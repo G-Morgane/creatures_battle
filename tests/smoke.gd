@@ -20,6 +20,7 @@ func _ready() -> void:
 	ok = _glace() and ok
 	ok = _phenix() and ok
 	ok = _nuit() and ok
+	ok = _aube() and ok
 	print("SMOKE: ", "OK" if ok else "ECHEC")
 	get_tree().quit(0 if ok else 1)
 
@@ -519,3 +520,72 @@ func _nuit() -> bool:
 	pv = n.cotes[1]["pv"]
 	n._lancer(n.cotes[0], n.cotes[1], n.cotes[0]["sorts"][0])
 	return _verifier(n._nb_maledictions(n.cotes[1]) == 0 and is_equal_approx(pv - n.cotes[1]["pv"], 10.0 + 2 * Data.FESTIN_DEGATS), "faux de la nuit profonde : consume") and ok
+
+func _aube() -> bool:
+	var vide := Nid.new().eclore()
+	var cr := Exemples.nid_aube().eclore()
+	var ok := _verifier(cr["nom"] == "Lion" and cr["eclat"] and cr["regen"] == Data.REGEN_LION, "aube -> lion")
+	# meche : (8 + 1 x aube 7) x 1,5 (huile voisine)
+	ok = _verifier(is_equal_approx(cr["sorts"][0]["soin"], (8.0 + 7.0) * 1.5), "meche et huile voisine") and ok
+	# charge : soin a moitie, excedent double
+	var c := Combat.new(cr, vide)
+	c.cotes[0]["pv"] = c.cotes[0]["cr"]["pv_max"] - 10.0
+	c._soigner(c.cotes[0], c.cotes[1], 20.0)
+	ok = _verifier(is_equal_approx(c.cotes[0]["eclat_jauge"], 10.0 * Data.ECLAT_PAR_SOIN + 10.0 * Data.ECLAT_PAR_EXCES), "eclat : soin et excedent") and ok
+	# seuil (60 - miroir 10) : l'Eclat part
+	var pv: float = c.cotes[1]["pv"]
+	c._charger_eclat(c.cotes[0], c.cotes[1], 30.0)
+	ok = _verifier(c.cotes[1]["pv"] == pv - Data.ECLAT_DEGATS and c.cotes[0]["eclat_jauge"] < 50.0, "eclat au seuil, miroir") and ok
+	# soin bloque par la belladone : charge quand meme
+	var b := Nid.new()
+	b.placer(Vector2i(0, 0), "belladone")
+	var d := Combat.new(cr, b.eclore())
+	d.cotes[0]["poison"] = 5.0
+	d.cotes[0]["pv"] = 100.0
+	d._soigner(d.cotes[0], d.cotes[1], 20.0)
+	ok = _verifier(d.cotes[0]["pv"] == 100.0 and d.cotes[0]["eclat_jauge"] > 0.0, "soin bloque : charge quand meme") and ok
+	# prisme, lanterne, encensoir, carillon, vasque
+	var n := Exemples.nid_aube()
+	n.placer(Vector2i(0, 2), "prisme")
+	n.placer(Vector2i(1, 2), "lanterne")
+	n.placer(Vector2i(2, 2), "encensoir")
+	n.placer(Vector2i(3, 2), "carillon")
+	n.placer(Vector2i(0, 3), "vasque")
+	var e := Combat.new(n.eclore(), vide)
+	e.cotes[0]["exces_accumule"] = 20.0
+	pv = e.cotes[1]["pv"]
+	e._eclat(e.cotes[0], e.cotes[1])
+	ok = _verifier(is_equal_approx(pv - e.cotes[1]["pv"], Data.ECLAT_DEGATS + 15.0 + 20.0), "eclat : prisme et lanterne") and ok
+	ok = _verifier(e.cotes[0]["encensoir_jusqu"] > e.t, "encensoir : regeneration renforcee") and ok
+	e.cotes[0]["pv"] = 100.0
+	e._eclat(e.cotes[0], e.cotes[1])
+	e._eclat(e.cotes[0], e.cotes[1])
+	ok = _verifier(e.cotes[0]["pv"] >= 140.0, "carillon : gros soin au 3e eclat") and ok
+	var v := Combat.new(n.eclore(), vide)
+	v._soigner(v.cotes[0], v.cotes[1], 20.0)
+	ok = _verifier(is_equal_approx(v.cotes[0]["bouclier"], 10.0), "vasque : l'excedent devient bouclier") and ok
+	# bande de lin : regeneration renforcee sous la moitie
+	var w := Combat.new(cr, vide)
+	w.cotes[0]["pv"] = 100.0
+	w._subir(w.cotes[0], w.cotes[1])
+	ok = _verifier(w.cotes[0]["pv"] > 100.0 + Data.REGEN_LION * Data.PAS + 0.01, "bande de lin : regeneration renforcee") and ok
+	# armes : hachette charge, hache solaire double apres un eclat, sceptre : eclat tous les 4 tirs
+	var h := Nid.new()
+	h.placer(Vector2i(0, 0), "hachette_matin")
+	h.placer(Vector2i(1, 0), "miroir")
+	var k := Combat.new(h.eclore(), vide)
+	k._lancer(k.cotes[0], k.cotes[1], k.cotes[0]["sorts"][0])
+	ok = _verifier(k.cotes[0]["eclat_jauge"] >= 15.0, "hachette du matin : charge l'eclat") and ok
+	var hs := Nid.new()
+	hs.placer(Vector2i(0, 0), "hache_solaire")
+	var m := Combat.new(hs.eclore(), vide)
+	m.cotes[0]["eclat_pret"] = true
+	pv = m.cotes[1]["pv"]
+	m._lancer(m.cotes[0], m.cotes[1], m.cotes[0]["sorts"][0])
+	ok = _verifier(is_equal_approx(pv - m.cotes[1]["pv"], 24.0) and not m.cotes[0]["eclat_pret"], "hache solaire : double apres un eclat") and ok
+	var sp := Nid.new()
+	sp.placer(Vector2i(0, 0), "sceptre_premier")
+	var q := Combat.new(sp.eclore(), vide)
+	for i in 4:
+		q._lancer(q.cotes[0], q.cotes[1], q.cotes[0]["sorts"][0])
+	return _verifier(q.evenements.filter(func(ev): return ev["type"] == "eclat").size() == 1, "sceptre du premier matin : eclat au 4e tir") and ok

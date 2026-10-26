@@ -59,3 +59,13 @@ static func nid_glace() -> Nid:
 	n.placer(Vector2i(1, 1), "galet")
 	n.placer(Vector2i(2, 1), "fourrure")
 	return n
+
+# Huile entre deux Meches (soins renforces).
+static func nid_aube() -> Nid:
+	var n := Nid.new()
+	n.placer(Vector2i(0, 0), "meche")
+	n.placer(Vector2i(1, 0), "huile")
+	n.placer(Vector2i(2, 0), "meche")
+	n.placer(Vector2i(0, 1), "miroir")
+	n.placer(Vector2i(1, 1), "bande")
+	return n

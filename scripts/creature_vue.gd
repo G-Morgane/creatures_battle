@@ -62,6 +62,8 @@ func _draw() -> void:
 			_sprite("nature")
 		"glace":
 			_sprite("glace")
+		"aube":
+			_sprite("aube")
 		_:
 			_informe(c)
 	_cavalier(c)
@@ -182,6 +184,8 @@ func _cavalier(c: Dictionary) -> void:
 			dos = Vector2(-10, -78)
 		"nature", "glace":
 			dos = Vector2(-22, -38)
+		"aube":
+			dos = Vector2(-30, -40)
 		"feu":
 			dos = Vector2(20, -20)
 	var vent := sin(t * 3.0) * 6.0

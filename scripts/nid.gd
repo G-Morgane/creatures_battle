@@ -182,6 +182,16 @@ func eclore() -> Dictionary:
 		"vol_par_malediction": 0.0,
 		"grimoire": 0.0,
 		"pacte": 0.0,
+		"eclat": f == "aube",
+		"regen": Data.REGEN_LION if f == "aube" else 0.0,
+		"miroir": 0.0,
+		"bande": 0.0,
+		"encensoir": 0.0,
+		"vasque": 0.0,
+		"prisme": 0.0,
+		"voile_aube": 0.0,
+		"carillon": 0.0,
+		"lanterne": 0.0,
 		"arme": arme(),
 		"sorts": [],
 	}
@@ -202,6 +212,8 @@ func eclore() -> Dictionary:
 				cr["poison_attaque"] += r.get("poison_attaque", 0.0) * m * _renfort(c, "poison")
 				cr["epines_poison"] += r.get("epines_poison", 0.0) * m * _renfort(c, "poison")
 				cr["gousse"] += r.get("gousse", 0.0) * m
+				# Huile de premiere lumiere renforce aussi la regeneration voisine
+				cr["bande"] += r.get("bande", 0.0) * m * _renfort(c, "soin")
 				# Croc du blizzard renforce le givre pose par ses voisines
 				cr["givre_attaque"] += r.get("givre_attaque", 0.0) * m * _renfort(c, "givre")
 				cr["bris_givre"] += r.get("bris_givre", 0.0) * m * _renfort(c, "givre")
@@ -211,7 +223,8 @@ func eclore() -> Dictionary:
 				cr["brulure_attaque"] += r.get("brulure_attaque", 0.0) * m * _renfort(c, "brulure")
 				for drapeau in ["resine", "fournaise", "oeuf"]:
 					cr[drapeau] = cr[drapeau] or r.get(drapeau, false)
-				for champ in ["crit", "sablier", "renvoi", "vol_par_malediction", "grimoire", "pacte"]:
+				for champ in ["crit", "sablier", "renvoi", "vol_par_malediction", "grimoire", "pacte",
+						"miroir", "encensoir", "vasque", "prisme", "voile_aube", "carillon", "lanterne"]:
 					cr[champ] += r.get(champ, 0.0) * m
 				if r.has("faiblesse_tous"):
 					cr["faiblesse_tous"] = r["faiblesse_tous"] if cr["faiblesse_tous"] == 0 else mini(cr["faiblesse_tous"], r["faiblesse_tous"])
@@ -272,6 +285,10 @@ func _sort(c: Vector2i, r: Dictionary, aff: Dictionary) -> Dictionary:
 		"malediction": r.get("malediction", ""),
 		"par_malediction": r.get("par_malediction", 0.0),
 		"consume_maledictions": r.get("consume_maledictions", false),
+		"soin": _puissance(r, "soin", aff) * m * _renfort(c, "soin"),
+		"charge_eclat": r.get("charge_eclat", 0.0) * m,
+		"apres_eclat": r.get("apres_eclat", false),
+		"eclat_tous": r.get("eclat_tous", 0),
 		"par_epine": r.get("par_epine", 0.0) * m,
 		"degats": _puissance(r, "degats", aff) * m,
 		"bouclier": _puissance(r, "bouclier", aff) * m,
@@ -302,7 +319,7 @@ func _puissance(r: Dictionary, champ: String, aff: Dictionary) -> float:
 		return 0.0
 	var echelle: String = r.get("echelle", "")
 	if echelle == "":
-		for k in ["degats", "bouclier", "poison"]:
+		for k in ["degats", "bouclier", "poison", "soin"]:
 			if r.has(k):
 				echelle = k
 				break

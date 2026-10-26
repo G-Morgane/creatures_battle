@@ -70,12 +70,29 @@ const ZONES := {
 	"faux_nuit":     ["chauvesouris_armes", 35, 940, 965, 530],
 	"serpe_ronces":  ["chapelet_serpe", 100, 30, 640, 860],
 	"chapelet":      ["chapelet_serpe", 820, 40, 600, 850],
+	"meche":         ["lion_objets", 35, 105, 220, 200],
+	"huile":         ["lion_objets", 265, 95, 220, 205],
+	"miroir":        ["lion_objets", 535, 75, 200, 225],
+	"bande":         ["lion_objets", 760, 125, 245, 180],
+	"encensoir":     ["lion_objets", 70, 395, 270, 272],
+	"vasque":        ["lion_objets", 360, 455, 310, 212],
+	"prisme":        ["lion_objets", 690, 400, 320, 277],
+	"voile_aube":    ["lion_objets", 75, 745, 460, 292],
+	"carillon":      ["lion_objets", 570, 740, 310, 247],
+	"lanterne":      ["lion_objets", 290, 1070, 450, 372],
+	"sceptre_aurore":["lion_arme", 130, 55, 390, 297],
+	"hachette_matin":["lion_arme", 590, 90, 380, 257],
+	"baton_rosee":   ["lion_arme", 70, 440, 470, 460],
+	"hache_solaire": ["lion_arme", 480, 460, 520, 440],
+	"sceptre_premier":["lion_arme", 55, 985, 930, 445],
 }
 
 # Objets de glace blancs et bleu pale, proches du fond creme : tolerance resserree,
 # et pas de retrait du fond enferme (il confond le blanc peint avec le papier).
 # [seuil dur, seuil doux, retirer les trous, (seuil des trous, facultatif)]
-const TOLERANCE := {"objets_loup": [0.045, 0.09, false], "loup_armes": [0.045, 0.09, false]}
+const TOLERANCE := {"objets_loup": [0.045, 0.09, false], "loup_armes": [0.045, 0.09, false],
+	# Aube : ivoire, creme, peche, tout est proche du papier
+	"lion_objets": [0.03, 0.06, false], "lion_arme": [0.03, 0.06, false]}
 const TOLERANCE_DEFAUT := [0.10, 0.22, true]
 # Reglages propres a un objet (prioritaires sur ceux de sa planche).
 const TOLERANCE_OBJET := {
@@ -104,12 +121,24 @@ const MASQUES := {
 	"faux_cendres": [Rect2i(640, 998, 250, 30), Rect2i(478, 520, 30, 90)],
 	"baton_premier": [Rect2i(340, 1400, 370, 90), Rect2i(130, 1030, 290, 50), Rect2i(610, 1030, 290, 50)],
 	"pacte": [Rect2i(130, 1095, 240, 40)],
+	"voile_aube": [Rect2i(60, 735, 250, 40)],
+	"encensoir": [Rect2i(60, 370, 260, 35)],
+	"baton_rosee": [Rect2i(478, 815, 70, 95)],
+	"hache_solaire": [Rect2i(478, 440, 85, 115)],
+	"lanterne": [Rect2i(270, 1090, 80, 45)],
+	"sceptre_premier": [Rect2i(320, 1400, 390, 90)],
 	"faux_festin": [Rect2i(640, 862, 240, 40)],
 	"faux_nuit": [Rect2i(340, 1400, 360, 80)],
 }
 
 # image de la bete (fond transparent) -> element
-const MONTURES := {"cerf": "nature", "loup": "glace", "phenix": "feu", "chauvesouris": "nuit"}
+const MONTURES := {"cerf": "nature", "loup": "glace", "phenix": "feu", "chauvesouris": "nuit", "lion": "aube"}
+
+# Poussieres : ilots opaques isoles plus petits que cette aire (en pixels, avant reduction).
+const POUSSIERE_ICONE := 40
+const POUSSIERE_MONTURE := 150
+# Debris tenaces d'un voisin : nettoyage plus fort pour ces objets.
+const POUSSIERE_OBJET := {"hache_solaire": 1500}
 
 func _initialize() -> void:
 	DirAccess.make_dir_recursive_absolute("res://images/icones")
@@ -127,6 +156,7 @@ func _initialize() -> void:
 		for m in MASQUES.get(id, []):
 			img.fill_rect(Rect2i(m.position - zone.position, m.size), fond)
 		_detourer(img, fond, TOLERANCE_OBJET.get(id, TOLERANCE.get(z[0], TOLERANCE_DEFAUT)))
+		_poussiere(img, POUSSIERE_OBJET.get(id, POUSSIERE_ICONE))
 		img = img.get_region(img.get_used_rect())
 		_reduire(img, TAILLE_ICONE)
 		img.save_png("res://images/icones/%s.png" % id)
@@ -134,6 +164,8 @@ func _initialize() -> void:
 	var betes := []
 	for bete in MONTURES:
 		var m := Image.load_from_file("res://images/%s.png" % bete)
+		m.convert(Image.FORMAT_RGBA8)
+		_poussiere(m, POUSSIERE_MONTURE)
 		m = m.get_region(m.get_used_rect())
 		_reduire(m, TAILLE_MONTURE)
 		m.save_png("res://images/montures/%s.png" % MONTURES[bete])
@@ -205,6 +237,33 @@ func _trous(img: Image, fond: Color, vu: PackedByteArray, seuil: float) -> void:
 					var c := img.get_pixelv(p)
 					c.a = 0.0
 					img.set_pixelv(p, c)
+
+# Retire les ilots opaques isoles (poussieres, debris d'un voisin, bouts de texte)
+# plus petits que aire. Un pixel compte comme opaque au-dela de 5 % d'alpha.
+func _poussiere(img: Image, aire: int) -> void:
+	var w := img.get_width()
+	var h := img.get_height()
+	var vu := PackedByteArray()
+	vu.resize(w * h)
+	for y0 in h:
+		for x0 in w:
+			if vu[y0 * w + x0] or img.get_pixel(x0, y0).a <= 0.05:
+				continue
+			var ilot: Array[Vector2i] = []
+			var pile: Array[Vector2i] = [Vector2i(x0, y0)]
+			while not pile.is_empty():
+				var p: Vector2i = pile.pop_back()
+				if p.x < 0 or p.y < 0 or p.x >= w or p.y >= h or vu[p.y * w + p.x]:
+					continue
+				if img.get_pixelv(p).a <= 0.05:
+					continue
+				vu[p.y * w + p.x] = 1
+				ilot.append(p)
+				for o in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+					pile.append(p + o)
+			if ilot.size() < aire:
+				for p in ilot:
+					img.set_pixelv(p, Color(0, 0, 0, 0))
 
 func _proche(c: Color, fond: Color, seuil: float) -> bool:
 	return Vector3(c.r - fond.r, c.g - fond.g, c.b - fond.b).length() < seuil

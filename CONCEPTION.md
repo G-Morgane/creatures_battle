@@ -79,8 +79,8 @@ Sans élimination, le joueur simple gagne 49 à 54 % de ses combats à chaque ma
 difficulté est plate. Le fantôme n'est jamais meilleur que le joueur automatique simple,
 d'où un joueur aléatoire encore trop à l'aise.
 
-Par élément (joueur simple, avec la nouvelle Nuit) : Terre 3,5, Feu 3,3, Glace 3,3, Vent 3,2,
-Nature 2,4, **Nuit 2,2**. Joueur simple : 2,9 victoires en moyenne, 17 % de parties gagnées.
+Par élément (joueur simple, avec l'Aube) : **Terre 4,1**, Feu 3,2, Vent 3,2, Nature 2,8, Glace 2,7,
+Aube 2,6, Nuit 2,6. Joueur simple : 3,0 victoires en moyenne, 20 % de parties gagnées.
 
 ### Fusion
 
@@ -431,6 +431,13 @@ La Coupelle d'étain (bonus de vol de vie) a été retirée au profit du Chapele
 
 ### Aube (Lion) : soin et Éclat
 
+**Fait** (images de `images/`). Chiffres : régénération du Lion 1,5 PV/s ; charge 0,75 par point
+de soin et 2 par point d'excédent (le Voile ajoute +100 % sur l'excédent) ; seuil 60 (Miroir -10,
+20 au moins) ; Éclat 40 dégâts (Prisme +15, Lanterne + l'excédent accumulé) ; Veille (Mèche) 8 de
+soin + 1 par point d'Aube toutes les 4 s ; Bande de lin +2 PV/s sous 50 % ; Encensoir +3 PV/s pendant
+4 s ; Vasque 50 % de l'excédent en bouclier ; Carillon 40 tous les 3 Éclats. L'outil de découpe
+retire maintenant aussi les « poussières » (petits îlots isolés) des icônes et des montures.
+
 **On stocke du soin pour frapper.** Un soigneur qui ne fait que se soigner ne gagne jamais : ici,
 chaque soin charge une jauge d'**Éclat**, qui part en coup de lumière sur l'adversaire.
 Familles d'armes : **Bâton et Hache** (chacune partagée avec un autre élément).
@@ -501,7 +508,7 @@ On adapte son Nid à ce qu'on affronte, pas à une couleur.
 
 ## 7. Prototype (périmètre actuel)
 
-- 6 éléments : Terre, Vent (4 objets chacun), Feu, Nature, Glace et Nuit (15 objets chacun),
+- 7 éléments : Terre, Vent (4 objets chacun), Feu, Nature, Glace, Nuit et Aube (15 objets chacun),
   1 arme neutre (Lance du guet).
 - Nid 4 x 4, reliques d'une case. **Les formes de reliques (2 x 1, L...) viendront après.**
 - Pas d'hybride, pas de réseau. Rareté en place.
@@ -515,8 +522,7 @@ donne envie de refaire un Nid ? Si non, rien d'autre ne compte.
 ## 8. Plus tard
 
 - Formes de reliques et rotation.
-- Équilibrage : Nuit et Nature un cran sous les autres.
-- Coder l'Aube (Lion) : il faudra le dessin du lion et les planches d'objets et d'armes.
+- Équilibrage : la Terre un cran au-dessus des autres.
 - Une image pour la Serpe de ronces (le Fouet a été remplacé).
 - Refaire Feu, Nuit, Terre, Vent au format 15 objets, avec une ou deux familles d'armes chacun.
 - Objets neutres qui visent une famille d'armes.

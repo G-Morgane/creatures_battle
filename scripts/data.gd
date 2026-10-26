@@ -18,6 +18,7 @@ const FORMES := {
 	"terre": {"nom": "Tortue",        "passif": "Fatigue de l'adversaire 10 s plus tôt, la sienne réduite de moitié"},
 	"vent":  {"nom": "Cheval",        "passif": "15 % d'esquive, chaque esquive lance un éclair"},
 	"glace": {"nom": "Loup",          "passif": "Ses attaques posent du givre, +50 % de dégâts contre une cible gelée"},
+	"aube":  {"nom": "Lion",          "passif": "Régénère, et ses soins chargent l'Éclat (un coup de lumière)"},
 	"nature":{"nom": "Cerf",          "passif": "Épines : blesse qui le frappe (2 dégâts par coup reçu)"},
 	"":      {"nom": "Informe",       "passif": "Aucun"},
 }
@@ -39,6 +40,18 @@ const FLETRISSURE := 0.30          # soins recus en moins
 const CRIT_MULT := 1.75
 const CRIT_LAME := 0.10
 const FESTIN_DEGATS := 15.0        # Faux de la Nuit profonde : par charge consumee
+# Lion : on stocke du soin pour frapper. Tous les soins chargent l'Eclat (aux trois quarts),
+# les soins excedentaires (au-dela des PV max) comptent double. La charge se fait
+# sur le soin prevu : un soin bloque (Belladone) ou reduit (Fletrissure) charge quand meme.
+const REGEN_LION := 1.5            # PV par seconde
+const ECLAT_SEUIL := 60.0
+const ECLAT_SEUIL_MIN := 20.0
+const ECLAT_DEGATS := 40.0
+const ECLAT_PAR_SOIN := 0.75
+const ECLAT_PAR_EXCES := 2.0
+const BANDE_SEUIL := 0.5           # Bande de lin : regeneration renforcee sous ce seuil
+const ENCENSOIR_DUREE := 4.0
+const CARILLON_TOUS := 3
 # Tortue : veut des combats longs, joue sur la fatigue (mort subite).
 const TORTUE_AVANCE_FATIGUE := 10.0
 const TORTUE_FATIGUE_MULT := 0.5
@@ -200,6 +213,27 @@ const RELIQUES := {
 		"rose": true},
 	"noyau_hiver":    {"nom": "Noyau de l'Hiver éternel","element": "glace", "affinite": 2, "type": "essence", "rarete": "legendaire",
 		"nova": 20.0},
+	# aube : soin et Eclat. Huile de premiere lumiere renforce les soins voisins.
+	"meche":          {"nom": "Mèche de veille","element": "aube",  "affinite": 1, "type": "sort",
+		"sort": "Veille", "recharge": 4.0, "soin": 8.0, "par_affinite": 1.0},
+	"huile":          {"nom": "Huile de première lumière", "element": "aube", "affinite": 1, "type": "catalyseur",
+		"effet": "soin", "valeur": 0.5},
+	"miroir":         {"nom": "Miroir de poche","element": "aube",  "affinite": 2, "type": "essence",
+		"miroir": 10.0},
+	"bande":          {"nom": "Bande de lin",   "element": "aube",  "affinite": 2, "type": "essence",
+		"bande": 2.0},
+	"encensoir":      {"nom": "Encensoir du matin","element": "aube", "affinite": 1, "type": "essence", "rarete": "rare",
+		"encensoir": 3.0},
+	"vasque":         {"nom": "Vasque de rosée","element": "aube",  "affinite": 1, "type": "essence", "rarete": "rare",
+		"vasque": 0.5},
+	"prisme":         {"nom": "Prisme d'aurore","element": "aube",  "affinite": 1, "type": "essence", "rarete": "rare",
+		"prisme": 15.0},
+	"voile_aube":     {"nom": "Voile de l'aube","element": "aube",  "affinite": 1, "type": "essence", "rarete": "epique",
+		"voile_aube": 1.0},
+	"carillon":       {"nom": "Carillon du réveil","element": "aube", "affinite": 1, "type": "essence", "rarete": "epique",
+		"carillon": 40.0},
+	"lanterne":       {"nom": "Lanterne du Premier Matin","element": "aube", "affinite": 2, "type": "essence", "rarete": "legendaire",
+		"lanterne": 1.0},
 	# armes : le cavalier en tient une seule et lance son propre sort.
 	# Les catalyseurs voisins s'appliquent aussi a ce sort.
 	# armes du Phenix : Baton et Faux
@@ -246,6 +280,17 @@ const RELIQUES := {
 		"sort": "Fracas", "recharge": 7.0, "degats": 10.0, "coups": 1, "fracas": true},
 	"lance_hiver":    {"nom": "Lance du Grand Hiver","element": "glace", "affinite": 2, "type": "arme", "famille": "hast", "rarete": "legendaire",
 		"sort": "Brise-gel", "recharge": 5.0, "degats": 12.0, "coups": 1, "brise_gel": true},
+	# armes du Lion : Baton et Hache
+	"sceptre_aurore": {"nom": "Sceptre de l'aurore","element": "aube", "affinite": 1, "type": "arme", "famille": "baton",
+		"sort": "Rayon", "recharge": 3.0, "degats": 5.0, "par_affinite": 0.8, "coups": 1},
+	"hachette_matin": {"nom": "Hachette du matin","element": "aube", "affinite": 1, "type": "arme", "famille": "hache",
+		"sort": "Coup du matin", "recharge": 5.0, "degats": 14.0, "coups": 1, "charge_eclat": 15.0},
+	"baton_rosee":    {"nom": "Bâton de rosée", "element": "aube",  "affinite": 1, "type": "arme", "famille": "baton", "rarete": "rare",
+		"sort": "Rosée", "recharge": 3.0, "degats": 4.0, "coups": 1, "soin": 6.0, "par_affinite": 0.5, "echelle": "soin"},
+	"hache_solaire":  {"nom": "Hache solaire",  "element": "aube",  "affinite": 1, "type": "arme", "famille": "hache", "rarete": "epique",
+		"sort": "Hache solaire", "recharge": 5.0, "degats": 12.0, "coups": 1, "apres_eclat": true},
+	"sceptre_premier":{"nom": "Sceptre du Premier Matin","element": "aube", "affinite": 2, "type": "arme", "famille": "baton", "rarete": "legendaire",
+		"sort": "Premier matin", "recharge": 3.0, "degats": 6.0, "coups": 1, "eclat_tous": 4},
 	"arc_jardin":     {"nom": "Arc du Jardin interdit","element": "nature", "affinite": 2, "type": "arme", "famille": "tir", "rarete": "legendaire",
 		"sort": "Flèche-graine", "recharge": 6.0, "degats": 12.0, "coups": 1, "graine": true},
 }

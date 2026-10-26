@@ -143,6 +143,14 @@ func _jouer(e: Dictionary) -> void:
 					"a": moi.position + moi.size / 2 + Vector2(0, 20) + Vector2(cos(a), sin(a)) * 120, "t0": lecture,
 					"duree": VOL_PROJECTILE, "couleur": f["vif"], "coeur": f["clair"], "taille": 9.0 if e["totale"] else 6.0})
 			_texte(moi, 2, ("Combustion totale !" if e["totale"] else "Combustion") + " %d" % roundi(e["valeur"]), f["clair"])
+		"eclat":
+			# rayon de lumiere : beaucoup de petites lueurs en ligne, de l'autre monture vers moi
+			var a: Dictionary = Palette.ELEMENTS["aube"]
+			var de: Vector2 = cible.position + cible.source(false)
+			for k in 8:
+				effets.append({"type": "projectile", "de": de, "a": moi.position + moi.size / 2 + Vector2(0, 20),
+					"t0": lecture + k * 0.03, "duree": VOL_PROJECTILE * 0.7, "couleur": a["vif"], "coeur": a["clair"], "taille": 11.0})
+			_texte(moi, 2, "Éclat %d" % roundi(e["valeur"]), a["clair"])
 		"malediction":
 			var nv: Dictionary = Palette.ELEMENTS["nuit"]
 			_texte(moi, 2, Data.NOMS_MALEDICTION[e["nom"]] + (" x%d" % e["n"] if e["n"] > 1 else ""), nv["clair"])
@@ -252,6 +260,9 @@ func _dessiner() -> void:
 			etats.append(["Gelé", Palette.ELEMENTS["glace"]["clair"]])
 		elif img[8 + i] > 0.0:
 			etats.append(["Givre %d" % roundi(img[8 + i]), Palette.ELEMENTS["glace"]["vif"]])
+		if cr["eclat"]:
+			var seuil := maxf(Data.ECLAT_SEUIL - cr["miroir"], Data.ECLAT_SEUIL_MIN)
+			etats.append(["Éclat %d/%d" % [roundi(img[16 + i]), roundi(seuil)], Palette.ELEMENTS["aube"]["vif"]])
 		if img[14 + i] != "":
 			calque.draw_string(police, Vector2(x, y + 54), img[14 + i],
 				HORIZONTAL_ALIGNMENT_CENTER, 300, 14, Palette.ELEMENTS["nuit"]["clair"])

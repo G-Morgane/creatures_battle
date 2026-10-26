@@ -10,7 +10,8 @@ var journal: Array[String] = []
 # Pour rejouer le combat a l'ecran : un evenement par action, et les PV
 # des deux cotes a chaque pas
 # ([pv0, pv1, brule0, brule1, bouclier0, bouclier1, poison0, poison1,
-#   givre0, givre1, gele0, gele1, braise0, braise1, maledictions0, maledictions1]) ;
+#   givre0, givre1, gele0, gele1, braise0, braise1, maledictions0, maledictions1,
+#   eclat0, eclat1]) ;
 # brule = nombre de charges de brulure, maledictions = texte ("Faiblesse x2, Langueur").
 var evenements: Array = []
 var images: Array = []
@@ -49,6 +50,11 @@ func _etat(cr: Dictionary, i: int) -> Dictionary:
 		"horloge_attaque": 0.0,    # comme horloge, mais la Langueur ne ralentit que les attaques
 		"attaques": 0,             # Aiguille noire
 		"vole": 0.0,               # Grimoire : vie volee depuis la derniere malediction
+		"eclat_jauge": 0.0,
+		"exces_accumule": 0.0,     # Lanterne : soins excedentaires depuis le dernier Eclat
+		"eclats": 0,               # Carillon
+		"encensoir_jusqu": 0.0,
+		"eclat_pret": false,       # Hache solaire
 		"bouclier": cr["bouclier"],
 		"poison": 0.0,             # doses
 		"epines_bonus": 1.0,       # Coeur de roncier, Graine
@@ -78,7 +84,8 @@ func simuler() -> int:
 		images.append([cotes[0]["pv"], cotes[1]["pv"], _brulure(cotes[0]), _brulure(cotes[1]),
 			cotes[0]["bouclier"], cotes[1]["bouclier"], cotes[0]["poison"], cotes[1]["poison"],
 			cotes[0]["givre"], cotes[1]["givre"], _gele(cotes[0]), _gele(cotes[1]), _braise(cotes[0]), _braise(cotes[1]),
-			_resume_maledictions(cotes[0]), _resume_maledictions(cotes[1])])
+			_resume_maledictions(cotes[0]), _resume_maledictions(cotes[1]),
+			cotes[0]["eclat_jauge"], cotes[1]["eclat_jauge"]])
 		if morts[0] or morts[1]:
 			var v := 1 if morts[0] else 0
 			# Chute simultanee : celui qui finit le moins en negatif tient debout.
@@ -168,6 +175,8 @@ func _lancer(moi: Dictionary, cible: Dictionary, s: Dictionary, renfort := 1.0) 
 		_briser(moi, cible)
 	for k in s["coups"]:
 		var degats: float = s["degats"] * renfort
+		if s["apres_eclat"] and moi["eclat_pret"]:
+			degats *= 2.0
 		if s["achever_seuil"] > 0.0 and cible["pv"] < cible["cr"]["pv_max"] * s["achever_seuil"]:
 			degats *= s["achever_mult"]
 		if s["execution"] and cible["pv"] < cible["cr"]["pv_max"] * Data.SEUIL_EXECUTION:
@@ -195,6 +204,16 @@ func _lancer(moi: Dictionary, cible: Dictionary, s: Dictionary, renfort := 1.0) 
 			_bruler(moi, cible, s["brulure"])
 		if s["malediction"] != "":
 			_maudire(moi, cible, s["malediction"])
+		if s["soin"] > 0.0:
+			_soigner(moi, cible, s["soin"])
+		if s["charge_eclat"] > 0.0 and moi["cr"]["eclat"]:
+			_charger_eclat(moi, cible, s["charge_eclat"])
+	if s["apres_eclat"]:
+		moi["eclat_pret"] = false
+	if s["eclat_tous"] > 0:
+		s["tirs"] = s.get("tirs", 0) + 1
+		if s["tirs"] % s["eclat_tous"] == 0:
+			_eclat(moi, cible)
 	if s["combustion"] > 0.0:
 		_combustion(moi, cible, s["combustion"], false, s["braise"])
 	if s["combustion_affaiblie"] and cible["pv"] < cible["cr"]["pv_max"] * 0.5:
@@ -264,6 +283,29 @@ func _frapper(moi: Dictionary, cible: Dictionary, degats: float, vol: float, per
 	_riposter(cible, moi)
 	return true
 
+# --- Eclat (Lion) ---------------------------------------------------------------
+
+func _charger_eclat(moi: Dictionary, adverse: Dictionary, n: float) -> void:
+	moi["eclat_jauge"] += n
+	var seuil := maxf(Data.ECLAT_SEUIL - moi["cr"]["miroir"], Data.ECLAT_SEUIL_MIN)
+	while moi["eclat_jauge"] >= seuil:
+		moi["eclat_jauge"] -= seuil
+		_eclat(moi, adverse)
+
+# Un coup de lumiere. Prisme : plus fort ; Lanterne : ajoute l'excedent accumule ;
+# Encensoir : regeneration renforcee un moment ; Carillon : un gros soin tous les 3.
+func _eclat(moi: Dictionary, adverse: Dictionary) -> void:
+	var degats: float = Data.ECLAT_DEGATS + moi["cr"]["prisme"] + moi["cr"]["lanterne"] * moi["exces_accumule"]
+	moi["exces_accumule"] = 0.0
+	_evenement(adverse, {"type": "eclat", "valeur": degats})
+	_blesser(adverse, degats, moi)
+	moi["eclats"] += 1
+	moi["eclat_pret"] = true
+	if moi["cr"]["encensoir"] > 0.0:
+		moi["encensoir_jusqu"] = t + Data.ENCENSOIR_DUREE
+	if moi["cr"]["carillon"] > 0.0 and moi["eclats"] % Data.CARILLON_TOUS == 0:
+		_soigner(moi, adverse, moi["cr"]["carillon"])
+
 # --- maledictions -------------------------------------------------------------
 
 func _charges(moi: Dictionary, nom: String) -> int:
@@ -294,11 +336,23 @@ func _resume_maledictions(moi: Dictionary) -> String:
 
 # Belladone : un combattant empoisonne ne peut plus se soigner.
 # Fletrissure : soins reduits. Grimoire : la vie volee finit par maudire.
+# Lion : le soin prevu (meme bloque ou reduit) charge l'Eclat ; l'excedent compte double.
+# Vasque de rosee : l'excedent reel devient du bouclier.
 func _soigner(moi: Dictionary, adverse: Dictionary, soin: float) -> void:
-	if soin <= 0.0 or (moi["poison"] > 0.0 and adverse["cr"]["belladone"]):
+	if soin <= 0.0:
+		return
+	if moi["cr"]["eclat"]:
+		var exces := maxf(0.0, soin - maxf(0.0, moi["cr"]["pv_max"] - moi["pv"]))
+		moi["exces_accumule"] += exces
+		_charger_eclat(moi, adverse, (soin - exces) * Data.ECLAT_PAR_SOIN
+			+ exces * Data.ECLAT_PAR_EXCES * (1.0 + moi["cr"]["voile_aube"]))
+	if moi["poison"] > 0.0 and adverse["cr"]["belladone"]:
 		return
 	soin *= maxf(0.0, 1.0 - Data.FLETRISSURE * _charges(moi, "fletrissure"))
-	moi["pv"] = min(moi["pv"] + soin, moi["cr"]["pv_max"])
+	var applique := minf(soin, maxf(0.0, moi["cr"]["pv_max"] - moi["pv"]))
+	moi["pv"] += applique
+	if moi["cr"]["vasque"] > 0.0 and soin > applique:
+		moi["bouclier"] += (soin - applique) * moi["cr"]["vasque"]
 	if moi["cr"]["grimoire"] > 0.0:
 		moi["vole"] += soin
 		if moi["vole"] >= moi["cr"]["grimoire"]:
@@ -388,6 +442,14 @@ func _geler(moi: Dictionary, cible: Dictionary) -> void:
 
 # Brulure, poison et fatigue passent a travers le bouclier.
 func _subir(moi: Dictionary, adverse: Dictionary) -> void:
+	# regeneration : Lion, Bande de lin sous la moitie de sa vie, Encensoir apres un Eclat
+	var regen: float = moi["cr"]["regen"]
+	if moi["pv"] < moi["cr"]["pv_max"] * Data.BANDE_SEUIL:
+		regen += moi["cr"]["bande"]
+	if t < moi["encensoir_jusqu"]:
+		regen += moi["cr"]["encensoir"]
+	if regen > 0.0 and moi["pv"] > 0.0:
+		_soigner(moi, adverse, regen * Data.PAS)
 	if not moi["brulures"].is_empty():
 		moi["pv"] -= _brulure(moi) * Data.BRULURE_DPS_CHARGE * Data.PAS
 		moi["brulures"] = moi["brulures"].filter(func(b): return b["fin"] > t)

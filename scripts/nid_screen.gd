@@ -170,7 +170,7 @@ func _decrire(cr: Dictionary) -> String:
 	var aff := nid.affinites()
 	var lignes := [
 		"[b]%s[/b]   [color=#%s]%s[/color]" % [cr["nom"], Palette.TEXTE_DOUX.to_html(false), Data.FORMES[cr["forme"]]["passif"]],
-		"Feu %d   Nuit %d   Terre %d   Vent %d   Nature %d   Glace %d" % [aff.get("feu", 0), aff.get("nuit", 0), aff.get("terre", 0), aff.get("vent", 0), aff.get("nature", 0), aff.get("glace", 0)],
+		"Feu %d   Nuit %d   Terre %d   Vent %d   Nature %d   Glace %d   Aube %d" % [aff.get("feu", 0), aff.get("nuit", 0), aff.get("terre", 0), aff.get("vent", 0), aff.get("nature", 0), aff.get("glace", 0), aff.get("aube", 0)],
 		"PV %d   Attaque %.0f   Une attaque toutes les %.2f s   Vol de vie %d %%" % [
 			cr["pv_max"], cr["attaque"], cr["intervalle"], roundi(cr["vol_de_vie"] * 100)],
 	]
@@ -204,6 +204,16 @@ func _decrire(cr: Dictionary) -> String:
 		effets.append("%d renaissances" % cr["renaissances"])
 	if cr["givre_attaque"] > 0.0:
 		effets.append("%.1f givre par attaque" % cr["givre_attaque"])
+	if cr["eclat"]:
+		effets.append("Éclat de %d tous les %d de soin chargé" % [Data.ECLAT_DEGATS + cr["prisme"], maxf(Data.ECLAT_SEUIL - cr["miroir"], Data.ECLAT_SEUIL_MIN)])
+	if cr["regen"] + cr["bande"] > 0.0:
+		effets.append("régénère %.1f PV/s (%.1f sous la moitié de sa vie)" % [cr["regen"], cr["regen"] + cr["bande"]])
+	if cr["vasque"] > 0.0:
+		effets.append("l'excédent de soin devient bouclier")
+	if cr["lanterne"] > 0.0:
+		effets.append("l'Éclat ajoute l'excédent de soin accumulé")
+	if cr["carillon"] > 0.0:
+		effets.append("gros soin tous les %d Éclats" % Data.CARILLON_TOUS)
 	if cr["crit"] > 0.0:
 		effets.append("%d %% de crit" % roundi(cr["crit"] * 100))
 	if cr["faiblesse_tous"] > 0:
@@ -293,6 +303,14 @@ func _decrire(cr: Dictionary) -> String:
 			d += ", +%d %% par malédiction" % roundi(s["par_malediction"] * 100)
 		if s["consume_maledictions"]:
 			d += ", consume les malédictions"
+		if s["soin"] > 0.0:
+			d += " soigne %.1f" % s["soin"]
+		if s["charge_eclat"] > 0.0:
+			d += ", charge l'Éclat de %d" % s["charge_eclat"]
+		if s["apres_eclat"]:
+			d += ", double après un Éclat"
+		if s["eclat_tous"] > 0:
+			d += ", un Éclat tous les %d tirs" % s["eclat_tous"]
 		if s["vol_de_vie"] > 0.0 and not s["esquive"]:
 			d += ", vole %d %%" % roundi(s["vol_de_vie"] * 100)
 		lignes.append(d)

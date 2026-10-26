@@ -36,6 +36,7 @@ const ELEMENTS := {
 	"terre": {"fond": Color("#3a3220"), "vif": Color("#b08a4a"), "clair": Color("#e3cf9a")},
 	"vent":  {"fond": Color("#1c3338"), "vif": Color("#6fd3d6"), "clair": Color("#d4f6f4")},
 	"glace": {"fond": Color("#1b2a3a"), "vif": Color("#6aa8de"), "clair": Color("#e4f1fb")},
+	"aube":  {"fond": Color("#3a2b22"), "vif": Color("#f2b26b"), "clair": Color("#fff1d6")},
 	"nature":{"fond": Color("#1d3027"), "vif": Color("#3f9e7a"), "clair": Color("#e8d5b0")},
 	"":      {"fond": Color("#2a2d33"), "vif": Color("#8a8f99"), "clair": Color("#c9ccd2")},
 }
