@@ -170,15 +170,33 @@ func _decrire(cr: Dictionary) -> String:
 	var aff := nid.affinites()
 	var lignes := [
 		"[b]%s[/b]   [color=#%s]%s[/color]" % [cr["nom"], Palette.TEXTE_DOUX.to_html(false), Data.FORMES[cr["forme"]]["passif"]],
-		"Feu %d   Nuit %d   Terre %d   Vent %d" % [aff.get("feu", 0), aff.get("nuit", 0), aff.get("terre", 0), aff.get("vent", 0)],
+		"Feu %d   Nuit %d   Terre %d   Vent %d   Nature %d" % [aff.get("feu", 0), aff.get("nuit", 0), aff.get("terre", 0), aff.get("vent", 0), aff.get("nature", 0)],
 		"PV %d   Attaque %.0f   Une attaque toutes les %.2f s   Vol de vie %d %%" % [
 			cr["pv_max"], cr["attaque"], cr["intervalle"], roundi(cr["vol_de_vie"] * 100)],
 	]
 	if cr["bouclier"] > 0.0 or cr["esquive"] > 0.0:
 		lignes.append("Bouclier de départ %d   Esquive %d %%" % [cr["bouclier"], roundi(cr["esquive"] * 100)])
+	if cr["epines"] > 0.0 or cr["poison_attaque"] > 0.0:
+		var l := "Épines %.1f   Poison par attaque %.1f" % [cr["epines"], cr["poison_attaque"]]
+		if cr["epines_poison"] > 0.0:
+			l += "   Épines empoisonnées %.1f" % cr["epines_poison"]
+		lignes.append(l)
+	var effets := []
+	if cr["gousse"] > 0.0:
+		effets.append("salve d'épines tous les %d coups reçus" % Data.GOUSSE_COUPS)
+	if cr["belladone"]:
+		effets.append("empoisonné, l'adversaire ne peut plus se soigner")
+	if cr["coeur"]:
+		effets.append("les épines se renforcent à chaque riposte")
+	if cr["graine"]:
+		effets.append("épines et poison se nourrissent l'un l'autre")
+	if not effets.is_empty():
+		lignes.append(", ".join(effets))
 	for s in cr["sorts"]:
 		var d := "[b]%s%s[/b] (toutes les %.1f s)" % ["Cavalier, " if s["cavalier"] else "", s["nom"], s["recharge"]]
-		if s["esquive"]:
+		if s["contre"] > 0:
+			d = "[b]Cavalier, %s[/b] (après %d coups reçus) : %.1f dégâts" % [s["nom"], s["contre"], s["degats"]]
+		elif s["esquive"]:
 			d += " : esquive la prochaine attaque"
 		elif s["coups"] > 0:
 			d += " : %d x %.1f dégâts" % [s["coups"], s["degats"]]
@@ -186,6 +204,14 @@ func _decrire(cr: Dictionary) -> String:
 			d += " :"
 		if s["bouclier"] > 0.0:
 			d += " +%d bouclier" % roundi(s["bouclier"])
+		if s["poison"] > 0.0:
+			d += " +%.1f poison" % s["poison"]
+		if s["par_poison"] > 0.0:
+			d += ", +%.1f par dose de poison" % s["par_poison"]
+		if s["degats_epines"]:
+			d += ", plus les épines"
+		if s["graine"]:
+			d += ", plante une graine"
 		if s["perce"]:
 			d += ", ignore l'esquive"
 		if s["execution"]:
@@ -209,17 +235,46 @@ static func dessiner_relique(ci: CanvasItem, rect: Rect2, id: String, niv := 1) 
 	var r: Dictionary = Data.RELIQUES[id]
 	var couleurs: Dictionary = Palette.ELEMENTS[r["element"]]
 	var police := ThemeDB.fallback_font
-	ci.draw_rect(rect.grow(-3), couleurs["fond"])
-	ci.draw_rect(rect.grow(-3), couleurs["vif"], false, 2.0)
-	var milieu := rect.position.y + rect.size.y / 2
-	ci.draw_string(police, Vector2(rect.position.x, milieu), r["nom"],
-		HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 13, Palette.TEXTE)
-	ci.draw_string(police, Vector2(rect.position.x, milieu + 18), r["type"],
-		HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 12, couleurs["clair"])
+	var cadre := rect.grow(-3)
+	ci.draw_rect(cadre, couleurs["fond"])
+	ci.draw_rect(cadre, couleurs["vif"], false, 2.0)
+	# rarete : bande de couleur en bas de la tuile (rien pour un commun)
+	var rarete := Data.rarete(id)
+	if rarete != "commun":
+		ci.draw_rect(Rect2(cadre.position.x, cadre.end.y - 5, cadre.size.x, 5), Palette.RARETES[rarete])
+	var tex := Palette.icone(id)
+	if tex == null:
+		var milieu := rect.position.y + rect.size.y / 2
+		ci.draw_string(police, Vector2(rect.position.x, milieu), r["nom"],
+			HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 13, Palette.TEXTE)
+		ci.draw_string(police, Vector2(rect.position.x, milieu + 18), r["type"],
+			HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 12, couleurs["clair"])
+	elif rect.size.x > rect.size.y * 1.4:
+		# tuile large (boutique) : icone a gauche, nom a droite sur deux lignes
+		var cote := cadre.size.y - 10
+		_icone(ci, tex, Rect2(cadre.position + Vector2(5, 5), Vector2(cote, cote)))
+		var x := cadre.position.x + cote + 10
+		ci.draw_multiline_string(police, Vector2(x, cadre.position.y + 22), r["nom"],
+			HORIZONTAL_ALIGNMENT_LEFT, cadre.end.x - x - 4, 12, 2, Palette.TEXTE)
+	else:
+		# case du Nid : icone en haut, nom en bas
+		_icone(ci, tex, Rect2(cadre.position + Vector2(8, 6), Vector2(cadre.size.x - 16, cadre.size.y - 34)))
+		ci.draw_string(police, Vector2(rect.position.x, cadre.end.y - 11), r["nom"],
+			HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 11, Palette.TEXTE)
 	# niveau : une etoile par niveau au-dessus du premier, en haut de la tuile
 	if niv > 1:
 		ci.draw_string(police, Vector2(rect.position.x, rect.position.y + 20), "★".repeat(niv - 1),
 			HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 16, Color("#f2c94c"))
+
+# Icone centree dans la zone, proportions gardees.
+static func _icone(ci: CanvasItem, tex: Texture2D, zone: Rect2) -> void:
+	var k := minf(zone.size.x / tex.get_width(), zone.size.y / tex.get_height())
+	var taille := tex.get_size() * k
+	ci.draw_texture_rect(tex, Rect2(zone.position + (zone.size - taille) / 2, taille), false)
+
+static func info(id: String) -> String:
+	var r: Dictionary = Data.RELIQUES[id]
+	return "%s\n%s, %s" % [r["nom"], Data.NOMS_RARETE[Data.rarete(id)], r["type"]]
 
 static func apercu(id: String) -> Control:
 	var a := Apercu.new()
@@ -240,6 +295,9 @@ class Offre extends Control:
 		ecran = e
 		index = i
 		custom_minimum_size = NidScreen.TUILE + Vector2(0, 20)
+		tooltip_text = " "
+	func _get_tooltip(_p: Vector2) -> String:
+		return "" if _id() == "" else NidScreen.info(_id())
 	func _id() -> String:
 		return ecran.partie.offres[index]
 	func _draw() -> void:
@@ -283,10 +341,13 @@ class CaseNid extends Control:
 		ecran = e
 		position_nid = c
 		custom_minimum_size = NidScreen.CASE_TAILLE
+		tooltip_text = " "
 		mouse_entered.connect(func(): survol = true; queue_redraw())
 		mouse_exited.connect(func(): survol = false; queue_redraw())
 	func _id():
 		return ecran.nid.cases.get(position_nid)
+	func _get_tooltip(_p: Vector2) -> String:
+		return "" if _id() == null else NidScreen.info(_id())
 	func _draw() -> void:
 		var rect := Rect2(Vector2.ZERO, size)
 		draw_rect(rect, Palette.SURVOL if survol else Palette.CASE)

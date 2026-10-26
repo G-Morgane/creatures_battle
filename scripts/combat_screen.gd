@@ -128,6 +128,19 @@ func _jouer(e: Dictionary) -> void:
 			_texte(moi, 2, "Voile", Palette.ELEMENTS["nuit"]["clair"])
 		"bouclier":
 			_texte(moi, 2, "+%d bouclier" % roundi(e["valeur"]), Palette.ELEMENTS["terre"]["clair"])
+		"epines":
+			# petite epine qui repart vers l'attaquant, sans texte (trop frequent)
+			var n: Dictionary = Palette.ELEMENTS["nature"]
+			effets.append({"type": "projectile", "de": moi.position + moi.size / 2 + Vector2(0, 20),
+				"a": cible.position + cible.size / 2 + Vector2(0, 20), "t0": lecture,
+				"duree": VOL_PROJECTILE * 0.6, "couleur": n["vif"], "coeur": n["clair"], "taille": 5.0})
+		"salve":
+			var n: Dictionary = Palette.ELEMENTS["nature"]
+			for k in 5:
+				effets.append({"type": "projectile", "de": moi.position + moi.size / 2 + Vector2(0, 20),
+					"a": cible.position + cible.size / 2 + Vector2(0, 20 - 20 + k * 10), "t0": lecture + k * ECART_COUPS * 0.5,
+					"duree": VOL_PROJECTILE, "couleur": n["vif"], "coeur": n["clair"], "taille": 7.0})
+			_texte(moi, 2, "Salve d'épines", n["clair"])
 		"eclair":
 			var vent: Dictionary = Palette.ELEMENTS["vent"]
 			effets.append({"type": "projectile", "de": moi.position + moi.source(false),
@@ -151,7 +164,7 @@ func _elan(v: CreatureVue) -> void:
 func _texte(v: CreatureVue, ligne: int, texte: String, couleur: Color) -> void:
 	var pos := v.position + Vector2(v.size.x / 2, 30 + ligne * 26)
 	# deux textes au meme endroit en meme temps : le nouveau monte d'un cran
-	while effets.any(func(e): return e["type"] == "texte" and e["pos"].distance_to(pos) < 1.0 and lecture - e["t0"] < 0.4):
+	while effets.any(func(e): return e["type"] == "texte" and absf(e["pos"].x - pos.x) < 1.0 and absf(e["pos"].y - pos.y) < 22.0 and lecture - e["t0"] < 0.4):
 		pos.y -= 22
 	effets.append({"type": "texte", "pos": pos, "texte": texte, "couleur": couleur,
 		"t0": lecture, "duree": DUREE_TEXTE})
@@ -195,6 +208,9 @@ func _dessiner() -> void:
 			HORIZONTAL_ALIGNMENT_CENTER, 300, 13, Palette.TEXTE)
 		if img[2 + i]:
 			_brulure(v)
+		if img[6 + i] > 0.0:
+			calque.draw_string(police, Vector2(x, y + 34), "Poison %d" % roundi(img[6 + i]),
+				HORIZONTAL_ALIGNMENT_CENTER, 300, 15, Palette.POISON)
 	if lecture > Data.MORT_SUBITE and not fini:
 		calque.draw_string(police, Vector2(0, 50), "Mort subite", HORIZONTAL_ALIGNMENT_CENTER, size.x, 22, Color("#e5834f"))
 	for e in effets:

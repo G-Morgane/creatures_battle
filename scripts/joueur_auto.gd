@@ -1,7 +1,8 @@
 class_name JoueurAuto
 extends RefCounted
 
-# Joueurs automatiques pour simuler des parties entieres.
+# Joueurs automatiques : simulation de parties (tests/simulation.gd) et
+# adversaire fantome (Partie.adversaire).
 #  simple    : choisit un element, achete dedans, pose les catalyseurs a cote
 #              des sorts, relance quand rien ne lui sert. Un joueur moyen.
 #  aleatoire : achete n'importe quoi d'abordable, le pose n'importe ou. Le plancher.
@@ -43,7 +44,7 @@ func _simple(p: Partie) -> void:
 
 # L'element le plus present dans la premiere boutique.
 func _choisir_element(p: Partie) -> String:
-	var compte := {"feu": 0, "nuit": 0, "terre": 0, "vent": 0}
+	var compte := {"feu": 0, "nuit": 0, "terre": 0, "vent": 0, "nature": 0}
 	for id in p.offres:
 		if id != "" and Data.RELIQUES[id]["element"] in compte:
 			compte[Data.RELIQUES[id]["element"]] += 1

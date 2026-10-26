@@ -35,12 +35,24 @@ godot --headless --path . -s res://tests/simulation.gd
 Simule 300 parties entières par joueur automatique (aléatoire, simple) : victoires moyennes,
 répartition, taux de victoire par manche avec et sans élimination.
 
+## Images
+
+Les planches d'objets et les montures dessinées sont dans `images/`. Pour regénérer les icônes
+détourées (`images/icones/`) et la monture (`images/montures/`) après une modification :
+
+```bash
+godot --headless --path . -s res://outils/decouper_icones.gd
+```
+
+`images/controle.png` montre toutes les découpes sur fond sombre pour vérifier.
+
 ## Structure
 
 - `scripts/data.gd` : constantes, formes, reliques
 - `scripts/nid.gd` : grille, affinités, éclosion de la créature
 - `scripts/combat.gd` : simulation déterministe par pas fixe
-- `scripts/partie.gd` : manches, bourse, boutique, adversaire généré
+- `scripts/partie.gd` : manches, bourse, boutique, rareté, adversaire fantôme
+- `scripts/joueur_auto.gd` : joueur automatique (simulation, adversaire fantôme)
 - `scripts/nid_screen.gd` : écran du Nid (boutique, glisser-déposer)
 - `scripts/combat_screen.gd` : rejoue le combat simulé (barres de PV, sorts, brûlure)
 - `scripts/creature_vue.gd` : monture et cavalier dessinés, en direct

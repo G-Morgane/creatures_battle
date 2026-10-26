@@ -58,6 +58,8 @@ func _draw() -> void:
 			_tortue(c)
 		"vent":
 			_cheval(c)
+		"nature":
+			_sprite("nature")
 		_:
 			_informe(c)
 	_cavalier(c)
@@ -100,6 +102,17 @@ func _chauve_souris(c: Dictionary) -> void:
 		draw_circle(Vector2(cote * 11, -58), 5, c["clair"])
 	draw_colored_polygon(PackedVector2Array([Vector2(-8, -40), Vector2(-4, -30), Vector2(0, -40)]), Color.WHITE)
 	draw_colored_polygon(PackedVector2Array([Vector2(0, -40), Vector2(4, -30), Vector2(8, -40)]), Color.WHITE)
+
+# Monture dessinee par un artiste : centree sur le meme repere que les formes.
+const SPRITE_LARGEUR := 260.0
+
+func _sprite(nom: String) -> void:
+	var tex := Palette.image("res://images/montures/%s.png" % nom)
+	if tex == null:
+		_informe(Palette.ELEMENTS[forme])
+		return
+	var taille := Vector2(SPRITE_LARGEUR, SPRITE_LARGEUR * tex.get_height() / tex.get_width())
+	draw_texture_rect(tex, Rect2(Vector2(-taille.x / 2, 95 - taille.y), taille), false)
 
 func _tortue(c: Dictionary) -> void:
 	var pas := sin(t * 2.0) * 4.0
@@ -165,6 +178,8 @@ func _cavalier(c: Dictionary) -> void:
 			dos = Vector2(-38, -30)
 		"terre":
 			dos = Vector2(-10, -78)
+		"nature":
+			dos = Vector2(-22, -38)
 	var vent := sin(t * 3.0) * 6.0
 	draw_colored_polygon(PackedVector2Array([dos + Vector2(-6, -40), dos + Vector2(-50 + vent, 20), dos + Vector2(-20, 24), dos + Vector2(10, -30)]), c["vif"].darkened(0.1))
 	draw_colored_polygon(PackedVector2Array([dos + Vector2(-16, -36), dos + Vector2(16, -36), dos + Vector2(20, 14), dos + Vector2(-20, 14)]), c["vif"])
@@ -181,6 +196,14 @@ func _arme(dos: Vector2) -> void:
 	var c: Dictionary = Palette.ELEMENTS[Data.RELIQUES[arme]["element"]]
 	var bois := Color("#7a5236")
 	var main := dos + Vector2(18, -14)
+	# arme dessinee par un artiste : son icone, tenue en main
+	var tex := Palette.icone(arme)
+	if tex != null and not arme in ["baton_braise", "lance_guet", "faux_lunaire"]:
+		var cote := 90.0
+		var k := cote / maxf(tex.get_width(), tex.get_height())
+		var taille := tex.get_size() * k
+		draw_texture_rect(tex, Rect2(main - taille / 2 + Vector2(10, -20), taille), false)
+		return
 	match arme:
 		"baton_braise":
 			draw_line(main + Vector2(0, 40), main + Vector2(0, -80), bois, 5)

@@ -6,6 +6,15 @@ extends RefCounted
 
 const OR_PAR_MANCHE := 10
 const PRIX := {"essence": 3, "sort": 4, "catalyseur": 4, "arme": 5}
+const BONUS_RARETE := {"commun": 0, "rare": 2, "epique": 4, "legendaire": 7}
+# Chances de tirage par rarete (commun, rare, epique, legendaire) a partir
+# d'une manche donnee : on ne voit d'abord que des communs.
+const CHANCES_RARETE := [
+	[1, [100, 0, 0, 0]],
+	[2, [75, 25, 0, 0]],
+	[4, [55, 30, 15, 0]],
+	[6, [40, 30, 20, 10]],
+]
 const PRIX_RELANCE := 1
 const TAILLE_BOUTIQUE := 5
 const VICTOIRES_MAX := 7
@@ -26,7 +35,30 @@ func _init(g := 0) -> void:
 	tirer()
 
 static func prix(id: String) -> int:
-	return PRIX[Data.RELIQUES[id]["type"]]
+	return PRIX[Data.RELIQUES[id]["type"]] + BONUS_RARETE[Data.rarete(id)]
+
+static func chances(m: int) -> Array:
+	var c: Array = CHANCES_RARETE[0][1]
+	for palier in CHANCES_RARETE:
+		if m >= palier[0]:
+			c = palier[1]
+	return c
+
+# Tire une rarete selon la manche, puis une relique de cette rarete parmi ids.
+# Si aucune relique de cette rarete n'est dans ids, on descend d'un cran.
+static func tirer_id(r: RandomNumberGenerator, ids: Array, m: int) -> String:
+	var c := chances(m)
+	var x := r.randi() % 100
+	var k := 0
+	while k < c.size() - 1 and x >= c[k]:
+		x -= c[k]
+		k += 1
+	while k >= 0:
+		var lot := ids.filter(func(id): return Data.rarete(id) == Data.RARETES[k])
+		if not lot.is_empty():
+			return lot[r.randi() % lot.size()]
+		k -= 1
+	return ids[r.randi() % ids.size()]
 
 # La revente rend la moitie de ce que la relique a coute (3 copies par niveau),
 # jamais moins d'une piece.
@@ -37,7 +69,7 @@ func tirer() -> void:
 	var ids := Data.RELIQUES.keys()
 	offres.clear()
 	for i in TAILLE_BOUTIQUE:
-		offres.append(ids[rng.randi() % ids.size()])
+		offres.append(tirer_id(rng, ids, manche))
 
 func relancer() -> bool:
 	if bourse < PRIX_RELANCE:
@@ -80,53 +112,22 @@ func enregistrer(vainqueur: int) -> void:
 func terminee() -> bool:
 	return victoires >= VICTOIRES_MAX or defaites >= DEFAITES_MAX
 
-# Adversaire fantome en attendant le PvP : un Nid tire au hasard avec tout l'or
-# qu'un joueur aurait recu jusqu'ici, centre sur un element.
-# Le Nid plafonne a 16 cases : passe la manche 6, l'or ne compte plus, seule la
-# composition compte. L'adversaire joue donc de mieux en mieux (soin : 0 -> 1) :
-# arme d'abord, pas plus de COPIES_MAX d'une meme relique, catalyseurs a cote d'un sort.
-const SOIN_MANCHES := 6.0
-const COPIES_MAX := 3
 # Comme en PvP, on affronte des joueurs au meme palmares : chaque victoire
-# peut donner de l'or en plus a l'adversaire. A 0 depuis la fusion : avec elle,
-# tout bonus rendait la partie trop dure (voir tests/simulation.gd).
+# peut donner de l'or en plus a l'adversaire. A 0 : avec la fusion, tout bonus
+# rendait la partie trop dure (voir tests/simulation.gd).
 const OR_PAR_VICTOIRE := 0
 
+# Adversaire fantome en attendant le PvP : un joueur automatique qui a joue
+# toutes les manches jusqu'ici, avec ses propres boutiques. Memes regles que
+# le joueur : il ne choisit que parmi ses offres, fusionne, relance.
 func adversaire() -> Nid:
-	var r := RandomNumberGenerator.new()
-	r.seed = graine + manche * 7919
-	var soin := clampf((manche - 1) / SOIN_MANCHES, 0.0, 1.0)
-	var elements := ["feu", "nuit", "terre", "vent"]
-	var element: String = elements[r.randi() % elements.size()]
-	var budget := OR_PAR_MANCHE * manche + OR_PAR_VICTOIRE * victoires
-	var n := Nid.new()
-	var ids := Data.RELIQUES.keys().filter(func(id): return Data.RELIQUES[id]["element"] in [element, ""])
-	var grille := []
-	for y in Data.NID_H:
-		for x in Data.NID_L:
-			grille.append(Vector2i(x, y))
-	# Chaque pose remplit une case vide ou complete un trio : une fois le Nid
-	# plein, l'or part dans les fusions.
-	while true:
-		var possibles := ids.filter(func(id): return prix(id) <= budget and grille.any(func(c): return n.peut_ajouter(c, id)))
-		if possibles.is_empty():
-			break
-		var soigne := r.randf() < soin
-		if soigne:
-			var armes := possibles.filter(func(id): return Data.RELIQUES[id]["type"] == "arme")
-			var varies := possibles.filter(func(id): return n.cases.values().count(id) < COPIES_MAX)
-			if not armes.is_empty():
-				possibles = armes
-			elif not varies.is_empty():
-				possibles = varies
-		var id: String = possibles[r.randi() % possibles.size()]
-		var cases_ok := grille.filter(func(c): return n.peut_ajouter(c, id))
-		var c: Vector2i = cases_ok[r.randi() % cases_ok.size()]
-		if soigne and Data.RELIQUES[id]["type"] == "catalyseur":
-			for l in cases_ok:
-				if n.voisins(l).any(func(v): return Data.RELIQUES[n.cases[v]]["type"] in ["sort", "arme"]):
-					c = l
-					break
-		n.ajouter(c, id)
-		budget -= prix(id)
-	return n
+	var fantome := Partie.new(graine + manche * 7919)
+	fantome.bourse += OR_PAR_VICTOIRE * victoires
+	var j := JoueurAuto.new("simple", fantome.graine)
+	for m in manche:
+		j.jouer_manche(fantome)
+		if m < manche - 1:
+			fantome.manche += 1
+			fantome.bourse += OR_PAR_MANCHE
+			fantome.tirer()
+	return fantome.nid

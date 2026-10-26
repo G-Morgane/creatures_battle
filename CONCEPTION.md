@@ -39,22 +39,47 @@ Fin de partie : **7 victoires ou 3 défaites**. Une égalité ne compte pas.
 - **Revente à moitié prix** (au moins 1 or) : ramener la relique à la boutique, ou clic droit.
 - Tout le hasard passe par une graine : même graine, mêmes boutiques, mêmes adversaires.
 
-En attendant le PvP, l'adversaire est un **fantôme généré** autour d'un élément :
-- **Budget** : tout l'or qu'un joueur aurait reçu jusqu'à cette manche. Un bonus par victoire
-  du joueur existe (`OR_PAR_VICTOIRE`) mais est à 0 depuis la fusion.
-- **Soin croissant** : en manche 1 il pose au hasard, à partir de la manche 7 il joue
-  comme un joueur correct (arme d'abord, 3 copies maximum d'une relique, catalyseurs à côté d'un sort).
-- Il fusionne aussi : une fois son Nid plein, son or part dans les trios.
+- Prix : celui du type (essence 3, sort 4, catalyseur 4, arme 5) **+ la rareté**
+  (rare +2, épique +4, légendaire +7).
+
+### Rareté
+
+Commun, rare, épique, légendaire. Les chances de tirage en boutique dépendent de la manche :
+
+| À partir de la manche | Commun | Rare | Épique | Légendaire |
+|---|---|---|---|---|
+| 1 | 100 % | | | |
+| 2 | 75 % | 25 % | | |
+| 4 | 55 % | 30 % | 15 % | |
+| 6 | 40 % | 30 % | 20 % | 10 % |
+
+Les légendaires ne fusionnent pas. Une tuile non commune porte une bande de couleur
+(bleu rare, violet épique, or légendaire).
+
+### Adversaire fantôme
+
+En attendant le PvP, l'adversaire est un **joueur automatique qui a joué toutes les manches
+jusqu'ici**, avec ses propres boutiques (une graine par manche) : mêmes règles que le joueur,
+il ne choisit que parmi ses offres, relance, fusionne. C'est la préfiguration du PvP, où
+l'on affrontera le Nid d'un vrai joueur au même stade.
+
+Le premier générateur piochait directement dans tous les objets de son élément. Avec cinq
+éléments, c'était un avantage énorme sur le joueur, limité à ses 5 offres.
+
+Un bonus d'or par victoire du joueur existe (`OR_PAR_VICTOIRE`) mais est à 0.
 
 Réglage mesuré sur 300 parties par joueur automatique (`tests/simulation.gd`) :
 
 | Joueur | Victoires moyennes | Parties gagnées |
 |---|---|---|
-| Aléatoire | 1,8 | 5 % |
-| Simple (un élément, catalyseurs bien placés) | 3,1 | 16 % |
+| Aléatoire | 2,5 | 17 % |
+| Simple (un élément, catalyseurs bien placés) | 3,1 | 22 % |
 
-Répartition du joueur simple : 0 victoire 17 %, 1 : 15 %, 2 : 17 %, 3 : 9 %, 4 : 10 %,
-5 : 10 %, 6 : 6 %, 7 : 16 %.
+Sans élimination, le joueur simple gagne 49 à 54 % de ses combats à chaque manche : la
+difficulté est plate. Le fantôme n'est jamais meilleur que le joueur automatique simple,
+d'où un joueur aléatoire encore trop à l'aise.
+
+Par élément (joueur simple) : Nature 4,1, Terre 4,0, Vent 3,2, Feu 3,1, **Nuit 1,9 (à remonter)**.
 
 ### Fusion
 
@@ -170,10 +195,14 @@ Chaque élément aura **15 objets** :
 Le prototype n'a encore que 4 objets de monture par élément (Feu, Nuit, Terre, Vent) et
 3 armes partagées. Les lots ci-dessus seront refaits à ce format.
 
-**La rareté reste à concevoir** : chances de tirage en boutique qui évoluent avec les manches,
-prix par rareté. Les légendaires ne fusionnent pas (comme les armes).
+La rareté est décrite dans la section Boutique.
 
 ### Nature (Cerf) : épines et poison
+
+**Fait** (images de `images/`, découpées par `outils/decouper_icones.gd`). Chiffres de départ :
+épines du Cerf 2 par coup reçu, Épine de ronce +2, Baie 0,5 dose par attaque, Nuage de spores
+2 doses + 0,2 par point de Nature toutes les 6 s, poison 0,2 dégât par dose et par seconde,
+Ortie et Amanite +50 % à leurs voisins, Gousse : salve de 15 tous les 5 coups reçus.
 
 Deux axes avec des ponts entre eux. **Les épines** blessent qui frappe le Cerf (contre les builds
 à beaucoup de petits coups : Rafale, Nuée). **Le poison** s'accumule sur la cible.
@@ -243,9 +272,9 @@ On adapte son Nid à ce qu'on affronte, pas à une couleur.
 
 ## 7. Prototype (périmètre actuel)
 
-- 4 éléments : Feu, Nuit, Terre, Vent, 16 reliques et 3 armes.
+- 5 éléments : Feu, Nuit, Terre, Vent (4 objets chacun), Nature (15 objets), 3 armes partagées.
 - Nid 4 x 4, reliques d'une case. **Les formes de reliques (2 x 1, L...) viendront après.**
-- Pas d'hybride, pas de réseau.
+- Pas d'hybride, pas de réseau. Rareté en place.
 - Boutique, manches, combat animé contre un adversaire généré, fin de partie.
 
 **Question à valider avec le prototype** : est-ce que voir sa créature changer selon son Nid
@@ -256,7 +285,6 @@ donne envie de refaire un Nid ? Si non, rien d'autre ne compte.
 ## 8. Plus tard
 
 - Formes de reliques et rotation.
-- Coder la Nature (set ci-dessus) et la rareté.
 - Refaire Feu, Nuit, Terre, Vent au format 15 objets.
 - Glace, les quatre moments du jour, et les hybrides.
 - Une arme propre à la Terre et au Vent (ils n'ont que la lance).

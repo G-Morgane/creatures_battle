@@ -33,7 +33,7 @@ func copies(id: String, niv: int) -> Array:
 	return cases.keys().filter(func(c): return cases[c] == id and niveau(c) == niv)
 
 func peut_fusionner(id: String, niv: int) -> bool:
-	return Data.RELIQUES[id]["type"] != "arme" and niv < Data.NIVEAU_MAX
+	return Data.RELIQUES[id]["type"] != "arme" and Data.rarete(id) != "legendaire" and niv < Data.NIVEAU_MAX
 
 # Fusionne en cascade a partir de c. Renvoie true si au moins une fusion a eu lieu.
 func fusionner(c: Vector2i) -> bool:
@@ -149,6 +149,13 @@ func eclore() -> Dictionary:
 		"eclair": f == "vent",
 		"bouclier": 0.0,
 		"esquive": Data.ESQUIVE_CHEVAL if f == "vent" else 0.0,
+		"epines": Data.EPINES_CERF if f == "nature" else 0.0,
+		"epines_poison": 0.0,
+		"poison_attaque": 0.0,
+		"gousse": 0.0,
+		"belladone": false,
+		"coeur": false,
+		"graine": false,
 		"arme": arme(),
 		"sorts": [],
 	}
@@ -164,6 +171,13 @@ func eclore() -> Dictionary:
 				cr["bouclier"] += r.get("bouclier", 0.0) * m
 				cr["esquive"] += r.get("esquive", 0.0) * m
 				vitesse += r.get("vitesse", 0.0) * m
+				# Ortie et Amanite renforcent aussi les essences voisines
+				cr["epines"] += r.get("epines", 0.0) * m * _renfort(c, "epines")
+				cr["poison_attaque"] += r.get("poison_attaque", 0.0) * m * _renfort(c, "poison")
+				cr["epines_poison"] += r.get("epines_poison", 0.0) * m * _renfort(c, "poison")
+				cr["gousse"] += r.get("gousse", 0.0) * m
+				for drapeau in ["belladone", "coeur", "graine"]:
+					cr[drapeau] = cr[drapeau] or r.get(drapeau, false)
 			"sort", "arme":
 				cr["sorts"].append(_sort(c, r, aff))
 	cr["intervalle"] = Data.INTERVALLE_BASE / (1.0 + vitesse)
@@ -171,6 +185,15 @@ func eclore() -> Dictionary:
 	return cr
 
 # Un sort lit ses catalyseurs voisins au moment de l'eclosion.
+# Multiplicateur apporte par les catalyseurs voisins d'un effet donne.
+func _renfort(c: Vector2i, effet: String) -> float:
+	var k := 1.0
+	for v in voisins(c):
+		var cat: Dictionary = Data.RELIQUES[cases[v]]
+		if cat["type"] == "catalyseur" and cat["effet"] == effet:
+			k *= 1.0 + cat["valeur"] * Data.NIVEAU_MULT[niveau(v)]
+	return k
+
 # Le niveau multiplie les degats ; un sort sans degats (Voile) recharge plus vite.
 func _sort(c: Vector2i, r: Dictionary, aff: Dictionary) -> Dictionary:
 	var m: float = Data.NIVEAU_MULT[niveau(c)]
@@ -180,7 +203,13 @@ func _sort(c: Vector2i, r: Dictionary, aff: Dictionary) -> Dictionary:
 		"element": r["element"],
 		"perce": r.get("perce", false),
 		"execution": r.get("execution", false),
-		"recharge": r["recharge"] / (1.0 + 0.5 * (niveau(c) - 1)) if r.get("esquive", false) else r["recharge"],
+		"recharge": r["recharge"] / (1.0 + 0.5 * (niveau(c) - 1)) if r.get("esquive", false) else r.get("recharge", 0.0),
+		"poison": _puissance(r, "poison", aff) * m * _renfort(c, "poison"),
+		"par_poison": r.get("par_poison", 0.0) * m,
+		"degats_epines": r.get("degats_epines", false),
+		"graine": r.get("graine", false),
+		"contre": r.get("contre", 0),
+		"par_epine": r.get("par_epine", 0.0) * m,
 		"degats": _puissance(r, "degats", aff) * m,
 		"bouclier": _puissance(r, "bouclier", aff) * m,
 		"coups": r.get("coups", 0),

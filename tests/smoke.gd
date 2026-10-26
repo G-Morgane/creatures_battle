@@ -15,6 +15,7 @@ func _ready() -> void:
 	ok = _partie() and ok
 	ok = _fusion() and ok
 	ok = _terre_vent() and ok
+	ok = _nature() and ok
 	print("SMOKE: ", "OK" if ok else "ECHEC")
 	get_tree().quit(0 if ok else 1)
 
@@ -198,3 +199,64 @@ func _terre_vent() -> bool:
 	var c2 := Combat.new(t, v)
 	c2.simuler()
 	return _verifier(c2.journal == c.journal, "esquive au hasard mais deterministe") and ok
+
+func _nature() -> bool:
+	var cr := Exemples.nid_nature().eclore()
+	var ok := _verifier(cr["nom"] == "Cerf", "nature -> cerf")
+	# epines : 2 (passif) + 2 x 1,5 (ortie voisine) ; poison par attaque : 0,5 x 1,5 (amanite voisine)
+	ok = _verifier(is_equal_approx(cr["epines"], 2.0 + 3.0) and is_equal_approx(cr["poison_attaque"], 0.75), "ortie et amanite renforcent leurs voisines") and ok
+	var spore: Dictionary = cr["sorts"][0]
+	# spore : (2 + 0,2 x nature 7) x 1,5 amanite
+	ok = _verifier(is_equal_approx(spore["poison"], (2.0 + 0.2 * 7) * 1.5), "nuage de spores : poison selon affinite") and ok
+	# poison : s'empile, plafonne, passe le bouclier ; epines : ripostent
+	var tortue := Exemples.nid_terre().eclore()
+	var c := Combat.new(cr, tortue)
+	c._empoisonner(c.cotes[1], 150.0)
+	ok = _verifier(c.cotes[1]["poison"] == Data.POISON_MAX, "poison plafonne a 100") and ok
+	var pv: float = c.cotes[1]["pv"]
+	c._subir(c.cotes[1], c.cotes[0])
+	ok = _verifier(c.cotes[1]["bouclier"] == 30.0 and c.cotes[1]["pv"] < pv, "le poison passe le bouclier") and ok
+	var vie_tortue: float = c.cotes[1]["pv"] + c.cotes[1]["bouclier"]
+	c._frapper(c.cotes[1], c.cotes[0], 5.0, 0.0)
+	ok = _verifier(c.cotes[1]["pv"] + c.cotes[1]["bouclier"] < vie_tortue, "les epines blessent l'attaquant") and ok
+	# belladone : un empoisonne ne se soigne plus
+	var b := Nid.new()
+	b.placer(Vector2i(0, 0), "belladone")
+	var nuit := Exemples.nid_nuit().eclore()
+	var d := Combat.new(nuit, b.eclore())
+	d.cotes[0]["pv"] = 100.0
+	d._frapper(d.cotes[0], d.cotes[1], 10.0, 0.5)
+	ok = _verifier(d.cotes[0]["pv"] > 100.0, "sans poison, le vol de vie soigne") and ok
+	d.cotes[0]["pv"] = 100.0
+	d._empoisonner(d.cotes[0], 1.0)
+	d._frapper(d.cotes[0], d.cotes[1], 10.0, 0.5)
+	# la belladone donne un Cerf : ses epines blessent, mais aucun soin ne compense
+	ok = _verifier(is_equal_approx(d.cotes[0]["pv"], 100.0 - Data.EPINES_CERF), "belladone : empoisonne, plus de soin") and ok
+	# coeur de roncier plafonne, dague : contre au 4e coup recu
+	var k := Nid.new()
+	k.placer(Vector2i(0, 0), "coeur_roncier")
+	k.placer(Vector2i(1, 0), "dague_epine")
+	var e := Combat.new(k.eclore(), Nid.new().eclore())
+	for i in 30:
+		e._frapper(e.cotes[1], e.cotes[0], 1.0, 0.0)
+	ok = _verifier(e.cotes[0]["epines_bonus"] == Data.EPINES_BONUS_MAX, "coeur de roncier : x2 au plus") and ok
+	ok = _verifier(e.evenements.filter(func(ev): return ev["type"] == "sort" and ev["nom"] == "Contre").size() == 7, "contre tous les 4 coups recus") and ok
+	# arc de saule : plus fort selon le poison ; legendaires : pas de fusion
+	var a := Nid.new()
+	a.placer(Vector2i(0, 0), "arc_saule")
+	var f := Combat.new(a.eclore(), Nid.new().eclore())
+	f.cotes[1]["poison"] = 10.0
+	var avant: float = f.cotes[1]["pv"]
+	f.cotes[0]["sorts"][0]["prochain"] = 0.0
+	f._agir(f.cotes[0], f.cotes[1])
+	ok = _verifier(avant - f.cotes[1]["pv"] > 10.0 + 9.0, "fleche de chasse : +1 par dose") and ok
+	var g := Nid.new()
+	g.ajouter(Vector2i(0, 0), "graine_jardin")
+	g.ajouter(Vector2i(1, 0), "graine_jardin")
+	g.ajouter(Vector2i(2, 0), "graine_jardin")
+	ok = _verifier(g.cases.size() == 3, "les legendaires ne fusionnent pas") and ok
+	# rarete : manche 1 que des communs ; prix
+	var p := Partie.new(5)
+	ok = _verifier(p.offres.all(func(id): return Data.rarete(id) == "commun"), "manche 1 : que des communs") and ok
+	ok = _verifier(Partie.prix("graine_jardin") == 3 + 7 and Partie.prix("arc_saule") == 5 + 2, "prix selon type et rarete") and ok
+	return ok

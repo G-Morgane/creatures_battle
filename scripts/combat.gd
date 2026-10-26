@@ -8,7 +8,8 @@ var t := 0.0
 var cotes: Array = []
 var journal: Array[String] = []
 # Pour rejouer le combat a l'ecran : un evenement par action, et les PV
-# des deux cotes a chaque pas ([pv0, pv1, brule0, brule1, bouclier0, bouclier1]).
+# des deux cotes a chaque pas
+# ([pv0, pv1, brule0, brule1, bouclier0, bouclier1, poison0, poison1]).
 var evenements: Array = []
 var images: Array = []
 # L'esquive du Vent est un tirage : graine fixe, donc toujours le meme combat.
@@ -28,7 +29,8 @@ func _etat(cr: Dictionary, i: int) -> Dictionary:
 	var sorts := []
 	for s in cr["sorts"]:
 		var copie: Dictionary = s.duplicate()
-		copie["prochain"] = s["recharge"]
+		# un Contre ne part pas sur minuterie mais sur coups recus
+		copie["prochain"] = INF if s["contre"] > 0 else s["recharge"]
 		sorts.append(copie)
 	return {
 		"cr": cr,
@@ -39,6 +41,10 @@ func _etat(cr: Dictionary, i: int) -> Dictionary:
 		"brulure": 0.0,
 		"brulure_force": 0.0,
 		"bouclier": cr["bouclier"],
+		"poison": 0.0,             # doses
+		"epines_bonus": 1.0,       # Coeur de roncier, Graine
+		"coups_recus": 0,
+		"graine_plantee": false,   # Fleche-graine
 		"esquive": false,
 		"renaissance": cr["renaissance"],
 	}
@@ -50,10 +56,10 @@ func simuler() -> int:
 		for i in 2:
 			_agir(cotes[i], cotes[1 - i])
 		for i in 2:
-			_subir(cotes[i])
+			_subir(cotes[i], cotes[1 - i])
 		var morts := [_mort(cotes[0]), _mort(cotes[1])]
 		images.append([cotes[0]["pv"], cotes[1]["pv"], cotes[0]["brulure"] > 0.0, cotes[1]["brulure"] > 0.0,
-			cotes[0]["bouclier"], cotes[1]["bouclier"]])
+			cotes[0]["bouclier"], cotes[1]["bouclier"], cotes[0]["poison"], cotes[1]["poison"]])
 		if morts[0] or morts[1]:
 			var v := 1 if morts[0] else 0
 			# Chute simultanee : celui qui finit le moins en negatif tient debout.
@@ -71,7 +77,8 @@ func _agir(moi: Dictionary, cible: Dictionary) -> void:
 	if t >= moi["prochaine_attaque"]:
 		moi["prochaine_attaque"] += moi["cr"]["intervalle"]
 		_evenement(moi, {"type": "attaque"})
-		_frapper(moi, cible, moi["cr"]["attaque"], moi["cr"]["vol_de_vie"])
+		if _frapper(moi, cible, moi["cr"]["attaque"], moi["cr"]["vol_de_vie"]) and moi["cr"]["poison_attaque"] > 0.0:
+			_empoisonner(cible, moi["cr"]["poison_attaque"])
 	for s in moi["sorts"]:
 		if t < s["prochain"]:
 			continue
@@ -88,30 +95,76 @@ func _agir(moi: Dictionary, cible: Dictionary) -> void:
 		if s["bouclier"] > 0.0:
 			moi["bouclier"] += s["bouclier"]
 			_evenement(moi, {"type": "bouclier", "valeur": s["bouclier"]})
+		var touche := false
 		for k in s["coups"]:
 			var degats: float = s["degats"]
 			if s["execution"] and cible["pv"] < cible["cr"]["pv_max"] * Data.SEUIL_EXECUTION:
 				degats *= 2.0
-			_frapper(moi, cible, degats, s["vol_de_vie"], s["perce"])
+			if s["degats_epines"]:
+				degats += moi["cr"]["epines"] * moi["epines_bonus"]
+			degats += s["par_poison"] * cible["poison"]
+			touche = _frapper(moi, cible, degats, s["vol_de_vie"], s["perce"]) or touche
+		if s["coups"] == 0 or touche:
+			if s["poison"] > 0.0:
+				_empoisonner(cible, s["poison"])
+			if s["graine"]:
+				cible["graine_plantee"] = true
 		if s["brulure"] > 0.0:
 			cible["brulure"] = Data.BRULURE_DUREE
 			cible["brulure_force"] = maxf(cible["brulure_force"], s["brulure"])
 
-func _frapper(moi: Dictionary, cible: Dictionary, degats: float, vol: float, perce := false) -> void:
+# Renvoie true si le coup a touche.
+func _frapper(moi: Dictionary, cible: Dictionary, degats: float, vol: float, perce := false) -> bool:
 	if cible["esquive"] and not perce:
 		cible["esquive"] = false
 		_evenement(cible, {"type": "esquive"})
 		_noter("%s esquive." % cible["cr"]["nom"])
-		return
+		return false
 	if not perce and cible["cr"]["esquive"] > 0.0 and rng.randf() < cible["cr"]["esquive"]:
 		_evenement(cible, {"type": "esquive"})
 		if cible["cr"]["eclair"]:
 			# le Cheval riposte : l'eclair ne s'esquive pas
 			_blesser(moi, Data.ECLAIR_DEGATS)
 			_evenement(cible, {"type": "eclair"})
-		return
+		return false
 	_blesser(cible, degats)
-	moi["pv"] = min(moi["pv"] + degats * vol, moi["cr"]["pv_max"])
+	_soigner(moi, cible, degats * vol)
+	_riposter(cible, moi)
+	return true
+
+# Belladone : un combattant empoisonne ne peut plus se soigner.
+func _soigner(moi: Dictionary, adverse: Dictionary, soin: float) -> void:
+	if soin <= 0.0 or (moi["poison"] > 0.0 and adverse["cr"]["belladone"]):
+		return
+	moi["pv"] = min(moi["pv"] + soin, moi["cr"]["pv_max"])
+
+# Ce que declenche un coup recu : epines (et Liane, Graine, Coeur), Gousse, Contre.
+# Ces ripostes passent par _blesser : elles ne declenchent rien a leur tour.
+func _riposter(moi: Dictionary, attaquant: Dictionary) -> void:
+	moi["coups_recus"] += 1
+	var cr: Dictionary = moi["cr"]
+	if cr["epines"] > 0.0:
+		_blesser(attaquant, cr["epines"] * moi["epines_bonus"])
+		_evenement(moi, {"type": "epines"})
+		if cr["epines_poison"] > 0.0:
+			_empoisonner(attaquant, cr["epines_poison"])
+		if cr["graine"]:
+			_empoisonner(attaquant, 1.0)
+		if cr["coeur"]:
+			moi["epines_bonus"] = minf(moi["epines_bonus"] + Data.COEUR_PAR_RIPOSTE, Data.EPINES_BONUS_MAX)
+	if cr["gousse"] > 0.0 and moi["coups_recus"] % Data.GOUSSE_COUPS == 0:
+		_blesser(attaquant, cr["gousse"] * moi["epines_bonus"])
+		_evenement(moi, {"type": "salve"})
+	for s in moi["sorts"]:
+		if s["contre"] > 0 and moi["coups_recus"] % s["contre"] == 0:
+			_blesser(attaquant, s["degats"] + s["par_epine"] * cr["epines"] * moi["epines_bonus"])
+			_evenement(moi, {"type": "sort", "nom": s["nom"], "cavalier": true, "element": s["element"], "coups": 1})
+
+# Le poison s'empile (plafond) ; une Fleche-graine plantee blesse a chaque dose recue.
+func _empoisonner(cible: Dictionary, doses: float) -> void:
+	cible["poison"] = minf(cible["poison"] + doses, Data.POISON_MAX)
+	if cible["graine_plantee"]:
+		_blesser(cible, doses * Data.GRAINE_DEGATS_PAR_DOSE)
 
 # Le bouclier encaisse avant les PV. Brulure et fatigue passent a travers.
 func _blesser(cible: Dictionary, degats: float) -> void:
@@ -119,7 +172,13 @@ func _blesser(cible: Dictionary, degats: float) -> void:
 	cible["bouclier"] -= absorbe
 	cible["pv"] -= degats - absorbe
 
-func _subir(moi: Dictionary) -> void:
+# Brulure, poison et fatigue passent a travers le bouclier.
+func _subir(moi: Dictionary, adverse: Dictionary) -> void:
+	if moi["poison"] > 0.0:
+		moi["pv"] -= moi["poison"] * Data.POISON_DPS_PAR_DOSE * Data.PAS
+		# Graine : tant que l'adversaire est empoisonne, les epines poussent
+		if adverse["cr"]["graine"]:
+			adverse["epines_bonus"] = minf(adverse["epines_bonus"] + Data.GRAINE_POUSSE * Data.PAS, Data.EPINES_BONUS_MAX)
 	if moi["brulure"] > 0.0:
 		moi["brulure"] -= Data.PAS
 		moi["pv"] -= Data.BRULURE_DPS * moi["brulure_force"] * Data.PAS

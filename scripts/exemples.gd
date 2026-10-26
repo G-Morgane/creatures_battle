@@ -38,3 +38,13 @@ static func nid_vent() -> Nid:
 	n.placer(Vector2i(1, 1), "rafale")
 	n.placer(Vector2i(2, 1), "girouette")
 	return n
+
+# Ortie a cote de l'Epine (epines), Amanite a cote de la Baie et de la Spore (poison).
+static func nid_nature() -> Nid:
+	var n := Nid.new()
+	n.placer(Vector2i(0, 0), "epine_ronce")
+	n.placer(Vector2i(1, 0), "ortie")
+	n.placer(Vector2i(2, 0), "baie")
+	n.placer(Vector2i(1, 1), "spore")
+	n.placer(Vector2i(2, 1), "amanite")
+	return n

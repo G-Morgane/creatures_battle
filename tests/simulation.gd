@@ -12,6 +12,7 @@ func _initialize() -> void:
 		repartition.fill(0)
 		var par_manche := {}   # manche -> [victoires, combats]
 		var total := 0
+		var par_element := {}   # element choisi -> [parties, victoires]
 		for g in PARTIES:
 			var p := Partie.new(g + 1)
 			var j := JoueurAuto.new(style, g + 1)
@@ -25,6 +26,10 @@ func _initialize() -> void:
 				p.enregistrer(v)
 			repartition[p.victoires] += 1
 			total += p.victoires
+			var pe: Array = par_element.get(j.element, [0, 0])
+			pe[0] += 1
+			pe[1] += p.victoires
+			par_element[j.element] = pe
 		print("\n## Joueur %s (%d parties)" % [style, PARTIES])
 		print("Victoires moyennes : %.2f   Parties gagnées (7) : %d %%" % [
 			float(total) / PARTIES, roundi(100.0 * repartition[Partie.VICTOIRES_MAX] / PARTIES)])
@@ -40,6 +45,11 @@ func _initialize() -> void:
 				ligne += "m%d:%d%%  " % [m, roundi(100.0 * par_manche[m][0] / par_manche[m][1])]
 		print(ligne)
 		print("Sans élimination (difficulté réelle) : " + _courbe(style))
+		if style == "simple":
+			ligne = "Victoires moyennes par élément : "
+			for e in par_element:
+				ligne += "%s %.1f (%d)  " % [e, float(par_element[e][1]) / par_element[e][0], par_element[e][0]]
+			print(ligne)
 	quit()
 
 # Chaque partie joue 9 manches quoi qu'il arrive : pas de biais de survie.

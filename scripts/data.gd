@@ -17,6 +17,7 @@ const FORMES := {
 	"nuit":  {"nom": "Chauve-souris", "passif": "Vol de vie sur les attaques de base"},
 	"terre": {"nom": "Tortue",        "passif": "Fatigue de l'adversaire 10 s plus tôt, la sienne réduite de moitié"},
 	"vent":  {"nom": "Cheval",        "passif": "15 % d'esquive, chaque esquive lance un éclair"},
+	"nature":{"nom": "Cerf",          "passif": "Épines : blesse qui le frappe (2 dégâts par coup reçu)"},
 	"":      {"nom": "Informe",       "passif": "Aucun"},
 }
 
@@ -29,6 +30,16 @@ const TORTUE_FATIGUE_MULT := 0.5
 const ESQUIVE_CHEVAL := 0.15
 const ESQUIVE_MAX := 0.5
 const ECLAIR_DEGATS := 10.0
+# Cerf : epines (riposte a chaque coup recu) et poison (doses qui s'empilent,
+# ne s'effacent pas, passent a travers le bouclier).
+const EPINES_CERF := 2.0
+const POISON_DPS_PAR_DOSE := 0.2
+const POISON_MAX := 100
+const EPINES_BONUS_MAX := 2.0      # Coeur de roncier et Graine : epines x2 au plus
+const COEUR_PAR_RIPOSTE := 0.1
+const GRAINE_POUSSE := 0.05        # bonus d'epines par seconde ou l'adversaire est empoisonne
+const GRAINE_DEGATS_PAR_DOSE := 1.0  # Fleche-graine : chaque dose recue blesse aussi
+const GOUSSE_COUPS := 5            # Gousse eclatante : une salve tous les 5 coups recus
 
 # --- combat ----------------------------------------------------------------
 
@@ -81,6 +92,27 @@ const RELIQUES := {
 		"recharge": 3.0, "degats": 4.0, "par_affinite": 0.4, "coups": 3},
 	"girouette":      {"nom": "Girouette",      "element": "vent",  "affinite": 1, "type": "catalyseur",
 		"effet": "recharge", "valeur": 0.25},
+	# nature : epines et poison. Ortie et Amanite renforcent leurs voisins.
+	"epine_ronce":    {"nom": "Épine de ronce", "element": "nature", "affinite": 2, "type": "essence",
+		"epines": 2.0},
+	"baie":           {"nom": "Baie vénéneuse", "element": "nature", "affinite": 2, "type": "essence",
+		"poison_attaque": 0.5},
+	"ortie":          {"nom": "Feuille d'ortie","element": "nature", "affinite": 1, "type": "catalyseur",
+		"effet": "epines", "valeur": 0.5},
+	"spore":          {"nom": "Spore amère",    "element": "nature", "affinite": 1, "type": "sort",
+		"sort": "Nuage de spores", "recharge": 6.0, "poison": 2.0, "par_affinite": 0.2},
+	"liane":          {"nom": "Liane barbelée", "element": "nature", "affinite": 1, "type": "essence", "rarete": "rare",
+		"epines_poison": 1.0},
+	"amanite":        {"nom": "Amanite pourpre","element": "nature", "affinite": 1, "type": "catalyseur", "rarete": "rare",
+		"effet": "poison", "valeur": 0.5},
+	"gousse":         {"nom": "Gousse éclatante","element": "nature", "affinite": 1, "type": "essence", "rarete": "rare",
+		"gousse": 15.0},
+	"belladone":      {"nom": "Fleur de belladone","element": "nature", "affinite": 1, "type": "essence", "rarete": "epique",
+		"belladone": true},
+	"coeur_roncier":  {"nom": "Cœur de roncier","element": "nature", "affinite": 1, "type": "essence", "rarete": "epique",
+		"coeur": true, "epines": 2.0},
+	"graine_jardin":  {"nom": "Graine du Jardin interdit","element": "nature", "affinite": 2, "type": "essence", "rarete": "legendaire",
+		"graine": true, "epines": 3.0},
 	# armes : le cavalier en tient une seule et lance son propre sort.
 	# Les catalyseurs voisins s'appliquent aussi a ce sort.
 	"baton_braise":   {"nom": "Bâton de braise","element": "feu",   "affinite": 1, "type": "arme",
@@ -89,7 +121,27 @@ const RELIQUES := {
 		"sort": "Estoc", "recharge": 2.5, "degats": 8.0, "coups": 1, "perce": true},
 	"faux_lunaire":   {"nom": "Faux lunaire",   "element": "nuit", "affinite": 1, "type": "arme",
 		"sort": "Moisson", "recharge": 6.0, "degats": 6.0, "par_affinite": 1.0, "coups": 1, "execution": true},
+	# armes du Cerf
+	"sarbacane":      {"nom": "Sarbacane de roseau","element": "nature", "affinite": 1, "type": "arme",
+		"sort": "Fléchette", "recharge": 2.0, "degats": 2.0, "coups": 1, "poison": 1.0},
+	"dague_epine":    {"nom": "Dague d'épine",  "element": "nature", "affinite": 1, "type": "arme",
+		"sort": "Contre", "contre": 4, "degats": 8.0, "par_epine": 2.0, "coups": 1},
+	"arc_saule":      {"nom": "Arc de saule",   "element": "nature", "affinite": 1, "type": "arme", "rarete": "rare",
+		"sort": "Flèche de chasse", "recharge": 5.0, "degats": 10.0, "par_poison": 1.0, "coups": 1},
+	"fouet_ronces":   {"nom": "Fouet de ronces","element": "nature", "affinite": 1, "type": "arme", "rarete": "epique",
+		"sort": "Lacération", "recharge": 4.0, "degats": 2.0, "coups": 4, "degats_epines": true},
+	"arc_jardin":     {"nom": "Arc du Jardin interdit","element": "nature", "affinite": 2, "type": "arme", "rarete": "legendaire",
+		"sort": "Flèche-graine", "recharge": 6.0, "degats": 12.0, "coups": 1, "graine": true},
 }
+
+# --- rarete ----------------------------------------------------------------
+
+# Une relique sans champ "rarete" est commune.
+const RARETES := ["commun", "rare", "epique", "legendaire"]
+const NOMS_RARETE := {"commun": "Commun", "rare": "Rare", "epique": "Épique", "legendaire": "Légendaire"}
+
+static func rarete(id: String) -> String:
+	return RELIQUES[id].get("rarete", "commun")
 
 # Fusion : 3 copies d'un niveau donnent 1 relique du niveau suivant.
 # Multiplicateur des stats par niveau (index 0 inutilise). Le niveau 2 vaut un
