@@ -178,20 +178,28 @@ prix par rareté. Les légendaires ne fusionnent pas (comme les armes).
 Deux axes avec des ponts entre eux. **Les épines** blessent qui frappe le Cerf (contre les builds
 à beaucoup de petits coups : Rafale, Nuée). **Le poison** s'accumule sur la cible.
 
+Règles du poison et des épines :
+- **Le poison s'empile** : chaque application ajoute des doses, chaque dose fait des dégâts par
+  seconde, et les doses durent longtemps. **Il passe à travers le bouclier** (contre la Tortue).
+  À distinguer de la brûlure du Feu : courte, intense, elle se renouvelle au lieu de s'empiler.
+- **Plafond de 20 doses** de poison sur une cible.
+- **Les épines** se déclenchent à chaque coup reçu (attaque ou sort), pas sur la brûlure,
+  le poison ni la fatigue.
+
 #### Monture (10)
 
 | Rareté | Objet | Apparence | Effet |
 |---|---|---|---|
 | Commun | Épine de ronce | Une longue épine courbée, vert sombre | Ajoute des dégâts d'épines lorsqu'on est attaqué |
 | Commun | Baie vénéneuse | Une petite grappe de baies violettes | Les attaques appliquent un peu de poison |
-| Commun | Feuille d'ortie | Une feuille dentelée aux nervures claires | Renforce les dégâts d'épines |
+| Commun | Feuille d'ortie | Une feuille dentelée aux nervures claires | **Catalyseur** : renforce les épines des objets voisins |
 | Commun | Spore amère | Une petite vesse-de-loup verdâtre | **Sort** *Nuage de spores* : toutes les 6 s, un nuage de poison visible |
 | Rare | Liane barbelée | Une liane enroulée, couverte de crochets | Les ripostes d'épines appliquent aussi du poison |
-| Rare | Amanite pourpre | Un champignon violet à quelques taches crème | Renforce le poison appliqué |
+| Rare | Amanite pourpre | Un champignon violet à quelques taches crème | **Catalyseur** : renforce le poison appliqué par les objets voisins |
 | Rare | Gousse éclatante | Une capsule sèche entrouverte, pleine de graines pointues | Après plusieurs attaques reçues, projette une salve d'épines |
-| Épique | Fleur de belladone | Une fleur en cloche sombre accompagnée d'une baie brillante | Le poison affaiblit aussi les attaques de l'adversaire |
-| Épique | Cœur de roncier | Un nœud de racines épineuses autour d'un cœur vert | Les déclenchements d'épines renforcent les prochaines ripostes |
-| Légendaire | Graine du Jardin interdit | Une graine fendue, laissant sortir une pousse dorée aux épines violettes | Chaque déclenchement d'épines intensifie le poison ; chaque déclenchement du poison fait pousser les épines |
+| Épique | Fleur de belladone | Une fleur en cloche sombre accompagnée d'une baie brillante | **Un adversaire empoisonné ne peut plus se soigner** (soins, vol de vie, régénération) |
+| Épique | Cœur de roncier | Un nœud de racines épineuses autour d'un cœur vert | Les déclenchements d'épines renforcent les prochaines ripostes, **jusqu'à x2 au maximum** |
+| Légendaire | Graine du Jardin interdit | Une graine fendue, laissant sortir une pousse dorée aux épines violettes | Chaque déclenchement d'épines intensifie le poison ; chaque déclenchement du poison fait pousser les épines. **Plafonds : 20 doses de poison, épines x2 au maximum** |
 
 #### Armes du cavalier (5)
 
@@ -203,15 +211,7 @@ Deux axes avec des ponts entre eux. **Les épines** blessent qui frappe le Cerf 
 | Épique | Fouet de ronces | *Lacération* : 4 coups rapides qui infligent des dégâts d'épines (profitent des bonus d'épines) | Fait des épines une attaque |
 | Légendaire | Arc du Jardin interdit | *Flèche-graine* : se plante dans la cible ; chaque dose de poison qu'elle reçoit ensuite la blesse aussi d'épines | Assorti à la Graine du Jardin interdit |
 
-#### Points ouverts (à valider)
-
-- **Poison et brûlure** sont deux dégâts sur la durée. Proposition : brûlure courte et intense,
-  poison qui s'empile et dure, et **qui passe à travers le bouclier** (contre la Tortue).
-- **Fleur de belladone** : « affaiblit les attaques » recoupe les malédictions de la Nuit.
-  Proposition : **un adversaire empoisonné ne peut plus se soigner** (contre l'Aube et le vol de vie).
-- **Feuille d'ortie et Amanite pourpre** sont des bonus invisibles. Proposition : en faire des
-  **catalyseurs** (renforcent les épines ou le poison des objets voisins) pour créer des choix de placement.
-- **Cœur de roncier et Graine** montent sans limite : prévoir un plafond.
+Les plafonds (x2, 20 doses) sont des valeurs de départ, à régler par simulation.
 
 ---
 
