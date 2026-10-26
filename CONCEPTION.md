@@ -50,6 +50,13 @@ Chaque relique donne des points d'**affinité** dans un élément.
   Plus de variété de sorts, passif plus faible. Pur = spécialisé et fort.
 - **Aucune affinité** : créature informe, sans passif.
 
+### Le cavalier
+
+La créature est une **monture** : un petit cavalier encapuchonné (visage sombre, deux yeux
+lumineux) est assis dessus. Sa cape prend la couleur de l'élément dominant.
+Pour l'instant purement visuel. Piste à creuser : le cavalier porte une arme
+(bâton, lance, faux...) qui vient d'une relique et lance ses propres sorts.
+
 ---
 
 ## 4. Reliques

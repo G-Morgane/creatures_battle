@@ -9,6 +9,7 @@ func _ready() -> void:
 	ok = _catalyseurs() and ok
 	ok = _deterministe() and ok
 	ok = _renaissance() and ok
+	ok = _ecran() and ok
 	print("SMOKE: ", "OK" if ok else "ECHEC")
 	get_tree().quit(0 if ok else 1)
 
@@ -52,3 +53,21 @@ func _renaissance() -> bool:
 	c.simuler()
 	var renait := c.journal.any(func(l): return "renaît" in l)
 	return _verifier(renait, "le phenix renait au moins une fois")
+
+# Glisser-deposer sans souris : on appelle ce que les cases appellent.
+func _ecran() -> bool:
+	var e := NidScreen.new()
+	add_child(e)
+	e.deposer(Vector2i(0, 0), "braise", null)
+	var ok := _verifier(e.nid.forme() == "feu" and e.vue.forme == "feu", "poser une braise -> phenix")
+	e.deposer(Vector2i(1, 0), "croc_noir", null)
+	e.deposer(Vector2i(2, 0), "nuee", null)
+	ok = _verifier(e.vue.forme == "ombre", "plus d'ombre -> chauve-souris") and ok
+	e.deposer(Vector2i(3, 3), "croc_noir", Vector2i(1, 0))
+	ok = _verifier(e.nid.cases.get(Vector2i(3, 3)) == "croc_noir" and not e.nid.cases.has(Vector2i(1, 0)), "deplacer une relique") and ok
+	e.deposer(Vector2i(0, 0), "croc_noir", Vector2i(3, 3))
+	ok = _verifier(e.nid.cases.get(Vector2i(3, 3)) == "braise", "echanger deux reliques") and ok
+	e.vider_case(Vector2i(3, 3))
+	ok = _verifier(e.vue.forme == "ombre" and e.nid.cases.size() == 2, "vider une case") and ok
+	e.queue_free()
+	return ok
