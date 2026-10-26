@@ -43,11 +43,15 @@ func _simple(p: Partie) -> void:
 
 # L'element le plus present dans la premiere boutique.
 func _choisir_element(p: Partie) -> String:
-	var compte := {"feu": 0, "nuit": 0}
+	var compte := {"feu": 0, "nuit": 0, "terre": 0, "vent": 0}
 	for id in p.offres:
 		if id != "" and Data.RELIQUES[id]["element"] in compte:
 			compte[Data.RELIQUES[id]["element"]] += 1
-	return "feu" if compte["feu"] >= compte["nuit"] else "nuit"
+	var meilleur := "feu"
+	for e in compte:
+		if compte[e] > compte[meilleur]:
+			meilleur = e
+	return meilleur
 
 func _utile(id: String) -> bool:
 	return id != "" and Data.RELIQUES[id]["element"] in [element, ""]

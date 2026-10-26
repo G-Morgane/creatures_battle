@@ -14,6 +14,7 @@ func _ready() -> void:
 	ok = _combat_anime() and ok
 	ok = _partie() and ok
 	ok = _fusion() and ok
+	ok = _terre_vent() and ok
 	print("SMOKE: ", "OK" if ok else "ECHEC")
 	get_tree().quit(0 if ok else 1)
 
@@ -177,3 +178,23 @@ func _fusion() -> bool:
 	n.deplacer(Vector2i(2, 0), Vector2i(3, 3))
 	ok = _verifier(n.niveau(Vector2i(3, 3)) == 2 and not n.niveaux.has(Vector2i(2, 0)), "deplacer garde le niveau") and ok
 	return ok
+
+func _terre_vent() -> bool:
+	var t := Exemples.nid_terre().eclore()
+	var v := Exemples.nid_vent().eclore()
+	var ok := _verifier(t["nom"] == "Tortue" and v["nom"] == "Cheval", "terre -> tortue, vent -> cheval")
+	ok = _verifier(is_equal_approx(t["pv_max"], Data.PV_BASE + 80.0) and is_equal_approx(t["bouclier"], 30.0), "pierre +PV, ecaille bouclier") and ok
+	var rempart: Dictionary = t["sorts"][0]
+	# rempart : 15 + 3 x terre (2+2+1+1+1 = 7) = 36, socle voisin +40 % = 50,4 ; aucun degat
+	ok = _verifier(is_equal_approx(rempart["bouclier"], 36.0 * 1.4) and rempart["degats"] == 0.0, "rempart : bouclier selon affinite, socle") and ok
+	ok = _verifier(is_equal_approx(v["esquive"], Data.ESQUIVE_CHEVAL + 0.06), "cheval : esquive passive + crin") and ok
+	ok = _verifier(is_equal_approx(v["sorts"][0]["recharge"], 3.0 / 1.25), "girouette : recharge plus rapide") and ok
+	# combat : le bouclier encaisse, le cheval esquive et riposte
+	var c := Combat.new(t, v)
+	c.simuler()
+	ok = _verifier(c.evenements.any(func(e): return e["type"] == "eclair"), "le cheval lance des eclairs") and ok
+	ok = _verifier(c.evenements.any(func(e): return e["type"] == "bouclier"), "la tortue gagne du bouclier") and ok
+	ok = _verifier(c.cotes[1]["fatigue_debut"] == Data.MORT_SUBITE - Data.TORTUE_AVANCE_FATIGUE and c.cotes[0]["fatigue_mult"] == Data.TORTUE_FATIGUE_MULT, "fatigue de la tortue") and ok
+	var c2 := Combat.new(t, v)
+	c2.simuler()
+	return _verifier(c2.journal == c.journal, "esquive au hasard mais deterministe") and ok

@@ -14,5 +14,7 @@ const TEXTE_DOUX  := Color("#8a8f99")
 const ELEMENTS := {
 	"feu":   {"fond": Color("#5a2a14"), "vif": Color("#ff8a3d"), "clair": Color("#ffd27a")},
 	"nuit":  {"fond": Color("#2a1d3d"), "vif": Color("#9d6bff"), "clair": Color("#d7c4ff")},
+	"terre": {"fond": Color("#3a3220"), "vif": Color("#b08a4a"), "clair": Color("#e3cf9a")},
+	"vent":  {"fond": Color("#1c3338"), "vif": Color("#6fd3d6"), "clair": Color("#d4f6f4")},
 	"":      {"fond": Color("#2a2d33"), "vif": Color("#8a8f99"), "clair": Color("#c9ccd2")},
 }

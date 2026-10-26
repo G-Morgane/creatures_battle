@@ -141,9 +141,23 @@ tactique pur. L'arme garde la couleur de son élément, pas celle de la monture.
 
 - **Feu** : Braise, Plume de cendre, Souffle ardent, Foyer (fait)
 - **Nuit** : Croc noir, Nuée, Voile, Lune creuse (fait)
+- **Terre** : Pierre (+PV), Écaille (bouclier de départ), Rempart (sort de bouclier), Socle (les sorts voisins donnent du bouclier) (fait)
+- **Vent** : Sabot (attaque, vitesse), Crin (esquive), Rafale (3 coups rapides), Girouette (les sorts voisins rechargent plus vite) (fait)
 - **Glace** : Éclat, Carapace gelée, Prison de glace, Cœur d'hiver
 - **Nature** : Racine, Ronces, Sève, Graine mère
-- **Vent, Terre, Aube, Lumière, Crépuscule** : à concevoir
+- **Aube, Lumière, Crépuscule** : à concevoir
+
+Règles de Terre et Vent :
+- **Bouclier** : encaisse les coups avant les PV. La brûlure et la fatigue passent à travers.
+- **Tortue** : la fatigue de l'adversaire commence 10 s plus tôt (à 20 s), la sienne est réduite de moitié.
+  Ses combats durent 27 à 35 s, plus que la cible de 15 à 25 s : c'est son identité.
+- **Cheval** : 15 % d'esquive (plafond 50 % avec les Crins), chaque esquive lance un éclair de 10 dégâts
+  qui ne s'esquive pas. Le tirage est fait avec une graine fixe : le combat reste déterministe.
+  L'Estoc de la lance ignore aussi cette esquive.
+- Fatigue : les dégâts montent de 2 par seconde chaque seconde après son début.
+
+Résultats en partie simulée (joueur simple, 400 parties) : Terre 3,3 victoires en moyenne,
+Vent 3,2, Feu 2,1, Nuit 1,5. **La Nuit est à remonter.**
 
 ---
 
@@ -175,7 +189,7 @@ On adapte son Nid à ce qu'on affronte, pas à une couleur.
 
 ## 7. Prototype (périmètre actuel)
 
-- 2 éléments : Feu et Nuit, 8 reliques et 3 armes.
+- 4 éléments : Feu, Nuit, Terre, Vent, 16 reliques et 3 armes.
 - Nid 4 x 4, reliques d'une case. **Les formes de reliques (2 x 1, L...) viendront après.**
 - Pas d'hybride, pas de réseau.
 - Boutique, manches, combat animé contre un adversaire généré, fin de partie.
@@ -188,9 +202,8 @@ donne envie de refaire un Nid ? Si non, rien d'autre ne compte.
 ## 8. Plus tard
 
 - Formes de reliques et rotation.
-- **Prochains éléments : Terre et Vent**, deux opposés (combat long contre combat rapide),
-  pour vérifier que ça reste lisible avant d'aller jusqu'à neuf.
-- Puis Glace, Nature, les quatre moments du jour, et les hybrides.
+- Glace, Nature, les quatre moments du jour, et les hybrides.
+- Une arme propre à la Terre et au Vent (ils n'ont que la lance).
 - 9 éléments donnent 36 paires d'hybrides : il faudra sûrement n'en garder qu'une partie.
 - Stades d'évolution (visuel qui grandit).
 - PvP asynchrone : stocker le Nid de chaque joueur par manche (Supabase), tirer un fantôme du même stade.

@@ -14,6 +14,10 @@ func _builds() -> Dictionary:
 	b["Nuit"] = Exemples.nid_nuit()
 	b["Nuit + faux"] = _avec(Exemples.nid_nuit(), "faux_lunaire", Vector2i(2, 0))
 	b["Nuit + lance"] = _avec(Exemples.nid_nuit(), "lance_guet", Vector2i(2, 0))
+	b["Terre"] = Exemples.nid_terre()
+	b["Terre + lance"] = _avec(Exemples.nid_terre(), "lance_guet", Vector2i(2, 0))
+	b["Vent"] = Exemples.nid_vent()
+	b["Vent + lance"] = _avec(Exemples.nid_vent(), "lance_guet", Vector2i(2, 0))
 	return b
 
 func _avec(n: Nid, id: String, c: Vector2i) -> Nid:

@@ -96,7 +96,7 @@ func adversaire() -> Nid:
 	var r := RandomNumberGenerator.new()
 	r.seed = graine + manche * 7919
 	var soin := clampf((manche - 1) / SOIN_MANCHES, 0.0, 1.0)
-	var elements := ["feu", "nuit"]
+	var elements := ["feu", "nuit", "terre", "vent"]
 	var element: String = elements[r.randi() % elements.size()]
 	var budget := OR_PAR_MANCHE * manche + OR_PAR_VICTOIRE * victoires
 	var n := Nid.new()

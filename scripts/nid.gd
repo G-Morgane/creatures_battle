@@ -145,6 +145,10 @@ func eclore() -> Dictionary:
 		"intervalle": Data.INTERVALLE_BASE,
 		"vol_de_vie": Data.VOL_DE_VIE_NUIT if f == "nuit" else 0.0,
 		"renaissance": f == "feu",
+		"tortue": f == "terre",
+		"eclair": f == "vent",
+		"bouclier": 0.0,
+		"esquive": Data.ESQUIVE_CHEVAL if f == "vent" else 0.0,
 		"arme": arme(),
 		"sorts": [],
 	}
@@ -156,10 +160,14 @@ func eclore() -> Dictionary:
 			"essence":
 				cr["attaque"] += r.get("attaque", 0.0) * m
 				cr["vol_de_vie"] += r.get("vol_de_vie", 0.0) * m
+				cr["pv_max"] += r.get("pv", 0.0) * m
+				cr["bouclier"] += r.get("bouclier", 0.0) * m
+				cr["esquive"] += r.get("esquive", 0.0) * m
 				vitesse += r.get("vitesse", 0.0) * m
 			"sort", "arme":
 				cr["sorts"].append(_sort(c, r, aff))
 	cr["intervalle"] = Data.INTERVALLE_BASE / (1.0 + vitesse)
+	cr["esquive"] = minf(cr["esquive"], Data.ESQUIVE_MAX)
 	return cr
 
 # Un sort lit ses catalyseurs voisins au moment de l'eclosion.
@@ -173,7 +181,8 @@ func _sort(c: Vector2i, r: Dictionary, aff: Dictionary) -> Dictionary:
 		"perce": r.get("perce", false),
 		"execution": r.get("execution", false),
 		"recharge": r["recharge"] / (1.0 + 0.5 * (niveau(c) - 1)) if r.get("esquive", false) else r["recharge"],
-		"degats": (r.get("degats", 0.0) + r.get("par_affinite", 0.0) * aff.get(r["element"], 0)) * m,
+		"degats": _puissance(r, "degats", aff) * m,
+		"bouclier": _puissance(r, "bouclier", aff) * m,
 		"coups": r.get("coups", 0),
 		"esquive": r.get("esquive", false),
 		"brulure": 0.0,   # force de la brulure, 0 = aucune
@@ -188,4 +197,18 @@ func _sort(c: Vector2i, r: Dictionary, aff: Dictionary) -> Dictionary:
 				s["brulure"] = maxf(s["brulure"], Data.NIVEAU_MULT[niveau(v)])
 			"vol_de_vie":
 				s["vol_de_vie"] += cat["valeur"] * Data.NIVEAU_MULT[niveau(v)]
+			"bouclier":
+				# un Socle donne un bouclier a chaque lancer, selon les degats du sort
+				# ou le bouclier qu'il donne deja (Rempart)
+				var k: float = cat["valeur"] * Data.NIVEAU_MULT[niveau(v)]
+				s["bouclier"] += (s["degats"] * maxi(s["coups"], 1) + s["bouclier"]) * k
+			"recharge":
+				s["recharge"] /= 1.0 + cat["valeur"] * Data.NIVEAU_MULT[niveau(v)]
 	return s
+
+# Le bonus par point d'affinite va a ce que fait le sort : degats, ou bouclier
+# pour un sort de protection (Rempart).
+func _puissance(r: Dictionary, champ: String, aff: Dictionary) -> float:
+	if not r.has(champ):
+		return 0.0
+	return r[champ] + r.get("par_affinite", 0.0) * aff.get(r["element"], 0)

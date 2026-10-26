@@ -126,6 +126,14 @@ func _jouer(e: Dictionary) -> void:
 			_texte(moi, 0 if e["cavalier"] else 1, qui + e["nom"], couleurs["clair"])
 		"voile":
 			_texte(moi, 2, "Voile", Palette.ELEMENTS["nuit"]["clair"])
+		"bouclier":
+			_texte(moi, 2, "+%d bouclier" % roundi(e["valeur"]), Palette.ELEMENTS["terre"]["clair"])
+		"eclair":
+			var vent: Dictionary = Palette.ELEMENTS["vent"]
+			effets.append({"type": "projectile", "de": moi.position + moi.source(false),
+				"a": cible.position + cible.size / 2 + Vector2(0, 20), "t0": lecture,
+				"duree": VOL_PROJECTILE * 0.5, "couleur": vent["vif"], "coeur": vent["clair"], "taille": 8.0})
+			_texte(moi, 1, "Éclair", vent["clair"])
 		"esquive":
 			_texte(moi, 2, "Esquive !", Palette.TEXTE)
 		"renaissance":
@@ -175,6 +183,10 @@ func _dessiner() -> void:
 		var part := clampf(img[i] / cr["pv_max"], 0.0, 1.0)
 		calque.draw_rect(Rect2(x, y, 300, 16), Palette.CASE)
 		calque.draw_rect(Rect2(x, y, 300 * part, 16), Palette.ELEMENTS[cr["forme"]]["vif"])
+		# bouclier : bande claire au bout des PV
+		var bouclier := clampf(img[4 + i] / cr["pv_max"], 0.0, 1.0 - part)
+		if bouclier > 0.0:
+			calque.draw_rect(Rect2(x + 300 * part, y, 300 * bouclier, 16), Color("#cfe3f2"))
 		calque.draw_rect(Rect2(x, y, 300, 16), Palette.CASE_BORD, false, 1.0)
 		calque.draw_string(police, Vector2(x, y + 13), "%d / %d" % [maxi(ceili(img[i]), 0), cr["pv_max"]],
 			HORIZONTAL_ALIGNMENT_CENTER, 300, 13, Palette.TEXTE)

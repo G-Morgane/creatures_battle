@@ -170,16 +170,22 @@ func _decrire(cr: Dictionary) -> String:
 	var aff := nid.affinites()
 	var lignes := [
 		"[b]%s[/b]   [color=#%s]%s[/color]" % [cr["nom"], Palette.TEXTE_DOUX.to_html(false), Data.FORMES[cr["forme"]]["passif"]],
-		"Feu %d   Nuit %d" % [aff.get("feu", 0), aff.get("nuit", 0)],
+		"Feu %d   Nuit %d   Terre %d   Vent %d" % [aff.get("feu", 0), aff.get("nuit", 0), aff.get("terre", 0), aff.get("vent", 0)],
 		"PV %d   Attaque %.0f   Une attaque toutes les %.2f s   Vol de vie %d %%" % [
 			cr["pv_max"], cr["attaque"], cr["intervalle"], roundi(cr["vol_de_vie"] * 100)],
 	]
+	if cr["bouclier"] > 0.0 or cr["esquive"] > 0.0:
+		lignes.append("Bouclier de départ %d   Esquive %d %%" % [cr["bouclier"], roundi(cr["esquive"] * 100)])
 	for s in cr["sorts"]:
 		var d := "[b]%s%s[/b] (toutes les %.1f s)" % ["Cavalier, " if s["cavalier"] else "", s["nom"], s["recharge"]]
 		if s["esquive"]:
 			d += " : esquive la prochaine attaque"
-		else:
+		elif s["coups"] > 0:
 			d += " : %d x %.1f dégâts" % [s["coups"], s["degats"]]
+		else:
+			d += " :"
+		if s["bouclier"] > 0.0:
+			d += " +%d bouclier" % roundi(s["bouclier"])
 		if s["perce"]:
 			d += ", ignore l'esquive"
 		if s["execution"]:

@@ -15,16 +15,26 @@ const INTERVALLE_BASE := 1.0   # secondes entre deux attaques de base
 const FORMES := {
 	"feu":   {"nom": "Phénix",        "passif": "Renaît une fois à 25 % de PV"},
 	"nuit":  {"nom": "Chauve-souris", "passif": "Vol de vie sur les attaques de base"},
+	"terre": {"nom": "Tortue",        "passif": "Fatigue de l'adversaire 10 s plus tôt, la sienne réduite de moitié"},
+	"vent":  {"nom": "Cheval",        "passif": "15 % d'esquive, chaque esquive lance un éclair"},
 	"":      {"nom": "Informe",       "passif": "Aucun"},
 }
 
 const RENAISSANCE_PV := 0.25
 const VOL_DE_VIE_NUIT := 0.15
+# Tortue : veut des combats longs, joue sur la fatigue (mort subite).
+const TORTUE_AVANCE_FATIGUE := 10.0
+const TORTUE_FATIGUE_MULT := 0.5
+# Cheval : esquive au hasard (tirage deterministe par combat), riposte par l'eclair.
+const ESQUIVE_CHEVAL := 0.15
+const ESQUIVE_MAX := 0.5
+const ECLAIR_DEGATS := 10.0
 
 # --- combat ----------------------------------------------------------------
 
 const PAS := 0.1
 const MORT_SUBITE := 30.0      # apres, degats croissants des deux cotes
+const FATIGUE_RAMPE := 2.0     # degats par seconde gagnes chaque seconde de fatigue
 const DUREE_MAX := 90.0
 const BRULURE_DPS := 3.0
 const BRULURE_DUREE := 3.0
@@ -32,6 +42,7 @@ const BRULURE_DUREE := 3.0
 # --- reliques --------------------------------------------------------------
 
 # type : essence (stats), sort (actif avec recharge), catalyseur (modifie ses voisins)
+# Essences : attaque, vitesse, vol_de_vie, pv, bouclier (au depart), esquive (chance).
 # Un sort gagne `par_affinite` par point d'affinite dans son element.
 const RELIQUES := {
 	# feu
@@ -52,6 +63,24 @@ const RELIQUES := {
 		"recharge": 6.0, "esquive": true},
 	"lune_creuse":    {"nom": "Lune creuse",    "element": "nuit", "affinite": 1, "type": "catalyseur",
 		"effet": "vol_de_vie", "valeur": 0.30},
+	# terre : encaisser, durer, laisser la fatigue faire le reste
+	"pierre":         {"nom": "Pierre",         "element": "terre", "affinite": 2, "type": "essence",
+		"pv": 40.0},
+	"ecaille":        {"nom": "Écaille",        "element": "terre", "affinite": 1, "type": "essence",
+		"bouclier": 30.0},
+	"rempart":        {"nom": "Rempart",        "element": "terre", "affinite": 1, "type": "sort",
+		"recharge": 6.0, "bouclier": 15.0, "par_affinite": 3.0},
+	"socle":          {"nom": "Socle",          "element": "terre", "affinite": 1, "type": "catalyseur",
+		"effet": "bouclier", "valeur": 0.4},
+	# vent : vitesse, esquive, coups rapides
+	"sabot":          {"nom": "Sabot",          "element": "vent",  "affinite": 2, "type": "essence",
+		"attaque": 1.5, "vitesse": 0.10},
+	"crin":           {"nom": "Crin",           "element": "vent",  "affinite": 1, "type": "essence",
+		"esquive": 0.06},
+	"rafale":         {"nom": "Rafale",         "element": "vent",  "affinite": 1, "type": "sort",
+		"recharge": 3.0, "degats": 4.0, "par_affinite": 0.4, "coups": 3},
+	"girouette":      {"nom": "Girouette",      "element": "vent",  "affinite": 1, "type": "catalyseur",
+		"effet": "recharge", "valeur": 0.25},
 	# armes : le cavalier en tient une seule et lance son propre sort.
 	# Les catalyseurs voisins s'appliquent aussi a ce sort.
 	"baton_braise":   {"nom": "Bâton de braise","element": "feu",   "affinite": 1, "type": "arme",

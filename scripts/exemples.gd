@@ -20,3 +20,21 @@ static func nid_nuit() -> Nid:
 	n.placer(Vector2i(1, 1), "lune_creuse")
 	n.placer(Vector2i(2, 1), "voile")
 	return n
+
+static func nid_terre() -> Nid:
+	var n := Nid.new()
+	n.placer(Vector2i(0, 0), "pierre")
+	n.placer(Vector2i(1, 0), "pierre")
+	n.placer(Vector2i(0, 1), "ecaille")
+	n.placer(Vector2i(1, 1), "rempart")
+	n.placer(Vector2i(2, 1), "socle")
+	return n
+
+static func nid_vent() -> Nid:
+	var n := Nid.new()
+	n.placer(Vector2i(0, 0), "sabot")
+	n.placer(Vector2i(1, 0), "sabot")
+	n.placer(Vector2i(0, 1), "crin")
+	n.placer(Vector2i(1, 1), "rafale")
+	n.placer(Vector2i(2, 1), "girouette")
+	return n

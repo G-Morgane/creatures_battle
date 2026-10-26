@@ -41,7 +41,8 @@ func _draw() -> void:
 		draw_rect(Rect2(Vector2.ZERO, size), Palette.PANNEAU)
 	var c: Dictionary = Palette.ELEMENTS[forme]
 	var echelle := minf(0.75 + 0.04 * affinite, 1.25) * pulse
-	var flotte := sin(t * 2.0) * 6.0 if forme != "" else 0.0
+	# seules les montures ailees flottent
+	var flotte := sin(t * 2.0) * 6.0 if forme in ["feu", "nuit"] else 0.0
 	var sens := -1.0 if miroir else 1.0
 	var centre := size / 2 + Vector2(elan * sens, 45 + flotte)
 	# ombre au sol, qui ne flotte pas
@@ -53,6 +54,10 @@ func _draw() -> void:
 			_phenix(c)
 		"nuit":
 			_chauve_souris(c)
+		"terre":
+			_tortue(c)
+		"vent":
+			_cheval(c)
 		_:
 			_informe(c)
 	_cavalier(c)
@@ -96,6 +101,52 @@ func _chauve_souris(c: Dictionary) -> void:
 	draw_colored_polygon(PackedVector2Array([Vector2(-8, -40), Vector2(-4, -30), Vector2(0, -40)]), Color.WHITE)
 	draw_colored_polygon(PackedVector2Array([Vector2(0, -40), Vector2(4, -30), Vector2(8, -40)]), Color.WHITE)
 
+func _tortue(c: Dictionary) -> void:
+	var pas := sin(t * 2.0) * 4.0
+	# pattes courtes et tete qui sort de la carapace
+	for x in [-55, -20, 25, 55]:
+		draw_rect(Rect2(x - 12, 30 + (pas if x < 0 else -pas) * 0.5, 24, 40), c["fond"].lightened(0.3))
+	draw_circle(Vector2(95 + pas, 10), 24, c["fond"].lightened(0.3))
+	draw_circle(Vector2(104 + pas, 4), 4, Color.WHITE)
+	# carapace en dome, avec ses plaques
+	var dome := PackedVector2Array()
+	for i in 17:
+		var a := PI + PI * i / 16.0
+		dome.append(Vector2(cos(a) * 90, sin(a) * 70 + 40))
+	draw_colored_polygon(dome, c["vif"].darkened(0.2))
+	draw_polyline(dome, c["clair"], 3.0)
+	for p in [Vector2(-40, 5), Vector2(0, -15), Vector2(40, 5), Vector2(-15, 25), Vector2(25, 25)]:
+		var hexa := PackedVector2Array()
+		for k in 7:
+			hexa.append(p + Vector2(cos(TAU * k / 6.0), sin(TAU * k / 6.0)) * 16)
+		draw_polyline(hexa, c["clair"].darkened(0.2), 2.0)
+	draw_line(Vector2(-92, 40), Vector2(92, 40), c["clair"], 4.0)
+
+func _cheval(c: Dictionary) -> void:
+	var galop := sin(t * 7.0)
+	var robe: Color = c["clair"]
+	# pattes au galop
+	for k in 4:
+		var x := -50.0 + k * 33.0
+		var dx := galop * 14.0 * (1 if k % 2 == 0 else -1)
+		draw_line(Vector2(x, 15), Vector2(x + dx, 90), robe.darkened(0.15), 9.0)
+	# queue
+	draw_colored_polygon(PackedVector2Array([Vector2(-70, -20), Vector2(-120, 10 + galop * 8), Vector2(-110, 40 + galop * 6), Vector2(-75, 0)]), c["vif"])
+	# corps, encolure, tete
+	var corps := PackedVector2Array()
+	for i in 20:
+		var a := TAU * i / 20.0
+		corps.append(Vector2(cos(a) * 78, sin(a) * 36 - 5))
+	draw_colored_polygon(corps, robe)
+	draw_colored_polygon(PackedVector2Array([Vector2(45, -25), Vector2(85, -85), Vector2(105, -70), Vector2(75, -5)]), robe)
+	draw_colored_polygon(PackedVector2Array([Vector2(80, -95), Vector2(130, -70), Vector2(125, -55), Vector2(88, -62)]), robe)
+	draw_circle(Vector2(98, -80), 4, c["fond"])
+	draw_colored_polygon(PackedVector2Array([Vector2(84, -96), Vector2(88, -112), Vector2(94, -94)]), robe)
+	# criniere au vent
+	for k in 4:
+		var b := Vector2(80 - k * 9, -88 + k * 16)
+		draw_colored_polygon(PackedVector2Array([b, b + Vector2(-26 - galop * 6, 4), b + Vector2(-6, 12)]), c["vif"])
+
 func _informe(c: Dictionary) -> void:
 	var pts := PackedVector2Array()
 	for i in 24:
@@ -108,7 +159,12 @@ func _informe(c: Dictionary) -> void:
 
 # Cavalier encapuchonne : visage sombre, deux yeux, cape a la couleur de l'element.
 func _cavalier(c: Dictionary) -> void:
-	var dos := Vector2(-38, -30) if forme == "nuit" else Vector2(-10, -60)
+	var dos := Vector2(-10, -60)
+	match forme:
+		"nuit":
+			dos = Vector2(-38, -30)
+		"terre":
+			dos = Vector2(-10, -78)
 	var vent := sin(t * 3.0) * 6.0
 	draw_colored_polygon(PackedVector2Array([dos + Vector2(-6, -40), dos + Vector2(-50 + vent, 20), dos + Vector2(-20, 24), dos + Vector2(10, -30)]), c["vif"].darkened(0.1))
 	draw_colored_polygon(PackedVector2Array([dos + Vector2(-16, -36), dos + Vector2(16, -36), dos + Vector2(20, 14), dos + Vector2(-20, 14)]), c["vif"])
