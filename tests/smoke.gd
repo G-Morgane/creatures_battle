@@ -11,6 +11,7 @@ func _ready() -> void:
 	ok = _renaissance() and ok
 	ok = _ecran() and ok
 	ok = _armes() and ok
+	ok = _combat_anime() and ok
 	print("SMOKE: ", "OK" if ok else "ECHEC")
 	get_tree().quit(0 if ok else 1)
 
@@ -99,3 +100,19 @@ func _armes() -> bool:
 	m._agir(m.cotes[0], m.cotes[1])
 	var attendu: float = 30.0 - 2.0 * faux.eclore()["sorts"][0]["degats"]
 	return _verifier(is_equal_approx(m.cotes[1]["pv"], attendu), "moisson double sous 40 %% (pv %s, attendu %s)" % [m.cotes[1]["pv"], attendu]) and ok
+
+# L'ecran rejoue le combat jusqu'au bout sans rien recalculer.
+func _combat_anime() -> bool:
+	var feu := Exemples.nid_feu()
+	feu.placer(Vector2i(2, 0), "baton_braise")
+	var e := CombatScreen.new(feu.eclore(), Exemples.nid_ombre().eclore())
+	add_child(e)
+	var ok := _verifier(e.combat.images.size() == roundi(e.combat.t / Data.PAS), "une image de PV par pas")
+	ok = _verifier(e.combat.evenements.any(func(ev): return ev["type"] == "sort" and ev["cavalier"]), "evenement de sort du cavalier") and ok
+	for i in 2000:
+		e._process(0.05)
+		if e.fini:
+			break
+	ok = _verifier(e.fini and e.prochain == e.combat.evenements.size(), "lecture jusqu'a la fin") and ok
+	e.queue_free()
+	return ok

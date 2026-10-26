@@ -26,5 +26,6 @@ godot --headless --path . res://tests/smoke.tscn
 - `scripts/nid.gd` : grille, affinités, éclosion de la créature
 - `scripts/combat.gd` : simulation déterministe par pas fixe
 - `scripts/nid_screen.gd` : écran du Nid (glisser-déposer)
+- `scripts/combat_screen.gd` : rejoue le combat simulé (barres de PV, sorts, brûlure)
 - `scripts/creature_vue.gd` : monture et cavalier dessinés, en direct
 - `scripts/exemples.gd` : Nids de démo

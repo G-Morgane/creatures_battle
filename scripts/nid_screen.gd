@@ -5,6 +5,8 @@ extends Control
 # Glisser une relique dans une case la pose (ou remplace), glisser une case
 # vers une autre echange, la ramener au reliquaire ou clic droit la retire.
 
+signal combattre(adverse: Nid)
+
 const TUILE := Vector2(124, 64)
 const CASE_TAILLE := Vector2(104, 104)
 
@@ -12,7 +14,6 @@ var nid := Nid.new()
 var cases_ui := {}   # Vector2i -> CaseNid
 var vue: CreatureVue
 var infos: RichTextLabel
-var journal: RichTextLabel
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -96,9 +97,6 @@ func _panneau() -> Control:
 	combattre.text = "Combattre un Nid d'exemple"
 	combattre.pressed.connect(_combattre)
 	col.add_child(combattre)
-	journal = _texte()
-	journal.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	col.add_child(journal)
 	return col
 
 func _texte() -> RichTextLabel:
@@ -134,7 +132,6 @@ func rafraichir() -> void:
 	var cr := nid.eclore()
 	vue.montrer(cr["forme"], _affinite_totale(), cr["arme"])
 	infos.text = _decrire(cr)
-	journal.text = ""
 
 func _affinite_totale() -> int:
 	var total := 0
@@ -168,11 +165,7 @@ func _decrire(cr: Dictionary) -> String:
 	return "\n".join(lignes)
 
 func _combattre() -> void:
-	var adverse := Exemples.nid_feu() if nid.forme() == "ombre" else Exemples.nid_ombre()
-	var combat := Combat.new(nid.eclore(), adverse.eclore())
-	var v := combat.simuler()
-	var bilan := "Égalité." if v == -1 else ("Victoire !" if v == 0 else "Défaite.")
-	journal.text = "[b]%s[/b]\n%s" % [bilan, "\n".join(combat.journal)]
+	combattre.emit(Exemples.nid_feu() if nid.forme() == "ombre" else Exemples.nid_ombre())
 
 # --- elements d'interface --------------------------------------------------
 

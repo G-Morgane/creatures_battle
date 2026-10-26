@@ -7,11 +7,15 @@ extends RefCounted
 var t := 0.0
 var cotes: Array = []
 var journal: Array[String] = []
+# Pour rejouer le combat a l'ecran : un evenement par action, et les PV
+# des deux cotes a chaque pas ([pv0, pv1, brule0, brule1]).
+var evenements: Array = []
+var images: Array = []
 
 func _init(a: Dictionary, b: Dictionary) -> void:
-	cotes = [_etat(a), _etat(b)]
+	cotes = [_etat(a, 0), _etat(b, 1)]
 
-func _etat(cr: Dictionary) -> Dictionary:
+func _etat(cr: Dictionary, i: int) -> Dictionary:
 	var sorts := []
 	for s in cr["sorts"]:
 		var copie: Dictionary = s.duplicate()
@@ -19,6 +23,7 @@ func _etat(cr: Dictionary) -> Dictionary:
 		sorts.append(copie)
 	return {
 		"cr": cr,
+		"cote": i,
 		"pv": cr["pv_max"],
 		"prochaine_attaque": cr["intervalle"],
 		"sorts": sorts,
@@ -36,6 +41,7 @@ func simuler() -> int:
 		for i in 2:
 			_subir(cotes[i])
 		var morts := [_mort(cotes[0]), _mort(cotes[1])]
+		images.append([cotes[0]["pv"], cotes[1]["pv"], cotes[0]["brulure"] > 0.0, cotes[1]["brulure"] > 0.0])
 		if morts[0] or morts[1]:
 			if morts[0] and morts[1]:
 				_noter("Les deux tombent ensemble.")
@@ -49,6 +55,7 @@ func simuler() -> int:
 func _agir(moi: Dictionary, cible: Dictionary) -> void:
 	if t >= moi["prochaine_attaque"]:
 		moi["prochaine_attaque"] += moi["cr"]["intervalle"]
+		_evenement(moi, {"type": "attaque"})
 		_frapper(moi, cible, moi["cr"]["attaque"], moi["cr"]["vol_de_vie"])
 	for s in moi["sorts"]:
 		if t < s["prochain"]:
@@ -56,10 +63,13 @@ func _agir(moi: Dictionary, cible: Dictionary) -> void:
 		s["prochain"] += s["recharge"]
 		if s["esquive"]:
 			moi["esquive"] = true
+			_evenement(moi, {"type": "voile"})
 			_noter("%s se voile." % moi["cr"]["nom"])
 			continue
 		var qui: String = moi["cr"]["nom"] + (" : le cavalier" if s["cavalier"] else "")
 		_noter("%s lance %s." % [qui, s["nom"]])
+		_evenement(moi, {"type": "sort", "nom": s["nom"], "cavalier": s["cavalier"],
+			"element": s["element"], "coups": s["coups"]})
 		for k in s["coups"]:
 			var degats: float = s["degats"]
 			if s["execution"] and cible["pv"] < cible["cr"]["pv_max"] * Data.SEUIL_EXECUTION:
@@ -71,6 +81,7 @@ func _agir(moi: Dictionary, cible: Dictionary) -> void:
 func _frapper(moi: Dictionary, cible: Dictionary, degats: float, vol: float, perce := false) -> void:
 	if cible["esquive"] and not perce:
 		cible["esquive"] = false
+		_evenement(cible, {"type": "esquive"})
 		_noter("%s esquive." % cible["cr"]["nom"])
 		return
 	cible["pv"] -= degats
@@ -89,9 +100,15 @@ func _mort(moi: Dictionary) -> bool:
 	if moi["renaissance"]:
 		moi["renaissance"] = false
 		moi["pv"] = moi["cr"]["pv_max"] * Data.RENAISSANCE_PV
+		_evenement(moi, {"type": "renaissance"})
 		_noter("%s renaît de ses cendres !" % moi["cr"]["nom"])
 		return false
 	return true
+
+func _evenement(moi: Dictionary, e: Dictionary) -> void:
+	e["t"] = t
+	e["cote"] = moi["cote"]
+	evenements.append(e)
 
 func _noter(texte: String) -> void:
 	journal.append("[%5.1f s] %s" % [t, texte])

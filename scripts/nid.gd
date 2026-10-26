@@ -73,6 +73,7 @@ func eclore() -> Dictionary:
 	var f := forme()
 	var cr := {
 		"forme": f,
+		"affinite": aff.values().reduce(func(s, v): return s + v, 0),
 		"nom": Data.FORMES[f]["nom"],
 		"pv_max": Data.PV_BASE,
 		"attaque": Data.ATTAQUE_BASE,
@@ -100,6 +101,7 @@ func _sort(c: Vector2i, r: Dictionary, aff: Dictionary) -> Dictionary:
 	var s := {
 		"nom": r.get("sort", r["nom"]),
 		"cavalier": r["type"] == "arme",
+		"element": r["element"],
 		"perce": r.get("perce", false),
 		"execution": r.get("execution", false),
 		"recharge": r["recharge"],

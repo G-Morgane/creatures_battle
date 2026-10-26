@@ -7,6 +7,11 @@ extends Control
 var forme := ""
 var affinite := 0
 var arme = null   # id de relique ou null
+# En arene : pas de panneau, la monture de droite regarde a gauche,
+# et elan la pousse vers l'adversaire quand elle frappe.
+var fond := true
+var miroir := false
+var elan := 0.0
 var t := 0.0
 var pulse := 1.0
 
@@ -20,20 +25,29 @@ func montrer(f: String, a: int, ar = null) -> void:
 		create_tween().tween_property(self, "pulse", 1.0, 0.35).set_trans(Tween.TRANS_BACK)
 	queue_redraw()
 
+# Position (dans le repere de la vue) d'ou partent les sorts.
+func source(cavalier: bool) -> Vector2:
+	var sens := -1.0 if miroir else 1.0
+	var echelle := minf(0.75 + 0.04 * affinite, 1.25)
+	var p := Vector2(20, -150) if cavalier else Vector2(70, -30)
+	return size / 2 + Vector2(0, 45) + Vector2(p.x * sens, p.y) * echelle
+
 func _process(delta: float) -> void:
 	t += delta
 	queue_redraw()
 
 func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, size), Palette.PANNEAU)
+	if fond:
+		draw_rect(Rect2(Vector2.ZERO, size), Palette.PANNEAU)
 	var c: Dictionary = Palette.ELEMENTS[forme]
 	var echelle := minf(0.75 + 0.04 * affinite, 1.25) * pulse
 	var flotte := sin(t * 2.0) * 6.0 if forme != "" else 0.0
-	var centre := size / 2 + Vector2(0, 45 + flotte)
+	var sens := -1.0 if miroir else 1.0
+	var centre := size / 2 + Vector2(elan * sens, 45 + flotte)
 	# ombre au sol, qui ne flotte pas
 	draw_set_transform(size / 2 + Vector2(0, 130), 0.0, Vector2(echelle, echelle * 0.25))
 	draw_circle(Vector2.ZERO, 80, Color(0, 0, 0, 0.35))
-	draw_set_transform(centre, 0.0, Vector2(echelle, echelle))
+	draw_set_transform(centre, 0.0, Vector2(echelle * sens, echelle))
 	match forme:
 		"feu":
 			_phenix(c)

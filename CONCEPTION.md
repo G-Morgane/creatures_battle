@@ -105,6 +105,8 @@ On adapte son Nid à ce qu'on affronte, pas à une couleur.
   Indispensable pour rejouer un combat asynchrone à l'identique.
 - Attaques de base selon la vitesse, sorts sur leur recharge.
 - Mort subite après 30 s : dégâts croissants des deux côtés, pas de match nul interminable.
+- **Affichage = relecture** : le combat est simulé en entier d'abord, l'écran rejoue
+  ses événements et ses PV. L'animation ne peut donc jamais changer le résultat.
 
 ---
 
