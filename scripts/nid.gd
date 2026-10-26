@@ -6,9 +6,13 @@ extends RefCounted
 
 const VOISINAGE := [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 
-var cases := {}   # Vector2i -> id de relique
+var cases := {}     # Vector2i -> id de relique
+var niveaux := {}   # Vector2i -> niveau, absent = 1
 
-func placer(c: Vector2i, id: String) -> bool:
+func niveau(c: Vector2i) -> int:
+	return niveaux.get(c, 1)
+
+func placer(c: Vector2i, id: String, niv := 1) -> bool:
 	if c.x < 0 or c.y < 0 or c.x >= Data.NID_L or c.y >= Data.NID_H:
 		return false
 	if cases.has(c) or not Data.RELIQUES.has(id):
@@ -16,7 +20,66 @@ func placer(c: Vector2i, id: String) -> bool:
 	if Data.RELIQUES[id]["type"] == "arme" and arme() != null:
 		return false
 	cases[c] = id
+	if niv > 1:
+		niveaux[c] = niv
 	return true
+
+# --- fusion ----------------------------------------------------------------
+# 3 copies d'une relique au meme niveau fusionnent en une seule, niveau +1,
+# a la place de celle qu'on vient de poser. Les armes ne fusionnent pas
+# (une seule par Nid).
+
+func copies(id: String, niv: int) -> Array:
+	return cases.keys().filter(func(c): return cases[c] == id and niveau(c) == niv)
+
+func peut_fusionner(id: String, niv: int) -> bool:
+	return Data.RELIQUES[id]["type"] != "arme" and niv < Data.NIVEAU_MAX
+
+# Fusionne en cascade a partir de c. Renvoie true si au moins une fusion a eu lieu.
+func fusionner(c: Vector2i) -> bool:
+	var fusion := false
+	while cases.has(c) and peut_fusionner(cases[c], niveau(c)):
+		var autres := copies(cases[c], niveau(c)).filter(func(a): return a != c)
+		if autres.size() < 2:
+			break
+		for a in autres.slice(0, 2):
+			retirer(a)
+		niveaux[c] = niveau(c) + 1
+		fusion = true
+	return fusion
+
+# Poser id en c : case vide, ou case qui porte deja la meme relique au niveau 1
+# si cette pose complete un trio (utile quand le Nid est plein).
+func peut_ajouter(c: Vector2i, id: String) -> bool:
+	if not cases.has(c):
+		return accepte(c, id, null) and c.x >= 0 and c.y >= 0 and c.x < Data.NID_L and c.y < Data.NID_H
+	return cases[c] == id and niveau(c) == 1 and peut_fusionner(id, 1) and copies(id, 1).size() >= 2
+
+func ajouter(c: Vector2i, id: String) -> bool:
+	if not peut_ajouter(c, id):
+		return false
+	if not cases.has(c):
+		placer(c, id)
+		fusionner(c)
+		return true
+	# la pose sur une copie compte comme la troisieme : on en retire une autre
+	retirer(copies(id, 1).filter(func(a): return a != c)[0])
+	niveaux[c] = 2
+	fusionner(c)
+	return true
+
+# Echange deux cases (ou deplace si b est vide), niveaux compris.
+func deplacer(a: Vector2i, b: Vector2i) -> void:
+	var ida = cases.get(a)
+	var idb = cases.get(b)
+	var na := niveau(a)
+	var nb := niveau(b)
+	retirer(a)
+	retirer(b)
+	if ida != null:
+		placer(b, ida, na)
+	if idb != null:
+		placer(a, idb, nb)
 
 # Deposer id en c, venant de depuis (ou du reliquaire si null), est-il permis ?
 func accepte(c: Vector2i, id: String, depuis) -> bool:
@@ -36,6 +99,7 @@ func arme():
 
 func retirer(c: Vector2i) -> void:
 	cases.erase(c)
+	niveaux.erase(c)
 
 func voisins(c: Vector2i) -> Array:
 	var v := []
@@ -46,11 +110,12 @@ func voisins(c: Vector2i) -> Array:
 
 func affinites() -> Dictionary:
 	var a := {}
-	for id in cases.values():
-		var r: Dictionary = Data.RELIQUES[id]
+	for c in cases:
+		var r: Dictionary = Data.RELIQUES[cases[c]]
 		if r["element"] == "":
 			continue
-		a[r["element"]] = a.get(r["element"], 0) + r["affinite"]
+		# une relique fusionnee garde l'affinite des trois copies
+		a[r["element"]] = a.get(r["element"], 0) + r["affinite"] * int(pow(3, niveau(c) - 1))
 	return a
 
 # Element dominant, "" si vide ou egalite (en attendant les hybrides).
@@ -86,29 +151,32 @@ func eclore() -> Dictionary:
 	var vitesse := 0.0
 	for c in cases:
 		var r: Dictionary = Data.RELIQUES[cases[c]]
+		var m: float = Data.NIVEAU_MULT[niveau(c)]
 		match r["type"]:
 			"essence":
-				cr["attaque"] += r.get("attaque", 0.0)
-				cr["vol_de_vie"] += r.get("vol_de_vie", 0.0)
-				vitesse += r.get("vitesse", 0.0)
+				cr["attaque"] += r.get("attaque", 0.0) * m
+				cr["vol_de_vie"] += r.get("vol_de_vie", 0.0) * m
+				vitesse += r.get("vitesse", 0.0) * m
 			"sort", "arme":
 				cr["sorts"].append(_sort(c, r, aff))
 	cr["intervalle"] = Data.INTERVALLE_BASE / (1.0 + vitesse)
 	return cr
 
 # Un sort lit ses catalyseurs voisins au moment de l'eclosion.
+# Le niveau multiplie les degats ; un sort sans degats (Voile) recharge plus vite.
 func _sort(c: Vector2i, r: Dictionary, aff: Dictionary) -> Dictionary:
+	var m: float = Data.NIVEAU_MULT[niveau(c)]
 	var s := {
 		"nom": r.get("sort", r["nom"]),
 		"cavalier": r["type"] == "arme",
 		"element": r["element"],
 		"perce": r.get("perce", false),
 		"execution": r.get("execution", false),
-		"recharge": r["recharge"],
-		"degats": r.get("degats", 0.0) + r.get("par_affinite", 0.0) * aff.get(r["element"], 0),
+		"recharge": r["recharge"] / (1.0 + 0.5 * (niveau(c) - 1)) if r.get("esquive", false) else r["recharge"],
+		"degats": (r.get("degats", 0.0) + r.get("par_affinite", 0.0) * aff.get(r["element"], 0)) * m,
 		"coups": r.get("coups", 0),
 		"esquive": r.get("esquive", false),
-		"brulure": false,
+		"brulure": 0.0,   # force de la brulure, 0 = aucune
 		"vol_de_vie": 0.0,
 	}
 	for v in voisins(c):
@@ -117,7 +185,7 @@ func _sort(c: Vector2i, r: Dictionary, aff: Dictionary) -> Dictionary:
 			continue
 		match cat["effet"]:
 			"brulure":
-				s["brulure"] = true
+				s["brulure"] = maxf(s["brulure"], Data.NIVEAU_MULT[niveau(v)])
 			"vol_de_vie":
-				s["vol_de_vie"] += cat["valeur"]
+				s["vol_de_vie"] += cat["valeur"] * Data.NIVEAU_MULT[niveau(v)]
 	return s

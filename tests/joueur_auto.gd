@@ -24,11 +24,9 @@ func jouer_manche(p: Partie) -> void:
 
 func _aleatoire(p: Partie) -> void:
 	for i in p.offres.size():
-		var libres := _libres(p)
-		if libres.is_empty():
-			return
-		var c: Vector2i = libres[rng.randi() % libres.size()]
-		p.acheter(i, c)
+		var ok := _cases_ok(p, p.offres[i])
+		if not ok.is_empty():
+			p.acheter(i, ok[rng.randi() % ok.size()])
 
 func _simple(p: Partie) -> void:
 	if element == "":
@@ -39,7 +37,7 @@ func _simple(p: Partie) -> void:
 			var c = _case_pour(p, p.offres[i])
 			if c != null:
 				p.acheter(i, c)
-		if relances == RELANCES_MAX or _libres(p).is_empty() or p.bourse < 3 + Partie.PRIX_RELANCE:
+		if relances == RELANCES_MAX or p.bourse < 3 + Partie.PRIX_RELANCE:
 			return
 		p.relancer()
 
@@ -67,20 +65,23 @@ func _ordre(p: Partie) -> Array:
 func _case_pour(p: Partie, id: String):
 	if id == "":
 		return null
-	var libres := _libres(p)
-	if libres.is_empty():
+	var ok := _cases_ok(p, id)
+	if ok.is_empty():
 		return null
 	if Data.RELIQUES[id]["type"] == "catalyseur":
-		for c in libres:
+		for c in ok:
 			for v in p.nid.voisins(c):
 				if Data.RELIQUES[p.nid.cases[v]]["type"] in ["sort", "arme"]:
 					return c
-	return libres[0]
+	return ok[0]
 
-func _libres(p: Partie) -> Array:
+# Cases ou l'on peut poser id : vides, ou copie qui complete un trio.
+func _cases_ok(p: Partie, id: String) -> Array:
 	var l := []
+	if id == "":
+		return l
 	for y in Data.NID_H:
 		for x in Data.NID_L:
-			if not p.nid.cases.has(Vector2i(x, y)):
+			if p.nid.peut_ajouter(Vector2i(x, y), id):
 				l.append(Vector2i(x, y))
 	return l

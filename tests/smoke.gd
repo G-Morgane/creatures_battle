@@ -13,6 +13,7 @@ func _ready() -> void:
 	ok = _armes() and ok
 	ok = _combat_anime() and ok
 	ok = _partie() and ok
+	ok = _fusion() and ok
 	print("SMOKE: ", "OK" if ok else "ECHEC")
 	get_tree().quit(0 if ok else 1)
 
@@ -36,7 +37,7 @@ func _catalyseurs() -> bool:
 	var feu := Exemples.nid_feu().eclore()
 	var nuit := Exemples.nid_nuit().eclore()
 	var nuee: Dictionary = nuit["sorts"].filter(func(s): return s["nom"] == "Nuée")[0]
-	var ok := _verifier(feu["sorts"][0]["brulure"], "foyer voisin -> brulure")
+	var ok := _verifier(feu["sorts"][0]["brulure"] > 0.0, "foyer voisin -> brulure")
 	ok = _verifier(nuee["vol_de_vie"] > 0.0, "lune creuse voisine -> vol de vie") and ok
 	# souffle ardent : 10 + 1,5 x affinite feu (2+2+1+1+1 = 7)
 	return _verifier(is_equal_approx(feu["sorts"][0]["degats"], 20.5), "degats selon affinite") and ok
@@ -84,7 +85,7 @@ func _armes() -> bool:
 	ok = _verifier(n.affinites().is_empty(), "la lance n'a pas d'element") and ok
 	n.placer(Vector2i(1, 0), "foyer")
 	var s: Dictionary = n.eclore()["sorts"][0]
-	ok = _verifier(s["cavalier"] and s["nom"] == "Estoc" and s["brulure"], "sort du cavalier + catalyseur voisin") and ok
+	ok = _verifier(s["cavalier"] and s["nom"] == "Estoc" and s["brulure"] > 0.0, "sort du cavalier + catalyseur voisin") and ok
 	# Estoc perce le Voile : la chauve-souris ne doit jamais esquiver un Estoc.
 	var lance := Nid.new()
 	lance.placer(Vector2i(0, 0), "lance_guet")
@@ -145,3 +146,34 @@ func _partie() -> bool:
 	for i in 3:
 		p.enregistrer(1)
 	return _verifier(p.terminee(), "3 defaites : partie terminee") and ok
+
+func _fusion() -> bool:
+	var n := Nid.new()
+	n.ajouter(Vector2i(0, 0), "braise")
+	n.ajouter(Vector2i(1, 0), "braise")
+	var ok := _verifier(n.cases.size() == 2, "deux copies : pas de fusion")
+	n.ajouter(Vector2i(2, 0), "braise")
+	ok = _verifier(n.cases.size() == 1 and n.niveau(Vector2i(2, 0)) == 2, "trois copies : niveau 2 a la derniere pose") and ok
+	ok = _verifier(n.affinites()["feu"] == 6, "la fusion garde l'affinite") and ok
+	ok = _verifier(is_equal_approx(n.eclore()["attaque"], Data.ATTAQUE_BASE + 2.0 * 2.5), "niveau 2 : attaque x2,5") and ok
+	# pose sur une copie quand le Nid est plein
+	var m := Nid.new()
+	m.ajouter(Vector2i(0, 0), "nuee")
+	m.ajouter(Vector2i(1, 0), "nuee")
+	ok = _verifier(m.peut_ajouter(Vector2i(0, 0), "nuee") and not m.peut_ajouter(Vector2i(0, 0), "voile"), "poser sur une copie qui complete un trio") and ok
+	m.ajouter(Vector2i(0, 0), "nuee")
+	ok = _verifier(m.cases.size() == 1 and m.niveau(Vector2i(0, 0)) == 2, "fusion sur place") and ok
+	ok = _verifier(not m.peut_ajouter(Vector2i(0, 0), "nuee"), "une seule copie : pas de pose dessus") and ok
+	# cascade : 3 niveaux 2 donnent un niveau 3
+	var k := Nid.new()
+	for i in 9:
+		k.ajouter(Vector2i(i % 4, i / 4), "croc_noir")
+	ok = _verifier(k.cases.size() == 1 and k.niveau(k.cases.keys()[0]) == 3, "9 copies : niveau 3") and ok
+	# armes exclues
+	var a := Nid.new()
+	a.ajouter(Vector2i(0, 0), "lance_guet")
+	ok = _verifier(not a.peut_ajouter(Vector2i(0, 0), "lance_guet") and not a.peut_ajouter(Vector2i(1, 0), "lance_guet"), "les armes ne fusionnent pas") and ok
+	ok = _verifier(Partie.prix_revente("braise", 2) == 4, "revente niveau 2 : 9 / 2 = 4") and ok
+	n.deplacer(Vector2i(2, 0), Vector2i(3, 3))
+	ok = _verifier(n.niveau(Vector2i(3, 3)) == 2 and not n.niveaux.has(Vector2i(2, 0)), "deplacer garde le niveau") and ok
+	return ok

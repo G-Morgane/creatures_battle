@@ -40,26 +40,38 @@ Fin de partie : **7 victoires ou 3 défaites**. Une égalité ne compte pas.
 - Tout le hasard passe par une graine : même graine, mêmes boutiques, mêmes adversaires.
 
 En attendant le PvP, l'adversaire est un **fantôme généré** autour d'un élément :
-- **Budget** : tout l'or qu'un joueur aurait reçu jusqu'à cette manche, **+ 3 or par victoire
-  du joueur** (comme en PvP, on affronte des joueurs au même palmarès).
+- **Budget** : tout l'or qu'un joueur aurait reçu jusqu'à cette manche. Un bonus par victoire
+  du joueur existe (`OR_PAR_VICTOIRE`) mais est à 0 depuis la fusion.
 - **Soin croissant** : en manche 1 il pose au hasard, à partir de la manche 7 il joue
   comme un joueur correct (arme d'abord, 3 copies maximum d'une relique, catalyseurs à côté d'un sort).
+- Il fusionne aussi : une fois son Nid plein, son or part dans les trios.
 
 Réglage mesuré sur 300 parties par joueur automatique (`tests/simulation.gd`) :
 
 | Joueur | Victoires moyennes | Parties gagnées |
 |---|---|---|
-| Aléatoire | 1,2 | 2 % |
-| Simple (un élément, catalyseurs bien placés) | 2,3 | 15 % |
+| Aléatoire | 1,8 | 5 % |
+| Simple (un élément, catalyseurs bien placés) | 3,1 | 16 % |
 
-### Problème connu : le plafond du Nid
+Répartition du joueur simple : 0 victoire 17 %, 1 : 15 %, 2 : 17 %, 3 : 9 %, 4 : 10 %,
+5 : 10 %, 6 : 6 %, 7 : 16 %.
 
-Le Nid fait 16 cases et se remplit vers la manche 6. Après, l'or ne sert plus à rien et seule
-la composition compte : un bon Nid gagne en boucle, un mauvais ne peut plus se rattraper.
-D'où une répartition en deux bosses (beaucoup de 0 à 2 victoires, un pic à 7, presque rien
-entre 4 et 6). **Aucun réglage de chiffres ne corrige ça.** Il faut une progression de fin
-de partie qui consomme de l'or : fusion (3 copies d'une relique donnent une relique
-de niveau 2), stades d'évolution, ou cases du Nid à débloquer.
+### Fusion
+
+**3 copies d'une relique au même niveau fusionnent** en une seule relique du niveau suivant
+(★ niveau 2, ★★ niveau 3), à la place de la dernière posée.
+- Stats multipliées : x2,5 au niveau 2, x6 au niveau 3. Un peu moins que trois copies
+  (x3), mais deux cases libérées.
+- L'affinité des trois copies est conservée : fusionner ne change pas la forme de la monture.
+- Voile (sans dégâts) : recharge plus rapide. Foyer : brûlure plus forte. Lune creuse : plus de vol de vie.
+- Nid plein : on peut poser une offre **sur une copie** si elle complète un trio.
+- Les armes ne fusionnent pas (une seule par Nid).
+- Revente : la moitié de ce qu'elle a coûté (3 copies par niveau).
+
+C'est la progression de fin de partie : le Nid de 16 cases se remplit vers la manche 6, et
+avant la fusion l'or ne servait plus à rien ensuite. La répartition des victoires était en
+deux bosses (beaucoup de 0 à 2, un pic à 7, presque rien entre 4 et 6). Elle est maintenant
+régulière.
 
 ---
 

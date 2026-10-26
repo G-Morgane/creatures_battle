@@ -28,6 +28,7 @@ func _etat(cr: Dictionary, i: int) -> Dictionary:
 		"prochaine_attaque": cr["intervalle"],
 		"sorts": sorts,
 		"brulure": 0.0,
+		"brulure_force": 0.0,
 		"esquive": false,
 		"renaissance": cr["renaissance"],
 	}
@@ -78,8 +79,9 @@ func _agir(moi: Dictionary, cible: Dictionary) -> void:
 			if s["execution"] and cible["pv"] < cible["cr"]["pv_max"] * Data.SEUIL_EXECUTION:
 				degats *= 2.0
 			_frapper(moi, cible, degats, s["vol_de_vie"], s["perce"])
-		if s["brulure"]:
+		if s["brulure"] > 0.0:
 			cible["brulure"] = Data.BRULURE_DUREE
+			cible["brulure_force"] = maxf(cible["brulure_force"], s["brulure"])
 
 func _frapper(moi: Dictionary, cible: Dictionary, degats: float, vol: float, perce := false) -> void:
 	if cible["esquive"] and not perce:
@@ -93,7 +95,9 @@ func _frapper(moi: Dictionary, cible: Dictionary, degats: float, vol: float, per
 func _subir(moi: Dictionary) -> void:
 	if moi["brulure"] > 0.0:
 		moi["brulure"] -= Data.PAS
-		moi["pv"] -= Data.BRULURE_DPS * Data.PAS
+		moi["pv"] -= Data.BRULURE_DPS * moi["brulure_force"] * Data.PAS
+		if moi["brulure"] <= 0.0:
+			moi["brulure_force"] = 0.0
 	if t > Data.MORT_SUBITE:
 		moi["pv"] -= (t - Data.MORT_SUBITE) * Data.PAS
 

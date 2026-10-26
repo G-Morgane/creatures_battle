@@ -62,5 +62,11 @@ const RELIQUES := {
 		"sort": "Moisson", "recharge": 6.0, "degats": 6.0, "par_affinite": 1.0, "coups": 1, "execution": true},
 }
 
+# Fusion : 3 copies d'un niveau donnent 1 relique du niveau suivant.
+# Multiplicateur des stats par niveau (index 0 inutilise). Le niveau 2 vaut un
+# peu moins que trois copies (x2,5 contre x3) mais libere deux cases.
+const NIVEAU_MAX := 3
+const NIVEAU_MULT := [0.0, 1.0, 2.5, 6.0]
+
 # Estoc ignore l'esquive. Moisson double ses degats sous ce seuil de PV.
 const SEUIL_EXECUTION := 0.4

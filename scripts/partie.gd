@@ -28,9 +28,10 @@ func _init(g := 0) -> void:
 static func prix(id: String) -> int:
 	return PRIX[Data.RELIQUES[id]["type"]]
 
-# La revente rend la moitie, jamais moins d'une piece.
-static func prix_revente(id: String) -> int:
-	return maxi(1, prix(id) / 2)
+# La revente rend la moitie de ce que la relique a coute (3 copies par niveau),
+# jamais moins d'une piece.
+static func prix_revente(id: String, niv := 1) -> int:
+	return maxi(1, prix(id) * int(pow(3, niv - 1)) / 2)
 
 func tirer() -> void:
 	var ids := Data.RELIQUES.keys()
@@ -45,16 +46,17 @@ func relancer() -> bool:
 	tirer()
 	return true
 
-# On achete en posant : l'offre va directement dans une case vide du Nid.
+# On achete en posant : l'offre va dans une case vide du Nid, ou sur une copie
+# d'elle-meme si cela complete un trio (fusion).
 func peut_acheter(i: int, c: Vector2i) -> bool:
 	var id: String = offres[i]
-	return id != "" and bourse >= prix(id) and not nid.cases.has(c) and nid.accepte(c, id, null)
+	return id != "" and bourse >= prix(id) and nid.peut_ajouter(c, id)
 
 func acheter(i: int, c: Vector2i) -> bool:
 	if not peut_acheter(i, c):
 		return false
 	var id: String = offres[i]
-	nid.placer(c, id)
+	nid.ajouter(c, id)
 	bourse -= prix(id)
 	offres[i] = ""
 	return true
@@ -62,7 +64,7 @@ func acheter(i: int, c: Vector2i) -> bool:
 func vendre(c: Vector2i) -> void:
 	if not nid.cases.has(c):
 		return
-	bourse += prix_revente(nid.cases[c])
+	bourse += prix_revente(nid.cases[c], nid.niveau(c))
 	nid.retirer(c)
 
 # vainqueur : 0 le joueur, 1 l'adversaire, -1 egalite (ne compte pas).
@@ -86,8 +88,9 @@ func terminee() -> bool:
 const SOIN_MANCHES := 6.0
 const COPIES_MAX := 3
 # Comme en PvP, on affronte des joueurs au meme palmares : chaque victoire
-# donne de l'or en plus a l'adversaire.
-const OR_PAR_VICTOIRE := 3
+# peut donner de l'or en plus a l'adversaire. A 0 depuis la fusion : avec elle,
+# tout bonus rendait la partie trop dure (voir tests/simulation.gd).
+const OR_PAR_VICTOIRE := 0
 
 func adversaire() -> Nid:
 	var r := RandomNumberGenerator.new()
@@ -98,12 +101,14 @@ func adversaire() -> Nid:
 	var budget := OR_PAR_MANCHE * manche + OR_PAR_VICTOIRE * victoires
 	var n := Nid.new()
 	var ids := Data.RELIQUES.keys().filter(func(id): return Data.RELIQUES[id]["element"] in [element, ""])
-	var libres := []
+	var grille := []
 	for y in Data.NID_H:
 		for x in Data.NID_L:
-			libres.append(Vector2i(x, y))
-	while not libres.is_empty():
-		var possibles := ids.filter(func(id): return prix(id) <= budget and (Data.RELIQUES[id]["type"] != "arme" or n.arme() == null))
+			grille.append(Vector2i(x, y))
+	# Chaque pose remplit une case vide ou complete un trio : une fois le Nid
+	# plein, l'or part dans les fusions.
+	while true:
+		var possibles := ids.filter(func(id): return prix(id) <= budget and grille.any(func(c): return n.peut_ajouter(c, id)))
 		if possibles.is_empty():
 			break
 		var soigne := r.randf() < soin
@@ -115,13 +120,13 @@ func adversaire() -> Nid:
 			elif not varies.is_empty():
 				possibles = varies
 		var id: String = possibles[r.randi() % possibles.size()]
-		var c: Vector2i = libres[r.randi() % libres.size()]
+		var cases_ok := grille.filter(func(c): return n.peut_ajouter(c, id))
+		var c: Vector2i = cases_ok[r.randi() % cases_ok.size()]
 		if soigne and Data.RELIQUES[id]["type"] == "catalyseur":
-			for l in libres:
+			for l in cases_ok:
 				if n.voisins(l).any(func(v): return Data.RELIQUES[n.cases[v]]["type"] in ["sort", "arme"]):
 					c = l
 					break
-		libres.erase(c)
-		n.placer(c, id)
+		n.ajouter(c, id)
 		budget -= prix(id)
 	return n

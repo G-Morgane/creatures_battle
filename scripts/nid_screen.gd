@@ -77,7 +77,7 @@ func _boutique() -> Control:
 		rafraichir())
 	col.add_child(relance)
 	var aide := Label.new()
-	aide.text = "Glisse une offre dans le Nid pour l'acheter.\nRamène une relique ici ou clic droit\npour la revendre (moitié du prix).\nUne seule arme pour le cavalier."
+	aide.text = "Glisse une offre dans le Nid pour l'acheter.\n3 copies fusionnent en niveau 2 (★).\nRamène une relique ici ou clic droit\npour la revendre (moitié du prix).\nUne seule arme pour le cavalier."
 	aide.add_theme_color_override("font_color", Palette.TEXTE_DOUX)
 	col.add_child(aide)
 	return col
@@ -128,13 +128,11 @@ func _texte() -> RichTextLabel:
 func deposer(c: Vector2i, id: String, depuis) -> void:
 	if depuis == c or not nid.accepte(c, id, depuis):
 		return
-	var ancien = nid.cases.get(c)
-	nid.retirer(c)
 	if depuis != null:
-		nid.retirer(depuis)
-		if ancien != null:
-			nid.placer(depuis, ancien)
-	nid.placer(c, id)
+		nid.deplacer(depuis, c)
+	else:
+		nid.retirer(c)
+		nid.placer(c, id)
 	rafraichir()
 
 func acheter(i: int, c: Vector2i) -> void:
@@ -186,7 +184,7 @@ func _decrire(cr: Dictionary) -> String:
 			d += ", ignore l'esquive"
 		if s["execution"]:
 			d += ", double sous %d %% de PV" % roundi(Data.SEUIL_EXECUTION * 100)
-		if s["brulure"]:
+		if s["brulure"] > 0.0:
 			d += ", brûle"
 		if s["vol_de_vie"] > 0.0 and not s["esquive"]:
 			d += ", vole %d %%" % roundi(s["vol_de_vie"] * 100)
@@ -201,7 +199,7 @@ func _combattre() -> void:
 
 # --- elements d'interface --------------------------------------------------
 
-static func dessiner_relique(ci: CanvasItem, rect: Rect2, id: String) -> void:
+static func dessiner_relique(ci: CanvasItem, rect: Rect2, id: String, niv := 1) -> void:
 	var r: Dictionary = Data.RELIQUES[id]
 	var couleurs: Dictionary = Palette.ELEMENTS[r["element"]]
 	var police := ThemeDB.fallback_font
@@ -212,6 +210,10 @@ static func dessiner_relique(ci: CanvasItem, rect: Rect2, id: String) -> void:
 		HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 13, Palette.TEXTE)
 	ci.draw_string(police, Vector2(rect.position.x, milieu + 18), r["type"],
 		HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 12, couleurs["clair"])
+	# niveau : une etoile par niveau au-dessus du premier, en haut de la tuile
+	if niv > 1:
+		ci.draw_string(police, Vector2(rect.position.x, rect.position.y + 20), "★".repeat(niv - 1),
+			HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 16, Color("#f2c94c"))
 
 static func apercu(id: String) -> Control:
 	var a := Apercu.new()
@@ -284,7 +286,7 @@ class CaseNid extends Control:
 		draw_rect(rect, Palette.SURVOL if survol else Palette.CASE)
 		draw_rect(rect, Palette.CASE_BORD, false, 1.0)
 		if _id() != null:
-			NidScreen.dessiner_relique(self, rect.grow(-4), _id())
+			NidScreen.dessiner_relique(self, rect.grow(-4), _id(), ecran.nid.niveau(position_nid))
 	func _get_drag_data(_p: Vector2) -> Variant:
 		if _id() == null:
 			return null
