@@ -161,6 +161,60 @@ Vent 3,2, Feu 2,1, Nuit 1,5. **La Nuit est à remonter.**
 
 ---
 
+### Format cible : 15 objets par archétype
+
+Chaque élément aura **15 objets** :
+- **10 pour la monture** : 4 communs, 3 rares, 2 épiques, 1 légendaire.
+- **5 armes pour le cavalier** : 2 communes, 1 rare, 1 épique, 1 légendaire.
+
+Le prototype n'a encore que 4 objets de monture par élément (Feu, Nuit, Terre, Vent) et
+3 armes partagées. Les lots ci-dessus seront refaits à ce format.
+
+**La rareté reste à concevoir** : chances de tirage en boutique qui évoluent avec les manches,
+prix par rareté. Les légendaires ne fusionnent pas (comme les armes).
+
+### Nature (Cerf) : épines et poison
+
+Deux axes avec des ponts entre eux. **Les épines** blessent qui frappe le Cerf (contre les builds
+à beaucoup de petits coups : Rafale, Nuée). **Le poison** s'accumule sur la cible.
+
+#### Monture (10)
+
+| Rareté | Objet | Apparence | Effet |
+|---|---|---|---|
+| Commun | Épine de ronce | Une longue épine courbée, vert sombre | Ajoute des dégâts d'épines lorsqu'on est attaqué |
+| Commun | Baie vénéneuse | Une petite grappe de baies violettes | Les attaques appliquent un peu de poison |
+| Commun | Feuille d'ortie | Une feuille dentelée aux nervures claires | Renforce les dégâts d'épines |
+| Commun | Spore amère | Une petite vesse-de-loup verdâtre | **Sort** *Nuage de spores* : toutes les 6 s, un nuage de poison visible |
+| Rare | Liane barbelée | Une liane enroulée, couverte de crochets | Les ripostes d'épines appliquent aussi du poison |
+| Rare | Amanite pourpre | Un champignon violet à quelques taches crème | Renforce le poison appliqué |
+| Rare | Gousse éclatante | Une capsule sèche entrouverte, pleine de graines pointues | Après plusieurs attaques reçues, projette une salve d'épines |
+| Épique | Fleur de belladone | Une fleur en cloche sombre accompagnée d'une baie brillante | Le poison affaiblit aussi les attaques de l'adversaire |
+| Épique | Cœur de roncier | Un nœud de racines épineuses autour d'un cœur vert | Les déclenchements d'épines renforcent les prochaines ripostes |
+| Légendaire | Graine du Jardin interdit | Une graine fendue, laissant sortir une pousse dorée aux épines violettes | Chaque déclenchement d'épines intensifie le poison ; chaque déclenchement du poison fait pousser les épines |
+
+#### Armes du cavalier (5)
+
+| Rareté | Arme | Sort du cavalier | Rôle |
+|---|---|---|---|
+| Commun | Sarbacane de roseau | *Fléchette* : petit dard rapide (toutes les 2 s), pose 1 dose de poison | Prépare le poison |
+| Commun | Dague d'épine | *Contre* : après 4 coups reçus, le cavalier frappe en retour, plus fort avec des épines | Défense, pont vers les épines |
+| Rare | Arc de saule | *Flèche de chasse* (toutes les 5 s) : dégâts augmentés par dose de poison sur la cible | Récolte le poison |
+| Épique | Fouet de ronces | *Lacération* : 4 coups rapides qui infligent des dégâts d'épines (profitent des bonus d'épines) | Fait des épines une attaque |
+| Légendaire | Arc du Jardin interdit | *Flèche-graine* : se plante dans la cible ; chaque dose de poison qu'elle reçoit ensuite la blesse aussi d'épines | Assorti à la Graine du Jardin interdit |
+
+#### Points ouverts (à valider)
+
+- **Poison et brûlure** sont deux dégâts sur la durée. Proposition : brûlure courte et intense,
+  poison qui s'empile et dure, et **qui passe à travers le bouclier** (contre la Tortue).
+- **Fleur de belladone** : « affaiblit les attaques » recoupe les malédictions de la Nuit.
+  Proposition : **un adversaire empoisonné ne peut plus se soigner** (contre l'Aube et le vol de vie).
+- **Feuille d'ortie et Amanite pourpre** sont des bonus invisibles. Proposition : en faire des
+  **catalyseurs** (renforcent les épines ou le poison des objets voisins) pour créer des choix de placement.
+- **Cœur de roncier et Graine** montent sans limite : prévoir un plafond.
+
+---
+
 ## 5. Pas d'avantage élémentaire
 
 **Aucun élément ne bat un autre.** Pas de triangle, pas de multiplicateur caché.
@@ -202,7 +256,9 @@ donne envie de refaire un Nid ? Si non, rien d'autre ne compte.
 ## 8. Plus tard
 
 - Formes de reliques et rotation.
-- Glace, Nature, les quatre moments du jour, et les hybrides.
+- Coder la Nature (set ci-dessus) et la rareté.
+- Refaire Feu, Nuit, Terre, Vent au format 15 objets.
+- Glace, les quatre moments du jour, et les hybrides.
 - Une arme propre à la Terre et au Vent (ils n'ont que la lance).
 - 9 éléments donnent 36 paires d'hybrides : il faudra sûrement n'en garder qu'une partie.
 - Stades d'évolution (visuel qui grandit).
