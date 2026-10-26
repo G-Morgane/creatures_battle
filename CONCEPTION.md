@@ -182,7 +182,7 @@ Règles du poison et des épines :
 - **Le poison s'empile** : chaque application ajoute des doses, chaque dose fait des dégâts par
   seconde, et les doses durent longtemps. **Il passe à travers le bouclier** (contre la Tortue).
   À distinguer de la brûlure du Feu : courte, intense, elle se renouvelle au lieu de s'empiler.
-- **Plafond de 20 doses** de poison sur une cible.
+- **Plafond de 100 doses** de poison sur une cible.
 - **Les épines** se déclenchent à chaque coup reçu (attaque ou sort), pas sur la brûlure,
   le poison ni la fatigue.
 
@@ -199,7 +199,7 @@ Règles du poison et des épines :
 | Rare | Gousse éclatante | Une capsule sèche entrouverte, pleine de graines pointues | Après plusieurs attaques reçues, projette une salve d'épines |
 | Épique | Fleur de belladone | Une fleur en cloche sombre accompagnée d'une baie brillante | **Un adversaire empoisonné ne peut plus se soigner** (soins, vol de vie, régénération) |
 | Épique | Cœur de roncier | Un nœud de racines épineuses autour d'un cœur vert | Les déclenchements d'épines renforcent les prochaines ripostes, **jusqu'à x2 au maximum** |
-| Légendaire | Graine du Jardin interdit | Une graine fendue, laissant sortir une pousse dorée aux épines violettes | Chaque déclenchement d'épines intensifie le poison ; chaque déclenchement du poison fait pousser les épines. **Plafonds : 20 doses de poison, épines x2 au maximum** |
+| Légendaire | Graine du Jardin interdit | Une graine fendue, laissant sortir une pousse dorée aux épines violettes | Chaque déclenchement d'épines intensifie le poison ; chaque déclenchement du poison fait pousser les épines. **Plafonds : 100 doses de poison, épines x2 au maximum** |
 
 #### Armes du cavalier (5)
 
@@ -211,7 +211,7 @@ Règles du poison et des épines :
 | Épique | Fouet de ronces | *Lacération* : 4 coups rapides qui infligent des dégâts d'épines (profitent des bonus d'épines) | Fait des épines une attaque |
 | Légendaire | Arc du Jardin interdit | *Flèche-graine* : se plante dans la cible ; chaque dose de poison qu'elle reçoit ensuite la blesse aussi d'épines | Assorti à la Graine du Jardin interdit |
 
-Les plafonds (x2, 20 doses) sont des valeurs de départ, à régler par simulation.
+Les plafonds (x2, 100 doses) sont des valeurs de départ, à régler par simulation.
 
 ---
 
