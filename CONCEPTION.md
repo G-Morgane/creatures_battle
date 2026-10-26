@@ -165,7 +165,7 @@ tactique pur. L'arme garde la couleur de son élément, pas celle de la monture.
 
 ### Lots par élément (4 reliques chacun : essence, essence ou sort, sort, catalyseur)
 
-- **Feu** : Braise, Plume de cendre, Souffle ardent, Foyer (fait)
+- **Feu** : Braise, Plume de cendre, Souffle ardent, Foyer (ancien lot, remplacé par le set du Phénix ci-dessous)
 - **Nuit** : Croc noir, Nuée, Voile, Lune creuse (fait)
 - **Terre** : Pierre (+PV), Écaille (bouclier de départ), Rempart (sort de bouclier), Socle (les sorts voisins donnent du bouclier) (fait)
 - **Vent** : Sabot (attaque, vitesse), Crin (esquive), Rafale (3 coups rapides), Girouette (les sorts voisins rechargent plus vite) (fait)
@@ -309,6 +309,56 @@ Règles du givre :
 
 ---
 
+### Feu (Phénix) : brûlure, combustion, Braise
+
+**On allume, puis on consume.** La brûlure s'accumule sur la cible, puis une **combustion** la
+fait exploser d'un coup. Le Phénix **brûle plus fort au bord de la mort** (Résine ambrée, Cœur
+de fournaise, renaissance). Familles d'armes : **Bâton et Faux** (la Faux est partagée avec la Nuit).
+
+Ce set remplace les anciens objets du Feu (Braise, Plume de cendre, Souffle ardent, Foyer).
+Le Bâton de braise garde son nom avec sa nouvelle version.
+
+Règles :
+- **Brûlure** : s'empile, mais **chaque charge s'éteint au bout de 4 s**, il faut l'entretenir.
+  Le poison, lui, s'empile et dure tout le combat sans jamais être consommé.
+- **Combustion** : consume les brûlures de la cible pour des dégâts immédiats.
+  *Partielle* : la moitié des charges. *Totale* : toutes, avec un bonus.
+- **Braise = hâte** : +1 Braise à chaque combustion déclenchée (jusqu'à 10), chaque point
+  accélère attaques et recharges de sorts. C'est l'inverse du givre du Loup, les deux se
+  compensent. (Le crit reste à concevoir, pour une autre famille ou un autre élément.)
+- **Renaissance** (passif) : une fois, à 25 % de PV.
+
+#### Monture (10)
+
+| Rareté | Objet | Apparence | Effet |
+|---|---|---|---|
+| Commun | Charbon ardent | Un morceau de charbon noir fendu d'orange | Les attaques appliquent de la brûlure |
+| Commun | Plume incandescente | Une plume rouge à la pointe dorée | **Catalyseur** : brûlure des objets voisins +50 % |
+| Commun | Tison tenace | Un petit morceau de bois rougeoyant | **Catalyseur** : Braise gagnée par les objets voisins +50 % |
+| Commun | Cendre tiède | Un petit tas de cendres claires abritant une braise | Chaque combustion rend un peu de vie |
+| Rare | Graine de brasier | Une graine sombre dont sort une petite flamme | **Sort** *Embrasement* : une combustion partielle toutes les 7 s |
+| Rare | Éclat d'obsidienne | Une lame de pierre noire au bord rougeoyant | Les attaques contre une cible en feu infligent des dégâts supplémentaires |
+| Rare | Résine ambrée | Une goutte épaisse d'ambre contenant une étincelle | Renforce les nouvelles brûlures quand ta vie est basse |
+| Épique | Cœur de fournaise | Un cœur de roche sombre au centre incandescent | En passant sous la moitié de ta vie : une combustion et un fort bonus de Braise temporaire. Une fois par combat |
+| Épique | Fleur des cendres | Une fleur aux pétales gris, orange vif au centre | Les soins des combustions augmentent selon les charges consumées |
+| Légendaire | Œuf du Premier Brasier | Un œuf rouge sombre fendu, éclairé d'or de l'intérieur | **Seconde renaissance** ; chaque renaissance déclenche une combustion totale |
+
+#### Armes du cavalier (5, Bâton et Faux)
+
+| Rareté | Arme | Famille | Sort du cavalier |
+|---|---|---|---|
+| Commun | Bâton de braise | Bâton | Une étincelle qui applique de la brûlure, dégâts selon l'affinité Feu |
+| Commun | Faux de tison | Faux | Plus de dégâts contre une cible sous la moitié de sa vie |
+| Rare | Bâton du brasier | Bâton | Applique plus de brûlure selon l'affinité Feu |
+| Épique | Faux des cendres | Faux | Contre une cible affaiblie : une combustion qui consume ses brûlures et soigne le Phénix |
+| Légendaire | Bâton du Premier Brasier | Bâton | Une combustion totale après plusieurs tirs ; la renaissance déclenche aussitôt un tir renforcé |
+
+Points ouverts :
+- **Faux de tison et Faux lunaire** se ressemblent (bonus contre une cible affaiblie). À revoir
+  avec la Nuit, quand on fera son set, pour que les objets neutres de Faux servent aux deux.
+- **Le Phénix se soigne** (Cendre tiède, Fleur, Faux des cendres) : à surveiller face à l'Aube,
+  dont le soin est l'identité. La Belladone du Cerf le contre.
+
 ## 5. Pas d'avantage élémentaire
 
 **Aucun élément ne bat un autre.** Pas de triangle, pas de multiplicateur caché.
@@ -350,7 +400,8 @@ donne envie de refaire un Nid ? Si non, rien d'autre ne compte.
 ## 8. Plus tard
 
 - Formes de reliques et rotation.
-- Remonter la Nuit, la plus faible en partie complète.
+- Coder le Feu (Phénix) : il faudra le dessin du phénix et les planches d'objets et d'armes.
+- Remonter la Nuit, la plus faible en partie complète, en faisant son set (et revoir la Faux).
 - Une image pour la Serpe de ronces (le Fouet a été remplacé).
 - Refaire Feu, Nuit, Terre, Vent au format 15 objets, avec une ou deux familles d'armes chacun.
 - Objets neutres qui visent une famille d'armes.
