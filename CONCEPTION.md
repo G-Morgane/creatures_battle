@@ -254,15 +254,15 @@ croisés, objets neutres utiles sans être universels, style lisible quel que so
 
 | Famille | Style | Armes actuelles |
 |---|---|---|
-| Tir | Rapide, plusieurs petits coups | Sarbacane de roseau, Arc de saule, Arc du Jardin interdit |
+| Tir | Rapide, plusieurs petits coups | armes du Cerf, armes du Papillon |
 | Lame | Rapide, riposte, **coups critiques** | Dague d'épine, Serpe de ronces, armes de la Nuit |
-| Hast | Allonge, perce l'esquive | Lance du guet (neutre), armes du Loup |
+| Hast | Allonge, perce l'esquive | Lance du guet (neutre), armes du Loup, armes du Papillon |
 | Hache | Lent, gros coup | armes du Loup, armes du Lion |
 | Bâton | Magie, grandit avec l'affinité | armes du Phénix, armes du Lion |
 | Faux | Achève les cibles affaiblies | Faux de tison, Faux des cendres, armes de la Nuit |
 
 Familles par élément : **Cerf : Tir et Lame. Loup : Hast et Hache. Phénix : Bâton et Faux. Nuit : Faux et Lame.
-Lion : Bâton et Hache.**
+Lion : Bâton et Hache. Papillon : Tir et Hast.**
 
 **Coups critiques** : identité de la famille Lame. Un crit fait **x1,75** de dégâts ; les chances
 viennent des armes Lame et de certains objets (aucune chance de base). Les Lames du Cerf
@@ -480,6 +480,55 @@ Règles :
 Points à surveiller : la **Vasque** crée un pont avec la Terre et la Glace (bouclier, effets de bris) ;
 le Lion est contré par la Nature (Belladone) et la Nuit (Flétrissure), adouci par la règle ci-dessus.
 
+### Crépuscule (Papillon) : Transfert
+
+**Le moment où tout s'inverse.** Le Papillon **vole les bonus** de l'adversaire et lui **renvoie ses
+propres malus**. Familles d'armes : **Tir et Hast** (chacune partagée avec un autre élément).
+
+Règles :
+- **Malus qu'on renvoie** : poison, brûlure, givre, malédictions.
+- **Bonus qu'on vole** : bouclier, Braise (hâte), jauge d'Éclat, bonus d'épines.
+- **Transfert** : déplacer un malus vers l'adversaire, ou lui prendre un bonus. C'est le
+  déclencheur commun du set (« à chaque Transfert »), comme le bris de bouclier pour le Loup.
+- **Passif du Papillon** : *un Transfert sans rien à voler ni à renvoyer lance un projectile
+  d'arcane* (une petite comète violet et orangé). Le Papillon n'est jamais à vide : contre un
+  build chargé d'effets il vole et renvoie, contre un build brut il tire de l'arcane.
+- **Le projectile compte comme un Transfert** pour les objets « à chaque Transfert » (Phalène,
+  Arc des deux lunes), mais **pas** pour ceux qui ont besoin d'un vrai bonus ou malus (Mue, Brume
+  du soir, Aile de lune) : voler et renvoyer restent plus rentables que le projectile.
+
+#### Monture (10)
+
+| Rareté | Objet | Effet |
+|---|---|---|
+| Commun | Battement d'ailes | **Sort** : toutes les 5 s, renvoie ton malus le plus lourd à l'adversaire |
+| Commun | Poudre d'écailles | Tes attaques volent un peu de bouclier adverse |
+| Commun | Cocon | Commence le combat avec un petit bouclier, plus gros pour chaque malus porté par l'adversaire |
+| Commun | Pollen doré | **Catalyseur** : les Transferts des objets voisins déplacent 50 % de plus (et leurs projectiles d'arcane font 50 % de dégâts en plus) |
+| Rare | Mue | Un malus renvoyé arrive renforcé chez l'adversaire |
+| Rare | Brume du soir | Voler un bonus te soigne |
+| Rare | Phalène | Chaque Transfert déclenche une seconde attaque |
+| Épique | Chrysalide | Une fois, sous la moitié de ta vie : renvoie tous tes malus et vole tous ses bonus |
+| Épique | Aile de lune | Chaque bonus volé t'accélère un moment (tu lui prends sa hâte) |
+| Légendaire | Inversion | Une fois par combat, au milieu : échange vos pourcentages de vie |
+
+L'Inversion est volontairement folle : elle peut renverser un combat perdu comme en perdre un
+gagné. À tester avec prudence en simulation.
+
+#### Armes du cavalier (5, Tir et Hast)
+
+| Rareté | Arme | Famille | Effet |
+|---|---|---|---|
+| Commun | Arc du crépuscule | Tir | Flèches qui volent un peu de bouclier |
+| Commun | Fléchettes d'écailles | Tir | Rapides, renvoient un malus tous les 3 coups |
+| Rare | Glaive de brume | Hast | Perce l'esquive, vole un bonus à chaque coup |
+| Épique | Arc des deux lunes | Tir | Plus fort pour chaque Transfert fait pendant le combat |
+| Légendaire | Lance de l'entre-deux | Hast | Chaque coup échange un bonus de la cible contre un de tes malus |
+
+Pistes d'apparence : poussière d'écailles irisées, violets et orangés du soleil couchant, cocons,
+antennes, ailes de phalène, lune basse. **Pas de miroirs ni de reflets**, gardés pour la Lumière
+(la Raie, l'illusion).
+
 ## 5. Pas d'avantage élémentaire
 
 **Aucun élément ne bat un autre.** Pas de triangle, pas de multiplicateur caché.
@@ -523,6 +572,7 @@ donne envie de refaire un Nid ? Si non, rien d'autre ne compte.
 
 - Formes de reliques et rotation.
 - Équilibrage : la Terre un cran au-dessus des autres.
+- Coder le Crépuscule (Papillon) : il faudra le dessin du papillon et les planches d'objets et d'armes.
 - Une image pour la Serpe de ronces (le Fouet a été remplacé).
 - Refaire Feu, Nuit, Terre, Vent au format 15 objets, avec une ou deux familles d'armes chacun.
 - Objets neutres qui visent une famille d'armes.
