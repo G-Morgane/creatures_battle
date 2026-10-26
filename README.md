@@ -33,7 +33,8 @@ Affiche la durée et le vainqueur de chaque matchup entre builds types. Cible : 
 - `scripts/data.gd` : constantes, formes, reliques
 - `scripts/nid.gd` : grille, affinités, éclosion de la créature
 - `scripts/combat.gd` : simulation déterministe par pas fixe
-- `scripts/nid_screen.gd` : écran du Nid (glisser-déposer)
+- `scripts/partie.gd` : manches, bourse, boutique, adversaire généré
+- `scripts/nid_screen.gd` : écran du Nid (boutique, glisser-déposer)
 - `scripts/combat_screen.gd` : rejoue le combat simulé (barres de PV, sorts, brûlure)
 - `scripts/creature_vue.gd` : monture et cavalier dessinés, en direct
 - `scripts/exemples.gd` : Nids de démo

@@ -12,6 +12,7 @@ func _ready() -> void:
 	ok = _ecran() and ok
 	ok = _armes() and ok
 	ok = _combat_anime() and ok
+	ok = _partie() and ok
 	print("SMOKE: ", "OK" if ok else "ECHEC")
 	get_tree().quit(0 if ok else 1)
 
@@ -69,8 +70,8 @@ func _ecran() -> bool:
 	ok = _verifier(e.nid.cases.get(Vector2i(3, 3)) == "croc_noir" and not e.nid.cases.has(Vector2i(1, 0)), "deplacer une relique") and ok
 	e.deposer(Vector2i(0, 0), "croc_noir", Vector2i(3, 3))
 	ok = _verifier(e.nid.cases.get(Vector2i(3, 3)) == "braise", "echanger deux reliques") and ok
-	e.vider_case(Vector2i(3, 3))
-	ok = _verifier(e.vue.forme == "nuit" and e.nid.cases.size() == 2, "vider une case") and ok
+	e.vendre(Vector2i(3, 3))
+	ok = _verifier(e.vue.forme == "nuit" and e.nid.cases.size() == 2, "revendre une case") and ok
 	e.queue_free()
 	return ok
 
@@ -116,3 +117,31 @@ func _combat_anime() -> bool:
 	ok = _verifier(e.fini and e.prochain == e.combat.evenements.size(), "lecture jusqu'a la fin") and ok
 	e.queue_free()
 	return ok
+
+func _partie() -> bool:
+	var p := Partie.new(42)
+	var ok := _verifier(Partie.new(42).offres == p.offres, "meme graine, meme boutique")
+	ok = _verifier(p.offres.size() == Partie.TAILLE_BOUTIQUE and p.bourse == Partie.OR_PAR_MANCHE, "depart : 5 offres, 10 or") and ok
+	p.offres[0] = "braise"
+	p.offres[1] = "baton_braise"
+	ok = _verifier(p.acheter(0, Vector2i(0, 0)) and p.bourse == 7 and p.offres[0] == "", "acheter : -3 or, offre vendue") and ok
+	ok = _verifier(not p.acheter(0, Vector2i(1, 0)), "offre deja vendue") and ok
+	ok = _verifier(not p.acheter(1, Vector2i(0, 0)), "case occupee") and ok
+	p.bourse = 4
+	ok = _verifier(not p.acheter(1, Vector2i(1, 0)), "pas assez d'or") and ok
+	p.vendre(Vector2i(0, 0))
+	ok = _verifier(p.bourse == 5 and p.nid.cases.is_empty(), "revendre : moitie du prix") and ok
+	ok = _verifier(p.relancer() and p.bourse == 4, "relancer coute 1 or") and ok
+	p.enregistrer(0)
+	ok = _verifier(p.manche == 2 and p.victoires == 1 and p.bourse == 14, "victoire : manche 2, +10 or") and ok
+	p.enregistrer(-1)
+	ok = _verifier(p.victoires == 1 and p.defaites == 0 and p.manche == 3, "egalite : ne compte pas") and ok
+	var a := p.adversaire()
+	var cout := 0
+	for id in a.cases.values():
+		cout += Partie.prix(id)
+	ok = _verifier(cout <= Partie.OR_PAR_MANCHE * p.manche and cout > 0, "adversaire dans le budget de la manche") and ok
+	ok = _verifier(a.cases == p.adversaire().cases, "adversaire deterministe") and ok
+	for i in 3:
+		p.enregistrer(1)
+	return _verifier(p.terminee(), "3 defaites : partie terminee") and ok

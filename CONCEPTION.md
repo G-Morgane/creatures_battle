@@ -28,7 +28,19 @@ sur la créature ou dans le combat. Une relique qui ne fait que +2 en silence es
 4. **Combat automatique** contre la créature fantôme d'un autre joueur au même stade.
 5. Victoire ou défaite, la créature évolue (stade 1, 2, 3) et on recommence.
 
-Fin de partie : X victoires ou Y défaites (valeurs à régler).
+Fin de partie : **7 victoires ou 3 défaites**. Une égalité ne compte pas.
+
+### Boutique et or
+
+- **10 or par manche**, l'or non dépensé se garde.
+- **5 offres** tirées au hasard, **relance pour 1 or**.
+- Prix : essence 3, sort 4, catalyseur 4, arme 5.
+- **On achète en posant** : glisser une offre dans une case vide du Nid.
+- **Revente à moitié prix** (au moins 1 or) : ramener la relique à la boutique, ou clic droit.
+- Tout le hasard passe par une graine : même graine, mêmes boutiques, mêmes adversaires.
+
+En attendant le PvP, l'adversaire est un **fantôme généré** : un Nid tiré au hasard autour
+d'un élément, avec tout l'or qu'un joueur aurait reçu jusqu'à cette manche.
 
 ---
 
@@ -134,8 +146,8 @@ On adapte son Nid à ce qu'on affronte, pas à une couleur.
 
 - 2 éléments : Feu et Nuit, 8 reliques et 3 armes.
 - Nid 4 x 4, reliques d'une case. **Les formes de reliques (2 x 1, L...) viendront après.**
-- Pas d'hybride, pas de boutique, pas de réseau.
-- Écran du Nid en glisser-déposer, combat animé contre un Nid d'exemple.
+- Pas d'hybride, pas de réseau.
+- Boutique, manches, combat animé contre un adversaire généré, fin de partie.
 
 **Question à valider avec le prototype** : est-ce que voir sa créature changer selon son Nid
 donne envie de refaire un Nid ? Si non, rien d'autre ne compte.
@@ -144,7 +156,6 @@ donne envie de refaire un Nid ? Si non, rien d'autre ne compte.
 
 ## 8. Plus tard
 
-- Boutique et économie d'or.
 - Formes de reliques et rotation.
 - **Prochains éléments : Terre et Vent**, deux opposés (combat long contre combat rapide),
   pour vérifier que ça reste lisible avant d'aller jusqu'à neuf.

@@ -1,8 +1,9 @@
 extends Node
 
-# Prototype : Nid -> combat anime -> Nid. Le Nid survit aux allers-retours.
+# Prototype : Nid (boutique) -> combat anime -> Nid, manche apres manche.
+# La partie survit aux allers-retours, le resultat est compte au retour.
 
-var nid := Exemples.nid_feu()
+var partie := Partie.new()
 var ecran: Node = null
 
 func _ready() -> void:
@@ -16,14 +17,19 @@ func _vider() -> void:
 func aller_nid() -> void:
 	_vider()
 	var e := NidScreen.new()
-	e.nid = nid
+	e.partie = partie
 	e.combattre.connect(_combattre)
+	e.nouvelle_partie.connect(func():
+		partie = Partie.new()
+		aller_nid())
 	ecran = e
 	add_child(e)
 
-func _combattre(adverse: Nid) -> void:
+func _combattre() -> void:
 	_vider()
-	var c := CombatScreen.new(nid.eclore(), adverse.eclore())
-	c.retour.connect(aller_nid)
+	var c := CombatScreen.new(partie.nid.eclore(), partie.adversaire().eclore())
+	c.retour.connect(func():
+		partie.enregistrer(c.vainqueur)
+		aller_nid())
 	ecran = c
 	add_child(c)

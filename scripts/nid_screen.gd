@@ -1,19 +1,26 @@
 class_name NidScreen
 extends Control
 
-# Ecran du Nid : reliquaire a gauche, grille au centre, creature a droite.
-# Glisser une relique dans une case la pose (ou remplace), glisser une case
-# vers une autre echange, la ramener au reliquaire ou clic droit la retire.
+# Ecran du Nid : boutique a gauche, grille au centre, creature a droite.
+# Glisser une offre dans une case vide l'achete, glisser une case vers une
+# autre echange, la ramener a la boutique ou clic droit la revend.
 
-signal combattre(adverse: Nid)
+signal combattre
+signal nouvelle_partie
 
 const TUILE := Vector2(124, 64)
 const CASE_TAILLE := Vector2(104, 104)
 
-var nid := Nid.new()
+var partie := Partie.new()
+var nid: Nid:
+	get: return partie.nid
 var cases_ui := {}   # Vector2i -> CaseNid
 var vue: CreatureVue
 var infos: RichTextLabel
+var barre: Label
+var offres_ui: Array = []
+var relance: Button
+var bouton_combat: Button
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -28,11 +35,17 @@ func _ready() -> void:
 	for cote in ["left", "right", "top", "bottom"]:
 		marge.add_theme_constant_override("margin_" + cote, 32)
 	add_child(marge)
+	var pile := VBoxContainer.new()
+	pile.add_theme_constant_override("separation", 20)
+	marge.add_child(pile)
+	barre = _titre("")
+	pile.add_child(barre)
 	var colonnes := HBoxContainer.new()
 	colonnes.add_theme_constant_override("separation", 40)
-	marge.add_child(colonnes)
+	colonnes.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	pile.add_child(colonnes)
 
-	colonnes.add_child(_reliquaire())
+	colonnes.add_child(_boutique())
 	colonnes.add_child(_grille())
 	colonnes.add_child(_panneau())
 	rafraichir()
@@ -44,19 +57,27 @@ func _titre(texte: String) -> Label:
 	l.add_theme_color_override("font_color", Palette.TEXTE)
 	return l
 
-func _reliquaire() -> Control:
-	var col := Reliquaire.new(self)
+func _boutique() -> Control:
+	var col := Boutique.new(self)
 	col.add_theme_constant_override("separation", 12)
-	col.add_child(_titre("Reliques"))
+	col.add_child(_titre("Boutique"))
 	var g := GridContainer.new()
 	g.columns = 2
 	g.add_theme_constant_override("h_separation", 8)
 	g.add_theme_constant_override("v_separation", 8)
-	for id in Data.RELIQUES:
-		g.add_child(Tuile.new(self, id))
+	for i in Partie.TAILLE_BOUTIQUE:
+		var o := Offre.new(self, i)
+		offres_ui.append(o)
+		g.add_child(o)
 	col.add_child(g)
+	relance = Button.new()
+	relance.text = "Relancer (%d or)" % Partie.PRIX_RELANCE
+	relance.pressed.connect(func():
+		partie.relancer()
+		rafraichir())
+	col.add_child(relance)
 	var aide := Label.new()
-	aide.text = "Glisse une relique dans le Nid.\nClic droit sur une case pour la vider.\nUne seule arme pour le cavalier."
+	aide.text = "Glisse une offre dans le Nid pour l'acheter.\nRamène une relique ici ou clic droit\npour la revendre (moitié du prix).\nUne seule arme pour le cavalier."
 	aide.add_theme_color_override("font_color", Palette.TEXTE_DOUX)
 	col.add_child(aide)
 	return col
@@ -75,12 +96,6 @@ func _grille() -> Control:
 			cases_ui[c.position_nid] = c
 			g.add_child(c)
 	col.add_child(g)
-	var vider := Button.new()
-	vider.text = "Vider le Nid"
-	vider.pressed.connect(func():
-		nid.cases.clear()
-		rafraichir())
-	col.add_child(vider)
 	return col
 
 func _panneau() -> Control:
@@ -93,10 +108,10 @@ func _panneau() -> Control:
 	infos = _texte()
 	infos.fit_content = true
 	col.add_child(infos)
-	var combattre := Button.new()
-	combattre.text = "Combattre un Nid d'exemple"
-	combattre.pressed.connect(_combattre)
-	col.add_child(combattre)
+	bouton_combat = Button.new()
+	bouton_combat.custom_minimum_size.y = 44
+	bouton_combat.pressed.connect(_combattre)
+	col.add_child(bouton_combat)
 	return col
 
 func _texte() -> RichTextLabel:
@@ -122,8 +137,12 @@ func deposer(c: Vector2i, id: String, depuis) -> void:
 	nid.placer(c, id)
 	rafraichir()
 
-func vider_case(c: Vector2i) -> void:
-	nid.retirer(c)
+func acheter(i: int, c: Vector2i) -> void:
+	partie.acheter(i, c)
+	rafraichir()
+
+func vendre(c: Vector2i) -> void:
+	partie.vendre(c)
 	rafraichir()
 
 func rafraichir() -> void:
@@ -132,6 +151,16 @@ func rafraichir() -> void:
 	var cr := nid.eclore()
 	vue.montrer(cr["forme"], _affinite_totale(), cr["arme"])
 	infos.text = _decrire(cr)
+	for o in offres_ui:
+		o.queue_redraw()
+	relance.disabled = partie.bourse < Partie.PRIX_RELANCE or partie.terminee()
+	barre.text = "Manche %d      Or %d      Victoires %d / %d      Défaites %d / %d" % [
+		partie.manche, partie.bourse, partie.victoires, Partie.VICTOIRES_MAX, partie.defaites, Partie.DEFAITES_MAX]
+	if partie.terminee():
+		var gagne := partie.victoires >= Partie.VICTOIRES_MAX
+		bouton_combat.text = ("Partie gagnée !" if gagne else "Partie perdue.") + " Nouvelle partie"
+	else:
+		bouton_combat.text = "Combattre (manche %d)" % partie.manche
 
 func _affinite_totale() -> int:
 	var total := 0
@@ -165,7 +194,10 @@ func _decrire(cr: Dictionary) -> String:
 	return "\n".join(lignes)
 
 func _combattre() -> void:
-	combattre.emit(Exemples.nid_feu() if nid.forme() == "nuit" else Exemples.nid_nuit())
+	if partie.terminee():
+		nouvelle_partie.emit()
+	else:
+		combattre.emit()
 
 # --- elements d'interface --------------------------------------------------
 
@@ -193,34 +225,47 @@ class Apercu extends Control:
 	func _draw() -> void:
 		NidScreen.dessiner_relique(self, Rect2(Vector2.ZERO, size), id)
 
-class Tuile extends Control:
+class Offre extends Control:
 	var ecran: NidScreen
-	var id: String
-	func _init(e: NidScreen, i: String) -> void:
+	var index: int
+	func _init(e: NidScreen, i: int) -> void:
 		ecran = e
-		id = i
-		custom_minimum_size = NidScreen.TUILE
-		tooltip_text = Data.RELIQUES[i]["nom"]
+		index = i
+		custom_minimum_size = NidScreen.TUILE + Vector2(0, 20)
+	func _id() -> String:
+		return ecran.partie.offres[index]
 	func _draw() -> void:
-		NidScreen.dessiner_relique(self, Rect2(Vector2.ZERO, size), id)
+		var rect := Rect2(Vector2.ZERO, NidScreen.TUILE)
+		if _id() == "":
+			draw_rect(rect.grow(-3), Palette.CASE)
+			draw_string(ThemeDB.fallback_font, Vector2(0, rect.size.y / 2 + 5), "Acheté",
+				HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 13, Palette.TEXTE_DOUX)
+			return
+		var abordable := ecran.partie.bourse >= Partie.prix(_id())
+		modulate.a = 1.0 if abordable else 0.4
+		NidScreen.dessiner_relique(self, rect, _id())
+		draw_string(ThemeDB.fallback_font, Vector2(0, rect.size.y + 15), "%d or" % Partie.prix(_id()),
+			HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 14, Color("#f2c94c") if abordable else Palette.TEXTE_DOUX)
 	func _get_drag_data(_p: Vector2) -> Variant:
-		set_drag_preview(NidScreen.apercu(id))
-		return {"id": id, "depuis": null}
-	# Ramener une relique posee sur le reliquaire la retire du Nid.
+		if _id() == "" or ecran.partie.bourse < Partie.prix(_id()):
+			return null
+		set_drag_preview(NidScreen.apercu(_id()))
+		return {"id": _id(), "offre": index}
+	# Ramener une relique posee sur la boutique la revend.
 	func _can_drop_data(_p: Vector2, data: Variant) -> bool:
-		return data is Dictionary and data.get("depuis") != null
+		return data is Dictionary and data.has("depuis")
 	func _drop_data(_p: Vector2, data: Variant) -> void:
-		ecran.vider_case(data["depuis"])
+		ecran.vendre(data["depuis"])
 
-class Reliquaire extends VBoxContainer:
+class Boutique extends VBoxContainer:
 	var ecran: NidScreen
 	func _init(e: NidScreen) -> void:
 		ecran = e
 		mouse_filter = Control.MOUSE_FILTER_PASS
 	func _can_drop_data(_p: Vector2, data: Variant) -> bool:
-		return data is Dictionary and data.get("depuis") != null
+		return data is Dictionary and data.has("depuis")
 	func _drop_data(_p: Vector2, data: Variant) -> void:
-		ecran.vider_case(data["depuis"])
+		ecran.vendre(data["depuis"])
 
 class CaseNid extends Control:
 	var ecran: NidScreen
@@ -246,9 +291,16 @@ class CaseNid extends Control:
 		set_drag_preview(NidScreen.apercu(_id()))
 		return {"id": _id(), "depuis": position_nid}
 	func _can_drop_data(_p: Vector2, data: Variant) -> bool:
-		return data is Dictionary and data.has("id") and ecran.nid.accepte(position_nid, data["id"], data["depuis"])
+		if not data is Dictionary:
+			return false
+		if data.has("offre"):
+			return ecran.partie.peut_acheter(data["offre"], position_nid)
+		return data.has("depuis") and ecran.nid.accepte(position_nid, data["id"], data["depuis"])
 	func _drop_data(_p: Vector2, data: Variant) -> void:
-		ecran.deposer(position_nid, data["id"], data["depuis"])
+		if data.has("offre"):
+			ecran.acheter(data["offre"], position_nid)
+		else:
+			ecran.deposer(position_nid, data["id"], data["depuis"])
 	func _gui_input(ev: InputEvent) -> void:
 		if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_RIGHT:
-			ecran.vider_case(position_nid)
+			ecran.vendre(position_nid)
