@@ -23,7 +23,6 @@ const ZONES := {
 	"sarbacane":     ["armes_cerf", 40, 50, 548, 270],
 	"dague_epine":   ["armes_cerf", 598, 55, 392, 265],
 	"arc_saule":     ["armes_cerf", 35, 420, 510, 420],
-	"fouet_ronces":  ["armes_cerf", 530, 455, 460, 385],
 	"arc_jardin":    ["armes_cerf", 55, 920, 925, 460],
 	"flocon":        ["objets_loup", 35, 65, 235, 262],
 	"galet":         ["objets_loup", 290, 100, 240, 225],
@@ -69,6 +68,8 @@ const ZONES := {
 	"lame_veuve":    ["chauvesouris_armes", 60, 475, 440, 390],
 	"faux_festin":   ["chauvesouris_armes", 490, 480, 500, 410],
 	"faux_nuit":     ["chauvesouris_armes", 35, 940, 965, 530],
+	"serpe_ronces":  ["chapelet_serpe", 100, 30, 640, 860],
+	"chapelet":      ["chapelet_serpe", 820, 40, 600, 850],
 }
 
 # Objets de glace blancs et bleu pale, proches du fond creme : tolerance resserree,
@@ -90,6 +91,8 @@ const TOLERANCE_OBJET := {
 	"masque": [0.04, 0.08, false],
 	"faux_lunaire": [0.045, 0.09, true],
 	"faux_nuit": [0.03, 0.07, true, 0.08],  # fond enferme entre ruban et manche, grain du papier
+	"serpe_ronces": [0.05, 0.10, true],     # lame vert pale
+	"chapelet": [0.04, 0.08, true, 0.06],   # croc creme, fond enferme dans l'anneau
 }
 
 # Zones de la planche a effacer avant decoupe : morceaux d'un voisin qui deborde.

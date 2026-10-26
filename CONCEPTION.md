@@ -376,8 +376,7 @@ Points ouverts :
 
 ### Nuit (Chauve-souris) : vol de vie et malédictions
 
-**Fait** (images de `images/`, sauf le Chapelet des rancunes : la planche montre encore la
-Coupelle d'étain, le Chapelet s'affiche en texte). Chiffres : malédictions 6 s, Faiblesse -15 %
+**Fait** (images de `images/`, le Chapelet et la Serpe de ronces dans `chapelet_serpe.png`). Chiffres : malédictions 6 s, Faiblesse -15 %
 de dégâts, Langueur -15 % de vitesse d'attaque, Flétrissure -30 % de soins par charge ; passif
 de la Chauve-souris **+12 % de dégâts par malédiction différente sur la cible** (sans lui, et
 sans attaque sur ses essences, elle ne faisait presque aucun dégât : 0,8 victoire en moyenne) ;
@@ -471,7 +470,6 @@ donne envie de refaire un Nid ? Si non, rien d'autre ne compte.
 ## 8. Plus tard
 
 - Formes de reliques et rotation.
-- Images manquantes : Chapelet des rancunes, Serpe de ronces.
 - Équilibrage : Nuit et Nature un cran sous les autres.
 - Une image pour la Serpe de ronces (le Fouet a été remplacé).
 - Refaire Feu, Nuit, Terre, Vent au format 15 objets, avec une ou deux familles d'armes chacun.
