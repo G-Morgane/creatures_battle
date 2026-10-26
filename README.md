@@ -28,6 +28,13 @@ godot --headless --path . -s res://tests/equilibrage.gd
 
 Affiche la durée et le vainqueur de chaque matchup entre builds types. Cible : 15 à 25 s.
 
+```bash
+godot --headless --path . -s res://tests/simulation.gd
+```
+
+Simule 300 parties entières par joueur automatique (aléatoire, simple) : victoires moyennes,
+répartition, taux de victoire par manche avec et sans élimination.
+
 ## Structure
 
 - `scripts/data.gd` : constantes, formes, reliques

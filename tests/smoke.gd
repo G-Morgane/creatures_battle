@@ -140,7 +140,7 @@ func _partie() -> bool:
 	var cout := 0
 	for id in a.cases.values():
 		cout += Partie.prix(id)
-	ok = _verifier(cout <= Partie.OR_PAR_MANCHE * p.manche and cout > 0, "adversaire dans le budget de la manche") and ok
+	ok = _verifier(cout <= Partie.OR_PAR_MANCHE * p.manche + Partie.OR_PAR_VICTOIRE * p.victoires and cout > 0, "adversaire dans le budget de la manche") and ok
 	ok = _verifier(a.cases == p.adversaire().cases, "adversaire deterministe") and ok
 	for i in 3:
 		p.enregistrer(1)

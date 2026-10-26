@@ -80,12 +80,22 @@ func terminee() -> bool:
 
 # Adversaire fantome en attendant le PvP : un Nid tire au hasard avec tout l'or
 # qu'un joueur aurait recu jusqu'ici, centre sur un element.
+# Le Nid plafonne a 16 cases : passe la manche 6, l'or ne compte plus, seule la
+# composition compte. L'adversaire joue donc de mieux en mieux (soin : 0 -> 1) :
+# arme d'abord, pas plus de COPIES_MAX d'une meme relique, catalyseurs a cote d'un sort.
+const SOIN_MANCHES := 6.0
+const COPIES_MAX := 3
+# Comme en PvP, on affronte des joueurs au meme palmares : chaque victoire
+# donne de l'or en plus a l'adversaire.
+const OR_PAR_VICTOIRE := 3
+
 func adversaire() -> Nid:
 	var r := RandomNumberGenerator.new()
 	r.seed = graine + manche * 7919
+	var soin := clampf((manche - 1) / SOIN_MANCHES, 0.0, 1.0)
 	var elements := ["feu", "nuit"]
 	var element: String = elements[r.randi() % elements.size()]
-	var budget := OR_PAR_MANCHE * manche
+	var budget := OR_PAR_MANCHE * manche + OR_PAR_VICTOIRE * victoires
 	var n := Nid.new()
 	var ids := Data.RELIQUES.keys().filter(func(id): return Data.RELIQUES[id]["element"] in [element, ""])
 	var libres := []
@@ -96,8 +106,22 @@ func adversaire() -> Nid:
 		var possibles := ids.filter(func(id): return prix(id) <= budget and (Data.RELIQUES[id]["type"] != "arme" or n.arme() == null))
 		if possibles.is_empty():
 			break
+		var soigne := r.randf() < soin
+		if soigne:
+			var armes := possibles.filter(func(id): return Data.RELIQUES[id]["type"] == "arme")
+			var varies := possibles.filter(func(id): return n.cases.values().count(id) < COPIES_MAX)
+			if not armes.is_empty():
+				possibles = armes
+			elif not varies.is_empty():
+				possibles = varies
 		var id: String = possibles[r.randi() % possibles.size()]
-		var c: Vector2i = libres.pop_at(r.randi() % libres.size())
+		var c: Vector2i = libres[r.randi() % libres.size()]
+		if soigne and Data.RELIQUES[id]["type"] == "catalyseur":
+			for l in libres:
+				if n.voisins(l).any(func(v): return Data.RELIQUES[n.cases[v]]["type"] in ["sort", "arme"]):
+					c = l
+					break
+		libres.erase(c)
 		n.placer(c, id)
 		budget -= prix(id)
 	return n

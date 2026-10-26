@@ -39,8 +39,27 @@ Fin de partie : **7 victoires ou 3 défaites**. Une égalité ne compte pas.
 - **Revente à moitié prix** (au moins 1 or) : ramener la relique à la boutique, ou clic droit.
 - Tout le hasard passe par une graine : même graine, mêmes boutiques, mêmes adversaires.
 
-En attendant le PvP, l'adversaire est un **fantôme généré** : un Nid tiré au hasard autour
-d'un élément, avec tout l'or qu'un joueur aurait reçu jusqu'à cette manche.
+En attendant le PvP, l'adversaire est un **fantôme généré** autour d'un élément :
+- **Budget** : tout l'or qu'un joueur aurait reçu jusqu'à cette manche, **+ 3 or par victoire
+  du joueur** (comme en PvP, on affronte des joueurs au même palmarès).
+- **Soin croissant** : en manche 1 il pose au hasard, à partir de la manche 7 il joue
+  comme un joueur correct (arme d'abord, 3 copies maximum d'une relique, catalyseurs à côté d'un sort).
+
+Réglage mesuré sur 300 parties par joueur automatique (`tests/simulation.gd`) :
+
+| Joueur | Victoires moyennes | Parties gagnées |
+|---|---|---|
+| Aléatoire | 1,2 | 2 % |
+| Simple (un élément, catalyseurs bien placés) | 2,3 | 15 % |
+
+### Problème connu : le plafond du Nid
+
+Le Nid fait 16 cases et se remplit vers la manche 6. Après, l'or ne sert plus à rien et seule
+la composition compte : un bon Nid gagne en boucle, un mauvais ne peut plus se rattraper.
+D'où une répartition en deux bosses (beaucoup de 0 à 2 victoires, un pic à 7, presque rien
+entre 4 et 6). **Aucun réglage de chiffres ne corrige ça.** Il faut une progression de fin
+de partie qui consomme de l'or : fusion (3 copies d'une relique donnent une relique
+de niveau 2), stades d'évolution, ou cases du Nid à débloquer.
 
 ---
 
