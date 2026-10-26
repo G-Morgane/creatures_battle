@@ -79,9 +79,10 @@ Sans élimination, le joueur simple gagne 49 à 54 % de ses combats à chaque ma
 difficulté est plate. Le fantôme n'est jamais meilleur que le joueur automatique simple,
 d'où un joueur aléatoire encore trop à l'aise.
 
-Par élément (joueur simple, avec le Crépuscule) : Vent 4,1 (peu de parties), Crépuscule 3,1,
-Glace 3,0, Feu 2,9, Nature 2,7, Nuit 2,7, Terre 2,6, Aube 2,5. Joueur simple : 2,9 victoires en
-moyenne, 21 % de parties gagnées.
+Par élément (joueur simple, **1 000 parties**, avec le nouveau Vent) : Terre 3,7, Crépuscule 3,6,
+Vent 3,1, Aube 3,0, Feu 2,9, Nature 2,9, Glace 2,9, Nuit 2,7. Joueur simple : 3,0 victoires en
+moyenne, 20 % de parties gagnées. (Sur 300 parties, chaque élément n'a qu'une trentaine de
+parties et les moyennes bougent de ±0,5 d'une mesure à l'autre.)
 
 ### Fusion
 
@@ -169,7 +170,7 @@ tactique pur. L'arme garde la couleur de son élément, pas celle de la monture.
 - **Feu** : Braise, Plume de cendre, Souffle ardent, Foyer (ancien lot, remplacé par le set du Phénix ci-dessous)
 - **Nuit** : Croc noir, Nuée, Voile, Lune creuse (ancien lot, remplacé par le set de la Chauve-souris ci-dessous)
 - **Terre** : Pierre (+PV), Écaille (bouclier de départ), Rempart (sort de bouclier), Socle (les sorts voisins donnent du bouclier) (fait)
-- **Vent** : Sabot (attaque, vitesse), Crin (esquive), Rafale (3 coups rapides), Girouette (les sorts voisins rechargent plus vite) (fait)
+- **Vent** : Sabot, Crin, Rafale, Girouette (ancien lot, remplacé par le set du Cheval ci-dessous)
 - **Glace** : Éclat, Carapace gelée, Prison de glace, Cœur d'hiver
 - **Nature** : Racine, Ronces, Sève, Graine mère
 - **Aube, Lumière, Crépuscule** : à concevoir
@@ -263,7 +264,10 @@ croisés, objets neutres utiles sans être universels, style lisible quel que so
 | Faux | Achève les cibles affaiblies | Faux de tison, Faux des cendres, armes de la Nuit |
 
 Familles par élément : **Cerf : Tir et Lame. Loup : Hast et Hache. Phénix : Bâton et Faux. Nuit : Faux et Lame.
-Lion : Bâton et Hache. Papillon : Tir et Hast.**
+Lion : Bâton et Hache. Papillon : Tir et Hast. Cheval : Lame et Hast.**
+
+Avec 9 éléments à 2 familles, il y a 18 places pour 6 familles : **l'idéal est 3 éléments par
+famille**. Après le Cheval, il reste **Tir, Hache, Bâton et Faux pour la Terre et la Lumière**.
 
 **Coups critiques** : identité de la famille Lame. Un crit fait **x1,75** de dégâts ; les chances
 viennent des armes Lame et de certains objets (aucune chance de base). Les Lames du Cerf
@@ -538,6 +542,53 @@ Pistes d'apparence : poussière d'écailles irisées, violets et orangés du sol
 antennes, ailes de phalène, lune basse. **Pas de miroirs ni de reflets**, gardés pour la Lumière
 (la Raie, l'illusion).
 
+### Vent (Cheval) : Élan et Foudre
+
+**Fait** (images de `images/`). Chiffres : Foudre à 100 d'Élan (Manche à air -20, 40 au moins),
+35 dégâts (Éventail +15, Girouette +5 par esquive jusqu'à la Foudre suivante) ; +10 d'Élan par
+attaque, +20 par esquive ; Étrier +2 par attaque de la série (10 au plus) ; Grelot : Galop toutes
+les 4 s, 15 d'Élan ; Ruban : +3 de hâte pendant 2 s par esquive ; Voile de cavale : +30 % d'esquive
+pendant 3 s (plafond relevé à 75 %) ; Galop libre 4 s, +5 de hâte, Élan doublé. La Foudre ne
+s'esquive pas.
+
+**On court, on esquive, ça charge, ça tombe.** Enchaîner les attaques et esquiver remplissent
+l'**Élan** ; à pleine jauge, il est consommé pour déclencher **la Foudre**, un éclair qui frappe
+l'adversaire. Deux façons de jouer : la vitesse (Fer, Grelot, Étrier) ou l'esquive (Duvet, Ruban,
+Girouette). Familles d'armes : **Lame et Hast**. Ce set remplace l'ancien Vent (Sabot, Crin,
+Rafale, Girouette).
+
+Règles :
+- **Passif du Cheval** : 15 % d'esquive (plafond 50 %) ; chaque attaque et chaque esquive donnent
+  de l'Élan ; à pleine jauge, la Foudre. (Elle remplace l'éclair qui suivait chaque esquive.)
+- **Nom** : « Foudre » et pas « Éclair », trop proche de l'Éclat du Lion à la lecture.
+  Visuel : un éclair turquoise et blanc qui tombe sur l'adversaire, contre le rayon doré de l'Éclat.
+- Les armes qui percent l'esquive restent le contre naturel du Cheval.
+
+#### Monture (10)
+
+| Rareté | Objet | Apparence | Effet |
+|---|---|---|---|
+| Commun | Fer allégé | Un fer à cheval fin, ivoire et turquoise, ouvert aux extrémités | **Catalyseur** : les objets voisins génèrent 50 % d'Élan en plus |
+| Commun | Ruban de crinière | Un nœud menthe avec deux longues bandes flottantes | Chaque esquive accélère brièvement tes attaques |
+| Commun | Grelot de course | Un petit grelot de cuivre pâle, suspendu à une attache en cuir turquoise | **Sort** *Galop* : toutes les 4 s, un petit coup qui donne de l'Élan |
+| Commun | Duvet de pissenlit | Une seule graine crème portée par une aigrette légère | Une petite chance d'esquive |
+| Rare | Étrier du grand galop | Un étrier élancé dont la branche dessine une volute | Les attaques consécutives donnent de plus en plus d'Élan ; subir un coup remet ce bonus à zéro |
+| Rare | Manche à air | Un petit tube de toile rayé menthe et ivoire, gonflé par le vent | Moins d'Élan nécessaire pour la Foudre |
+| Rare | Éventail de bourrasque | Un éventail à trois larges pans de toile turquoise | Renforce les dégâts de la Foudre |
+| Épique | Voile de cavale | Une petite couverture de selle légère, prolongée en voile flottante | Après une Foudre, forte esquive pendant un court instant |
+| Épique | Girouette indocile | Une girouette en forme de cheval cabré, sur une flèche courbe | Chaque esquive fait progresser la prochaine Foudre et en renforce les dégâts |
+| Légendaire | Bride des vents libres | Une bride ouverte en cuir bleu-vert, dont les rênes se dissolvent en deux courants d'air | La Foudre ouvre un court **Galop libre** : attaques accélérées, gains d'Élan doublés. Ne se renouvelle pas pendant qu'il est actif |
+
+#### Armes du cavalier (5, Lame et Hast)
+
+| Rareté | Arme | Famille | Effet |
+|---|---|---|---|
+| Commun | Dague de brise | Lame | Coups rapides qui génèrent un peu d'Élan à chaque impact |
+| Commun | Javelot des alizés | Hast | Perce l'esquive ; chaque lancer accélère légèrement l'attaque suivante |
+| Rare | Sabre de rafale | Lame | Après une esquive, une riposte de trois coups rapides qui génèrent de l'Élan |
+| Épique | Lance de bourrasque | Hast | Après chaque Foudre, le prochain coup perce l'esquive et fait double dégâts |
+| Légendaire | Rapière des vents libres | Lame | Pendant le Galop libre, chaque attaque frappe deux fois ; la seconde touche fait moins de dégâts et génère aussi de l'Élan |
+
 ## 5. Pas d'avantage élémentaire
 
 **Aucun élément ne bat un autre.** Pas de triangle, pas de multiplicateur caché.
@@ -566,7 +617,7 @@ On adapte son Nid à ce qu'on affronte, pas à une couleur.
 
 ## 7. Prototype (périmètre actuel)
 
-- 8 éléments : Terre, Vent (4 objets chacun), Feu, Nature, Glace, Nuit, Aube et Crépuscule
+- 8 éléments : Terre (4 objets), Feu, Nature, Glace, Nuit, Aube, Crépuscule et Vent
   (15 objets chacun), 1 arme neutre (Lance du guet).
 - Nid 4 x 4, reliques d'une case. **Les formes de reliques (2 x 1, L...) viendront après.**
 - Pas d'hybride, pas de réseau. Rareté en place.

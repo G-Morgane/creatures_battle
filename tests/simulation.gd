@@ -2,10 +2,15 @@ extends SceneTree
 
 # Simule des parties entieres avec des joueurs automatiques.
 # Lancer : godot --headless --path . -s res://tests/simulation.gd
+# Mesure fiable par element (plus long, plusieurs minutes) :
+#   godot --headless --path . -s res://tests/simulation.gd -- --parties=1000
 
-const PARTIES := 300
+var PARTIES := 300
 
 func _initialize() -> void:
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--parties="):
+			PARTIES = int(arg.get_slice("=", 1))
 	for style in ["aleatoire", "simple"]:
 		var repartition := []
 		repartition.resize(Partie.VICTOIRES_MAX + 1)

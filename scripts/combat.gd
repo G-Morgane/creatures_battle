@@ -11,7 +11,7 @@ var journal: Array[String] = []
 # des deux cotes a chaque pas
 # ([pv0, pv1, brule0, brule1, bouclier0, bouclier1, poison0, poison1,
 #   givre0, givre1, gele0, gele1, braise0, braise1, maledictions0, maledictions1,
-#   eclat0, eclat1]) ;
+#   eclat0, eclat1, elan0, elan1]) ;
 # brule = nombre de charges de brulure, maledictions = texte ("Faiblesse x2, Langueur").
 var evenements: Array = []
 var images: Array = []
@@ -33,7 +33,7 @@ func _etat(cr: Dictionary, i: int) -> Dictionary:
 	for s in cr["sorts"]:
 		var copie: Dictionary = s.duplicate()
 		# un Contre ne part pas sur minuterie mais sur coups recus
-		copie["prochain"] = INF if s["contre"] > 0 else s["recharge"]
+		copie["prochain"] = INF if s["contre"] > 0 or s["riposte_esquive"] else s["recharge"]
 		sorts.append(copie)
 	return {
 		"cr": cr,
@@ -58,6 +58,12 @@ func _etat(cr: Dictionary, i: int) -> Dictionary:
 		"transferts": 0,           # Arc des deux lunes
 		"chrysalide_faite": false,
 		"inversion_faite": false,
+		"elan_jauge": 0.0,
+		"serie": 0,                # Etrier : attaques sans etre touche
+		"girouette_bonus": 0.0,    # degats ajoutes a la prochaine Foudre
+		"esquive_bonus_jusqu": 0.0,
+		"galop_jusqu": 0.0,
+		"foudre_prete": false,     # Lance de bourrasque
 		"bouclier": cr["bouclier"],
 		"poison": 0.0,             # doses
 		"epines_bonus": 1.0,       # Coeur de roncier, Graine
@@ -88,7 +94,7 @@ func simuler() -> int:
 			cotes[0]["bouclier"], cotes[1]["bouclier"], cotes[0]["poison"], cotes[1]["poison"],
 			cotes[0]["givre"], cotes[1]["givre"], _gele(cotes[0]), _gele(cotes[1]), _braise(cotes[0]), _braise(cotes[1]),
 			_resume_maledictions(cotes[0]), _resume_maledictions(cotes[1]),
-			cotes[0]["eclat_jauge"], cotes[1]["eclat_jauge"]])
+			cotes[0]["eclat_jauge"], cotes[1]["eclat_jauge"], cotes[0]["elan_jauge"], cotes[1]["elan_jauge"]])
 		if morts[0] or morts[1]:
 			var v := 1 if morts[0] else 0
 			# Chute simultanee : celui qui finit le moins en negatif tient debout.
@@ -130,7 +136,14 @@ func _agir(moi: Dictionary, cible: Dictionary) -> void:
 		if _brulure(cible) > 0.0:
 			degats += moi["cr"]["degats_en_feu"]
 		moi["attaques"] += 1
-		if _frapper(moi, cible, degats, moi["cr"]["vol_de_vie"]):
+		var touche_base := _frapper(moi, cible, degats, moi["cr"]["vol_de_vie"])
+		# Rapiere, pendant le Galop libre : une seconde touche plus faible, qui charge aussi
+		if moi["cr"]["rapiere"] and t < moi["galop_jusqu"]:
+			if _frapper(moi, cible, degats * 0.5, moi["cr"]["vol_de_vie"]):
+				_gagner_elan(moi, cible, Data.ELAN_PAR_ATTAQUE * 0.5)
+		if touche_base:
+			moi["serie"] += 1
+			_gagner_elan(moi, cible, Data.ELAN_PAR_ATTAQUE + minf(moi["cr"]["etrier"] * moi["serie"], Data.ETRIER_MAX))
 			var tous: int = moi["cr"]["faiblesse_tous"]
 			if tous > 0 and moi["attaques"] % tous == 0:
 				_maudire(moi, cible, "faiblesse")
@@ -182,6 +195,10 @@ func _lancer(moi: Dictionary, cible: Dictionary, s: Dictionary, renfort := 1.0) 
 		var degats: float = (s["degats"] + s["par_transfert"] * moi["transferts"]) * renfort
 		if s["apres_eclat"] and moi["eclat_pret"]:
 			degats *= 2.0
+		var perce: bool = s["perce"]
+		if s["apres_foudre"] and moi["foudre_prete"]:
+			degats *= 2.0
+			perce = true
 		if s["achever_seuil"] > 0.0 and cible["pv"] < cible["cr"]["pv_max"] * s["achever_seuil"]:
 			degats *= s["achever_mult"]
 		if s["execution"] and cible["pv"] < cible["cr"]["pv_max"] * Data.SEUIL_EXECUTION:
@@ -196,7 +213,7 @@ func _lancer(moi: Dictionary, cible: Dictionary, s: Dictionary, renfort := 1.0) 
 			degats *= 4.0
 			cible["gele_jusqu"] = t
 			_evenement(cible, {"type": "brise_gel"})
-		touche = _frapper(moi, cible, degats, s["vol_de_vie"] + (0.5 if festin > 0.0 else 0.0), s["perce"]) or touche
+		touche = _frapper(moi, cible, degats, s["vol_de_vie"] + (0.5 if festin > 0.0 else 0.0), perce) or touche
 	s.erase("bonus_fracas")
 	if s["coups"] == 0 or touche:
 		if s["poison"] > 0.0:
@@ -222,6 +239,13 @@ func _lancer(moi: Dictionary, cible: Dictionary, s: Dictionary, renfort := 1.0) 
 				_transfert(moi, cible, s["transfert"], s["puissance"])
 	if s["apres_eclat"]:
 		moi["eclat_pret"] = false
+	if s["apres_foudre"]:
+		moi["foudre_prete"] = false
+	if touche and s["elan"] > 0.0:
+		_gagner_elan(moi, cible, s["elan"])
+	# Javelot des alizes : l'attaque suivante arrive plus tot
+	if s["alize"]:
+		moi["prochaine_attaque"] -= Data.ALIZE_AVANCE
 	if s["eclat_tous"] > 0:
 		s["tirs"] = s.get("tirs", 0) + 1
 		if s["tirs"] % s["eclat_tous"] == 0:
@@ -268,13 +292,12 @@ func _frapper(moi: Dictionary, cible: Dictionary, degats: float, vol: float, per
 		_evenement(cible, {"type": "esquive"})
 		_noter("%s esquive." % cible["cr"]["nom"])
 		return false
-	if not perce and cible["cr"]["esquive"] > 0.0 and rng.randf() < cible["cr"]["esquive"]:
+	var esquive := _esquive(cible)
+	if not perce and esquive > 0.0 and rng.randf() < esquive:
 		_evenement(cible, {"type": "esquive"})
-		if cible["cr"]["eclair"]:
-			# le Cheval riposte : l'eclair ne s'esquive pas
-			_blesser(moi, Data.ECLAIR_DEGATS, cible)
-			_evenement(cible, {"type": "eclair"})
+		_esquive_reussie(cible, moi)
 		return false
+	cible["serie"] = 0
 	if _gele(cible):
 		degats *= moi["cr"]["bonus_gel"]
 	# Faiblesse : l'attaquant maudit frappe moins fort.
@@ -317,6 +340,56 @@ func _eclat(moi: Dictionary, adverse: Dictionary) -> void:
 		moi["encensoir_jusqu"] = t + Data.ENCENSOIR_DUREE
 	if moi["cr"]["carillon"] > 0.0 and moi["eclats"] % Data.CARILLON_TOUS == 0:
 		_soigner(moi, adverse, moi["cr"]["carillon"])
+
+# --- Elan et Foudre (Cheval) -------------------------------------------------------
+
+# Voile de cavale : forte esquive un moment apres la Foudre (plafond releve).
+func _esquive(moi: Dictionary) -> float:
+	if t < moi["esquive_bonus_jusqu"]:
+		return minf(moi["cr"]["esquive"] + moi["cr"]["voile_cavale"], Data.ESQUIVE_MAX_TEMP)
+	return moi["cr"]["esquive"]
+
+# Une esquive : de l'Elan, la hate du Ruban, la Girouette, la riposte du Sabre.
+func _esquive_reussie(moi: Dictionary, attaquant: Dictionary) -> void:
+	_gagner_elan(moi, attaquant, Data.ELAN_PAR_ESQUIVE + moi["cr"]["girouette"] * 2.0)
+	moi["girouette_bonus"] += moi["cr"]["girouette"]
+	if moi["cr"]["ruban_criniere"] > 0.0:
+		moi["braise_temp"] = maxf(moi["braise_temp"] if t < moi["braise_temp_jusqu"] else 0.0, moi["cr"]["ruban_criniere"])
+		moi["braise_temp_jusqu"] = maxf(moi["braise_temp_jusqu"], t + Data.RUBAN_DUREE)
+	for s in moi["sorts"]:
+		if s["riposte_esquive"]:
+			_evenement(moi, {"type": "sort", "nom": s["nom"], "cavalier": true, "element": s["element"], "coups": s["coups"]})
+			for k in s["coups"]:
+				_blesser(attaquant, s["degats"], moi)
+				_gagner_elan(moi, attaquant, s["elan"])
+
+# Le Galop libre (Bride) double les gains ; la Manche a air abaisse le seuil.
+func _gagner_elan(moi: Dictionary, adverse: Dictionary, n: float) -> void:
+	if not moi["cr"]["elan"] or n <= 0.0:
+		return
+	if t < moi["galop_jusqu"]:
+		n *= 2.0
+	moi["elan_jauge"] += n
+	var seuil := maxf(Data.ELAN_SEUIL - moi["cr"]["manche"], Data.ELAN_SEUIL_MIN)
+	while moi["elan_jauge"] >= seuil:
+		moi["elan_jauge"] -= seuil
+		_foudre(moi, adverse)
+
+# La Foudre ne s'esquive pas. Eventail, Girouette : plus fort ; Voile de cavale :
+# esquive ; Bride : Galop libre (pas renouvele s'il est deja actif) ; Lance : coup suivant.
+func _foudre(moi: Dictionary, adverse: Dictionary) -> void:
+	var degats: float = Data.FOUDRE_DEGATS + moi["cr"]["eventail"] + moi["girouette_bonus"]
+	moi["girouette_bonus"] = 0.0
+	_evenement(adverse, {"type": "foudre", "valeur": degats})
+	_blesser(adverse, degats, moi)
+	moi["foudre_prete"] = true
+	if moi["cr"]["voile_cavale"] > 0.0:
+		moi["esquive_bonus_jusqu"] = t + Data.VOILE_CAVALE_DUREE
+	if moi["cr"]["bride"] and t >= moi["galop_jusqu"]:
+		moi["galop_jusqu"] = t + Data.GALOP_DUREE
+		moi["braise_temp"] = Data.GALOP_HATE
+		moi["braise_temp_jusqu"] = moi["galop_jusqu"]
+		_evenement(moi, {"type": "galop"})
 
 # --- Transfert (Papillon) --------------------------------------------------------
 

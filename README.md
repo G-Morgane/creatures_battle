@@ -33,7 +33,13 @@ godot --headless --path . -s res://tests/simulation.gd
 ```
 
 Simule 300 parties entières par joueur automatique (aléatoire, simple) : victoires moyennes,
-répartition, taux de victoire par manche avec et sans élimination.
+répartition, taux de victoire par manche avec et sans élimination, victoires par élément.
+Avec 8 éléments, 300 parties en donnent une trentaine à chacun : les chiffres par élément bougent
+d'une mesure à l'autre. Pour une mesure fiable (environ 8 minutes) :
+
+```bash
+godot --headless --path . -s res://tests/simulation.gd -- --parties=1000
+```
 
 ## Images
 

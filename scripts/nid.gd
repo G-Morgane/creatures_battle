@@ -145,7 +145,16 @@ func eclore() -> Dictionary:
 		"intervalle": Data.INTERVALLE_BASE,
 		"vol_de_vie": Data.VOL_DE_VIE_NUIT if f == "nuit" else 0.0,
 		"tortue": f == "terre",
-		"eclair": f == "vent",
+		"elan": f == "vent",
+		"ruban_criniere": 0.0,
+		"etrier": 0.0,
+		"manche": 0.0,
+		"eventail": 0.0,
+		"voile_cavale": 0.0,
+		"girouette": 0.0,
+		"bride": false,
+		"rapiere": false,
+		"riposte_esquive": false,
 		"bouclier": 0.0,
 		"esquive": Data.ESQUIVE_CHEVAL if f == "vent" else 0.0,
 		"epines": Data.EPINES_CERF if f == "nature" else 0.0,
@@ -233,11 +242,14 @@ func eclore() -> Dictionary:
 				for drapeau in ["resine", "fournaise", "oeuf"]:
 					cr[drapeau] = cr[drapeau] or r.get(drapeau, false)
 				for champ in ["crit", "sablier", "renvoi", "vol_par_malediction", "grimoire", "pacte",
-						"miroir", "encensoir", "vasque", "prisme", "voile_aube", "carillon", "lanterne"]:
+						"miroir", "encensoir", "vasque", "prisme", "voile_aube", "carillon", "lanterne",
+						"ruban_criniere", "manche", "eventail", "voile_cavale", "girouette"]:
 					cr[champ] += r.get(champ, 0.0) * m
 				if r.has("faiblesse_tous"):
 					cr["faiblesse_tous"] = r["faiblesse_tous"] if cr["faiblesse_tous"] == 0 else mini(cr["faiblesse_tous"], r["faiblesse_tous"])
 				cr["poudre"] += r.get("poudre", 0.0) * m * _renfort(c, "transfert")
+				cr["etrier"] += r.get("etrier", 0.0) * m * _renfort(c, "elan")
+				cr["bride"] = cr["bride"] or r.get("bride", false)
 				cr["cocon"] += r.get("cocon", 0.0) * m
 				for drapeau in ["mue", "brume", "phalene", "chrysalide", "aile_lune", "inversion"]:
 					cr[drapeau] = cr[drapeau] or r.get(drapeau, false)
@@ -251,6 +263,8 @@ func eclore() -> Dictionary:
 				if r.get("famille", "") == "lame":
 					cr["crit"] += r.get("crit", Data.CRIT_LAME)
 				cr["crit_malediction"] = cr["crit_malediction"] or r.get("crit_malediction", false)
+				cr["rapiere"] = cr["rapiere"] or r.get("rapiere", false)
+				cr["riposte_esquive"] = cr["riposte_esquive"] or r.get("riposte_esquive", false)
 	cr["intervalle"] = Data.INTERVALLE_BASE / (1.0 + vitesse)
 	cr["esquive"] = minf(cr["esquive"], Data.ESQUIVE_MAX)
 	# l'Oeuf du Premier Brasier donne une renaissance de plus
@@ -306,6 +320,10 @@ func _sort(c: Vector2i, r: Dictionary, aff: Dictionary) -> Dictionary:
 		"puissance": _puissance(r, "puissance", aff) * m * _renfort(c, "transfert"),
 		"transfert_tous": r.get("transfert_tous", 0),
 		"par_transfert": r.get("par_transfert", 0.0) * m,
+		"elan": r.get("elan", 0.0) * m * _renfort(c, "elan"),
+		"alize": r.get("alize", false),
+		"riposte_esquive": r.get("riposte_esquive", false),
+		"apres_foudre": r.get("apres_foudre", false),
 		"par_epine": r.get("par_epine", 0.0) * m,
 		"degats": _puissance(r, "degats", aff) * m,
 		"bouclier": _puissance(r, "bouclier", aff) * m,

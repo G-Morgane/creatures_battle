@@ -57,7 +57,7 @@ func _draw() -> void:
 		"terre":
 			_tortue(c)
 		"vent":
-			_cheval(c)
+			_sprite("vent")
 		"nature":
 			_sprite("nature")
 		"glace":
@@ -70,44 +70,6 @@ func _draw() -> void:
 			_informe(c)
 	_cavalier(c)
 	draw_set_transform(Vector2.ZERO)
-
-func _phenix(c: Dictionary) -> void:
-	var battement := sin(t * 6.0) * 12.0
-	# queue de flammes
-	for i in 3:
-		var dy := (i - 1) * 16.0
-		draw_colored_polygon(PackedVector2Array([Vector2(-50, dy - 8), Vector2(-130 - i * 10, dy + 10 + sin(t * 5 + i) * 8), Vector2(-50, dy + 12)]),
-			[c["vif"], c["clair"], c["vif"]][i])
-	# ailes
-	draw_colored_polygon(PackedVector2Array([Vector2(-20, -10), Vector2(-60, -90 - battement), Vector2(20, -20)]), c["vif"])
-	draw_colored_polygon(PackedVector2Array([Vector2(-10, -12), Vector2(10, -110 - battement), Vector2(40, -20)]), c["clair"])
-	# corps et tete
-	draw_circle(Vector2(0, 0), 52, c["vif"].darkened(0.15))
-	draw_circle(Vector2(62, -40), 26, c["vif"].darkened(0.15))
-	draw_colored_polygon(PackedVector2Array([Vector2(84, -46), Vector2(110, -36), Vector2(84, -30)]), c["clair"])
-	draw_circle(Vector2(70, -46), 5, Color.WHITE)
-	# crete
-	for i in 3:
-		draw_colored_polygon(PackedVector2Array([Vector2(50 + i * 8, -60), Vector2(42 + i * 10, -90 - i * 4), Vector2(60 + i * 8, -62)]), c["vif"])
-	# pattes
-	draw_line(Vector2(-10, 48), Vector2(-14, 90), c["clair"], 5)
-	draw_line(Vector2(20, 46), Vector2(24, 90), c["clair"], 5)
-
-func _chauve_souris(c: Dictionary) -> void:
-	var battement := sin(t * 8.0) * 18.0
-	for cote in [-1, 1]:
-		var ail := PackedVector2Array([
-			Vector2(cote * 30, -20), Vector2(cote * 150, -70 - battement), Vector2(cote * 130, -10 - battement * 0.5),
-			Vector2(cote * 100, 0), Vector2(cote * 80, 20 - battement * 0.3), Vector2(cote * 30, 20)])
-		draw_colored_polygon(ail, c["fond"].lightened(0.15))
-		draw_polyline(ail, c["vif"], 2.0)
-	draw_circle(Vector2(0, 0), 50, c["fond"].lightened(0.3))
-	draw_circle(Vector2(0, -56), 30, c["fond"].lightened(0.3))
-	for cote in [-1, 1]:
-		draw_colored_polygon(PackedVector2Array([Vector2(cote * 8, -80), Vector2(cote * 26, -112), Vector2(cote * 28, -70)]), c["fond"].lightened(0.3))
-		draw_circle(Vector2(cote * 11, -58), 5, c["clair"])
-	draw_colored_polygon(PackedVector2Array([Vector2(-8, -40), Vector2(-4, -30), Vector2(0, -40)]), Color.WHITE)
-	draw_colored_polygon(PackedVector2Array([Vector2(0, -40), Vector2(4, -30), Vector2(8, -40)]), Color.WHITE)
 
 # Monture dessinee par un artiste : centree sur le meme repere que les formes.
 const SPRITE_LARGEUR := 260.0
@@ -141,31 +103,6 @@ func _tortue(c: Dictionary) -> void:
 		draw_polyline(hexa, c["clair"].darkened(0.2), 2.0)
 	draw_line(Vector2(-92, 40), Vector2(92, 40), c["clair"], 4.0)
 
-func _cheval(c: Dictionary) -> void:
-	var galop := sin(t * 7.0)
-	var robe: Color = c["clair"]
-	# pattes au galop
-	for k in 4:
-		var x := -50.0 + k * 33.0
-		var dx := galop * 14.0 * (1 if k % 2 == 0 else -1)
-		draw_line(Vector2(x, 15), Vector2(x + dx, 90), robe.darkened(0.15), 9.0)
-	# queue
-	draw_colored_polygon(PackedVector2Array([Vector2(-70, -20), Vector2(-120, 10 + galop * 8), Vector2(-110, 40 + galop * 6), Vector2(-75, 0)]), c["vif"])
-	# corps, encolure, tete
-	var corps := PackedVector2Array()
-	for i in 20:
-		var a := TAU * i / 20.0
-		corps.append(Vector2(cos(a) * 78, sin(a) * 36 - 5))
-	draw_colored_polygon(corps, robe)
-	draw_colored_polygon(PackedVector2Array([Vector2(45, -25), Vector2(85, -85), Vector2(105, -70), Vector2(75, -5)]), robe)
-	draw_colored_polygon(PackedVector2Array([Vector2(80, -95), Vector2(130, -70), Vector2(125, -55), Vector2(88, -62)]), robe)
-	draw_circle(Vector2(98, -80), 4, c["fond"])
-	draw_colored_polygon(PackedVector2Array([Vector2(84, -96), Vector2(88, -112), Vector2(94, -94)]), robe)
-	# criniere au vent
-	for k in 4:
-		var b := Vector2(80 - k * 9, -88 + k * 16)
-		draw_colored_polygon(PackedVector2Array([b, b + Vector2(-26 - galop * 6, 4), b + Vector2(-6, 12)]), c["vif"])
-
 func _informe(c: Dictionary) -> void:
 	var pts := PackedVector2Array()
 	for i in 24:
@@ -190,6 +127,8 @@ func _cavalier(c: Dictionary) -> void:
 			dos = Vector2(-30, -40)
 		"crepuscule":
 			dos = Vector2(40, -40)
+		"vent":
+			dos = Vector2(-20, -45)
 		"feu":
 			dos = Vector2(20, -20)
 	var vent := sin(t * 3.0) * 6.0

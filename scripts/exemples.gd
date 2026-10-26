@@ -31,13 +31,14 @@ static func nid_terre() -> Nid:
 	n.placer(Vector2i(2, 1), "socle")
 	return n
 
+# Fer entre le Grelot et le Ruban (Elan renforce).
 static func nid_vent() -> Nid:
 	var n := Nid.new()
-	n.placer(Vector2i(0, 0), "sabot")
-	n.placer(Vector2i(1, 0), "sabot")
-	n.placer(Vector2i(0, 1), "crin")
-	n.placer(Vector2i(1, 1), "rafale")
-	n.placer(Vector2i(2, 1), "girouette")
+	n.placer(Vector2i(0, 0), "grelot")
+	n.placer(Vector2i(1, 0), "fer")
+	n.placer(Vector2i(2, 0), "ruban_criniere")
+	n.placer(Vector2i(0, 1), "duvet")
+	n.placer(Vector2i(1, 1), "ruban_criniere")
 	return n
 
 # Ortie a cote de l'Epine (epines), Amanite a cote de la Baie et de la Spore (poison).

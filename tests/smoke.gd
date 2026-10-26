@@ -22,6 +22,7 @@ func _ready() -> void:
 	ok = _nuit() and ok
 	ok = _aube() and ok
 	ok = _crepuscule() and ok
+	ok = _vent() and ok
 	print("SMOKE: ", "OK" if ok else "ECHEC")
 	get_tree().quit(0 if ok else 1)
 
@@ -96,9 +97,9 @@ func _armes() -> bool:
 	ok = _verifier(n.accepte(Vector2i(0, 0), "faux_lunaire", null), "remplacer l'arme en place") and ok
 	ok = _verifier(n.accepte(Vector2i(2, 2), "lance_guet", Vector2i(0, 0)), "deplacer l'arme") and ok
 	ok = _verifier(n.affinites().is_empty(), "la lance n'a pas d'element") and ok
-	n.placer(Vector2i(1, 0), "girouette")
+	n.placer(Vector2i(1, 0), "socle")
 	var s: Dictionary = n.eclore()["sorts"][0]
-	ok = _verifier(s["cavalier"] and s["nom"] == "Estoc" and s["recharge"] < 2.5, "sort du cavalier + catalyseur voisin") and ok
+	ok = _verifier(s["cavalier"] and s["nom"] == "Estoc" and s["bouclier"] > 0.0, "sort du cavalier + catalyseur voisin") and ok
 	# Estoc perce le Voile : la chauve-souris ne doit jamais esquiver un Estoc.
 	var lance := Nid.new()
 	lance.placer(Vector2i(0, 0), "lance_guet")
@@ -199,12 +200,11 @@ func _terre_vent() -> bool:
 	var rempart: Dictionary = t["sorts"][0]
 	# rempart : 15 + 3 x terre (2+2+1+1+1 = 7) = 36, socle voisin +40 % = 50,4 ; aucun degat
 	ok = _verifier(is_equal_approx(rempart["bouclier"], 36.0 * 1.4) and rempart["degats"] == 0.0, "rempart : bouclier selon affinite, socle") and ok
-	ok = _verifier(is_equal_approx(v["esquive"], Data.ESQUIVE_CHEVAL + 0.06), "cheval : esquive passive + crin") and ok
-	ok = _verifier(is_equal_approx(v["sorts"][0]["recharge"], 3.0 / 1.25), "girouette : recharge plus rapide") and ok
-	# combat : le bouclier encaisse, le cheval esquive et riposte
+	ok = _verifier(is_equal_approx(v["esquive"], Data.ESQUIVE_CHEVAL + 0.06), "cheval : esquive passive + duvet") and ok
+	# combat : le bouclier encaisse, le cheval charge l'Elan et lance la Foudre
 	var c := Combat.new(t, v)
 	c.simuler()
-	ok = _verifier(c.evenements.any(func(e): return e["type"] == "eclair"), "le cheval lance des eclairs") and ok
+	ok = _verifier(c.evenements.any(func(e): return e["type"] == "foudre"), "le cheval lance la foudre") and ok
 	ok = _verifier(c.evenements.any(func(e): return e["type"] == "bouclier"), "la tortue gagne du bouclier") and ok
 	ok = _verifier(c.cotes[1]["fatigue_debut"] == Data.MORT_SUBITE - Data.TORTUE_AVANCE_FATIGUE and c.cotes[0]["fatigue_mult"] == Data.TORTUE_FATIGUE_MULT, "fatigue de la tortue") and ok
 	var c2 := Combat.new(t, v)
@@ -681,3 +681,73 @@ func _crepuscule() -> bool:
 	for i in 3:
 		r._lancer(r.cotes[0], r.cotes[1], fle)
 	return _verifier(r.cotes[0]["transferts"] == 1, "flechettes : transfert tous les 3 tirs") and ok
+
+func _vent() -> bool:
+	var vide := Nid.new().eclore()
+	var cr := Exemples.nid_vent().eclore()
+	var ok := _verifier(cr["elan"] and is_equal_approx(cr["ruban_criniere"], 6.0), "vent : elan et rubans")
+	# grelot : 15 d'Elan x 1,5 (fer voisin)
+	ok = _verifier(is_equal_approx(cr["sorts"][0]["elan"], 22.5), "fer voisin : plus d'elan") and ok
+	# Elan : la Foudre part au seuil, ne s'esquive pas
+	var c := Combat.new(cr, vide)
+	var pv: float = c.cotes[1]["pv"]
+	c._gagner_elan(c.cotes[0], c.cotes[1], 100.0)
+	ok = _verifier(c.cotes[1]["pv"] == pv - Data.FOUDRE_DEGATS and c.cotes[0]["elan_jauge"] == 0.0, "foudre a 100 d'elan") and ok
+	# esquive : de l'Elan et la hate du Ruban
+	var d := Combat.new(cr, vide)
+	d._esquive_reussie(d.cotes[0], d.cotes[1])
+	ok = _verifier(d.cotes[0]["elan_jauge"] == Data.ELAN_PAR_ESQUIVE and d._braise(d.cotes[0]) == 6.0, "esquive : elan et hate") and ok
+	# etrier : la serie donne plus d'Elan, un coup recu la casse
+	var e_nid := Nid.new()
+	e_nid.placer(Vector2i(0, 0), "etrier")
+	e_nid.placer(Vector2i(1, 0), "duvet")
+	var e := Combat.new(e_nid.eclore(), vide)
+	e.cotes[0]["prochaine_attaque"] = 0.0
+	e._agir(e.cotes[0], e.cotes[1])
+	e.cotes[0]["prochaine_attaque"] = 0.0
+	e._agir(e.cotes[0], e.cotes[1])
+	ok = _verifier(e.cotes[0]["elan_jauge"] == 10.0 + 2.0 + 10.0 + 4.0, "etrier : elan de serie") and ok
+	e.cotes[0]["cr"]["esquive"] = 0.0
+	e._frapper(e.cotes[1], e.cotes[0], 1.0, 0.0)
+	ok = _verifier(e.cotes[0]["serie"] == 0, "etrier : un coup recu casse la serie") and ok
+	# manche, eventail, girouette, voile de cavale, bride
+	var f_nid := Exemples.nid_vent()
+	var libres := [Vector2i(2, 1), Vector2i(3, 1), Vector2i(0, 2), Vector2i(1, 2), Vector2i(2, 2)]
+	for id in ["manche", "eventail", "girouette_indocile", "voile_cavale", "bride"]:
+		f_nid.placer(libres.pop_front(), id)
+	var f := Combat.new(f_nid.eclore(), vide)
+	f._esquive_reussie(f.cotes[0], f.cotes[1])
+	ok = _verifier(f.cotes[0]["girouette_bonus"] == 5.0, "girouette : la foudre grossit") and ok
+	pv = f.cotes[1]["pv"]
+	f._gagner_elan(f.cotes[0], f.cotes[1], 80.0 - f.cotes[0]["elan_jauge"])
+	ok = _verifier(is_equal_approx(pv - f.cotes[1]["pv"], Data.FOUDRE_DEGATS + 15.0 + 5.0), "manche (seuil 80), eventail, girouette") and ok
+	ok = _verifier(is_equal_approx(f._esquive(f.cotes[0]), minf(f.cotes[0]["cr"]["esquive"] + 0.3, Data.ESQUIVE_MAX_TEMP)), "voile de cavale : esquive renforcee") and ok
+	ok = _verifier(f.cotes[0]["galop_jusqu"] > f.t, "bride : galop libre") and ok
+	var fin: float = f.cotes[0]["galop_jusqu"]
+	f._foudre(f.cotes[0], f.cotes[1])
+	ok = _verifier(f.cotes[0]["galop_jusqu"] == fin, "bride : pas renouvele pendant le galop") and ok
+	f.cotes[0]["elan_jauge"] = 0.0
+	f._gagner_elan(f.cotes[0], f.cotes[1], 10.0)
+	ok = _verifier(f.cotes[0]["elan_jauge"] == 20.0, "galop libre : elan double") and ok
+	# sabre : riposte de 3 coups apres une esquive ; lance : double apres la foudre
+	var sb := Nid.new()
+	sb.placer(Vector2i(0, 0), "sabre_rafale")
+	var g := Combat.new(sb.eclore(), vide)
+	pv = g.cotes[1]["pv"]
+	g._esquive_reussie(g.cotes[0], g.cotes[1])
+	ok = _verifier(pv - g.cotes[1]["pv"] == 9.0, "sabre de rafale : riposte de 3 coups") and ok
+	var lb := Nid.new()
+	lb.placer(Vector2i(0, 0), "lance_bourrasque")
+	var h := Combat.new(lb.eclore(), vide)
+	h.cotes[0]["foudre_prete"] = true
+	h.cotes[1]["esquive"] = true
+	pv = h.cotes[1]["pv"]
+	h._lancer(h.cotes[0], h.cotes[1], h.cotes[0]["sorts"][0])
+	ok = _verifier(pv - h.cotes[1]["pv"] == 20.0 and not h.cotes[0]["foudre_prete"], "lance de bourrasque : perce et double") and ok
+	# javelot : l'attaque suivante arrive plus tot
+	var jv := Nid.new()
+	jv.placer(Vector2i(0, 0), "javelot_alizes")
+	var j := Combat.new(jv.eclore(), vide)
+	var avant: float = j.cotes[0]["prochaine_attaque"]
+	j._lancer(j.cotes[0], j.cotes[1], j.cotes[0]["sorts"][0])
+	return _verifier(is_equal_approx(j.cotes[0]["prochaine_attaque"], avant - Data.ALIZE_AVANCE), "javelot des alizes") and ok

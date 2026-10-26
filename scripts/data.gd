@@ -16,7 +16,7 @@ const FORMES := {
 	"feu":   {"nom": "Phénix",        "passif": "Renaît une fois à 25 % de PV, plus vite à chaque combustion (Braise)"},
 	"nuit":  {"nom": "Chauve-souris", "passif": "Vol de vie sur les attaques, +12 % de dégâts par malédiction sur la cible"},
 	"terre": {"nom": "Tortue",        "passif": "Fatigue de l'adversaire 10 s plus tôt, la sienne réduite de moitié"},
-	"vent":  {"nom": "Cheval",        "passif": "15 % d'esquive, chaque esquive lance un éclair"},
+	"vent":  {"nom": "Cheval",        "passif": "15 % d'esquive ; attaques et esquives chargent l'Élan, qui déclenche la Foudre"},
 	"glace": {"nom": "Loup",          "passif": "Ses attaques posent du givre, +50 % de dégâts contre une cible gelée"},
 	"aube":  {"nom": "Lion",          "passif": "Régénère, et ses soins chargent l'Éclat (un coup de lumière)"},
 	"crepuscule": {"nom": "Papillon", "passif": "Un Transfert sans rien à voler ni à renvoyer lance un projectile d'arcane"},
@@ -66,10 +66,22 @@ const INVERSION_T := 12.0
 # Tortue : veut des combats longs, joue sur la fatigue (mort subite).
 const TORTUE_AVANCE_FATIGUE := 10.0
 const TORTUE_FATIGUE_MULT := 0.5
-# Cheval : esquive au hasard (tirage deterministe par combat), riposte par l'eclair.
+# Cheval : esquive au hasard (tirage deterministe par combat). Attaques et esquives
+# chargent l'Elan ; a pleine jauge, la Foudre frappe l'adversaire.
 const ESQUIVE_CHEVAL := 0.15
 const ESQUIVE_MAX := 0.5
-const ECLAIR_DEGATS := 10.0
+const ESQUIVE_MAX_TEMP := 0.75     # avec le Voile de cavale
+const ELAN_SEUIL := 100.0
+const ELAN_SEUIL_MIN := 40.0
+const ELAN_PAR_ATTAQUE := 10.0
+const ELAN_PAR_ESQUIVE := 20.0
+const ETRIER_MAX := 10.0           # bonus d'Elan de serie au plus
+const FOUDRE_DEGATS := 35.0
+const RUBAN_DUREE := 2.0
+const VOILE_CAVALE_DUREE := 3.0
+const GALOP_DUREE := 4.0           # Bride des vents libres
+const GALOP_HATE := 5.0
+const ALIZE_AVANCE := 0.3          # Javelot des alizes : attaque suivante avancee
 # Cerf : epines (riposte a chaque coup recu) et poison (doses qui s'empilent,
 # ne s'effacent pas, passent a travers le bouclier).
 const EPINES_CERF := 2.0
@@ -172,15 +184,27 @@ const RELIQUES := {
 		"recharge": 6.0, "bouclier": 15.0, "par_affinite": 3.0},
 	"socle":          {"nom": "Socle",          "element": "terre", "affinite": 1, "type": "catalyseur",
 		"effet": "bouclier", "valeur": 0.4},
-	# vent : vitesse, esquive, coups rapides
-	"sabot":          {"nom": "Sabot",          "element": "vent",  "affinite": 2, "type": "essence",
-		"attaque": 1.5, "vitesse": 0.10},
-	"crin":           {"nom": "Crin",           "element": "vent",  "affinite": 1, "type": "essence",
+	# vent : Elan et Foudre. Fer allege renforce l'Elan des voisins.
+	"fer":            {"nom": "Fer allégé",     "element": "vent",  "affinite": 1, "type": "catalyseur",
+		"effet": "elan", "valeur": 0.5},
+	"ruban_criniere": {"nom": "Ruban de crinière","element": "vent", "affinite": 2, "type": "essence",
+		"ruban_criniere": 3.0},
+	"grelot":         {"nom": "Grelot de course","element": "vent", "affinite": 1, "type": "sort",
+		"sort": "Galop", "recharge": 4.0, "degats": 4.0, "coups": 1, "elan": 15.0},
+	"duvet":          {"nom": "Duvet de pissenlit","element": "vent", "affinite": 2, "type": "essence",
 		"esquive": 0.06},
-	"rafale":         {"nom": "Rafale",         "element": "vent",  "affinite": 1, "type": "sort",
-		"recharge": 3.0, "degats": 4.0, "par_affinite": 0.4, "coups": 3},
-	"girouette":      {"nom": "Girouette",      "element": "vent",  "affinite": 1, "type": "catalyseur",
-		"effet": "recharge", "valeur": 0.25},
+	"etrier":         {"nom": "Étrier du grand galop","element": "vent", "affinite": 1, "type": "essence", "rarete": "rare",
+		"etrier": 2.0},
+	"manche":         {"nom": "Manche à air",   "element": "vent",  "affinite": 1, "type": "essence", "rarete": "rare",
+		"manche": 20.0},
+	"eventail":       {"nom": "Éventail de bourrasque","element": "vent", "affinite": 1, "type": "essence", "rarete": "rare",
+		"eventail": 15.0},
+	"voile_cavale":   {"nom": "Voile de cavale","element": "vent",  "affinite": 1, "type": "essence", "rarete": "epique",
+		"voile_cavale": 0.3},
+	"girouette_indocile": {"nom": "Girouette indocile","element": "vent", "affinite": 1, "type": "essence", "rarete": "epique",
+		"girouette": 5.0},
+	"bride":          {"nom": "Bride des vents libres","element": "vent", "affinite": 2, "type": "essence", "rarete": "legendaire",
+		"bride": true},
 	# nature : epines et poison. Ortie et Amanite renforcent leurs voisins.
 	"epine_ronce":    {"nom": "Épine de ronce", "element": "nature", "affinite": 2, "type": "essence",
 		"epines": 2.0},
@@ -334,6 +358,17 @@ const RELIQUES := {
 		"sort": "Deux lunes", "recharge": 4.0, "degats": 6.0, "coups": 1, "par_transfert": 1.5},
 	"lance_entre":    {"nom": "Lance de l'entre-deux","element": "crepuscule", "affinite": 2, "type": "arme", "famille": "hast", "rarete": "legendaire",
 		"sort": "Entre-deux", "recharge": 3.0, "degats": 8.0, "coups": 1, "transfert": "echange", "puissance": 10.0},
+	# armes du Cheval : Lame et Hast
+	"dague_brise":    {"nom": "Dague de brise", "element": "vent",  "affinite": 1, "type": "arme", "famille": "lame",
+		"sort": "Brise", "recharge": 1.5, "degats": 3.0, "coups": 1, "elan": 8.0},
+	"javelot_alizes": {"nom": "Javelot des alizés","element": "vent", "affinite": 1, "type": "arme", "famille": "hast",
+		"sort": "Alizé", "recharge": 3.0, "degats": 7.0, "coups": 1, "perce": true, "alize": true},
+	"sabre_rafale":   {"nom": "Sabre de rafale","element": "vent",  "affinite": 1, "type": "arme", "famille": "lame", "rarete": "rare",
+		"sort": "Riposte", "riposte_esquive": true, "degats": 3.0, "coups": 3, "elan": 5.0},
+	"lance_bourrasque": {"nom": "Lance de bourrasque","element": "vent", "affinite": 1, "type": "arme", "famille": "hast", "rarete": "epique",
+		"sort": "Bourrasque", "recharge": 4.0, "degats": 10.0, "coups": 1, "apres_foudre": true},
+	"rapiere":        {"nom": "Rapière des vents libres","element": "vent", "affinite": 2, "type": "arme", "famille": "lame", "rarete": "legendaire",
+		"sort": "Vents libres", "recharge": 2.0, "degats": 6.0, "coups": 1, "elan": 6.0, "rapiere": true},
 	"arc_jardin":     {"nom": "Arc du Jardin interdit","element": "nature", "affinite": 2, "type": "arme", "famille": "tir", "rarete": "legendaire",
 		"sort": "Flèche-graine", "recharge": 6.0, "degats": 12.0, "coups": 1, "graine": true},
 }

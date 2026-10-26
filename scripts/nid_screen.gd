@@ -204,6 +204,14 @@ func _decrire(cr: Dictionary) -> String:
 		effets.append("%d renaissances" % cr["renaissances"])
 	if cr["givre_attaque"] > 0.0:
 		effets.append("%.1f givre par attaque" % cr["givre_attaque"])
+	if cr["elan"]:
+		effets.append("Foudre de %d tous les %d d'Élan" % [Data.FOUDRE_DEGATS + cr["eventail"], maxf(Data.ELAN_SEUIL - cr["manche"], Data.ELAN_SEUIL_MIN)])
+	for d in [["ruban_criniere", "une esquive accélère"], ["etrier", "les séries d'attaques chargent plus"],
+			["girouette", "les esquives renforcent la Foudre"], ["voile_cavale", "après la Foudre, forte esquive"]]:
+		if cr[d[0]] > 0.0:
+			effets.append(d[1])
+	if cr["bride"]:
+		effets.append("la Foudre ouvre un Galop libre")
 	if cr["arcane"]:
 		effets.append("un Transfert à vide tire un projectile d'arcane")
 	if cr["poudre"] > 0.0:
@@ -328,6 +336,14 @@ func _decrire(cr: Dictionary) -> String:
 			d += (" %s (%.1f)" % [verbes[s["transfert"]], s["puissance"]])
 			if s["transfert_tous"] > 0:
 				d += " tous les %d tirs" % s["transfert_tous"]
+		if s["elan"] > 0.0:
+			d += ", +%.1f Élan" % s["elan"]
+		if s["riposte_esquive"]:
+			d = "[b]Cavalier, %s[/b] (après une esquive) : %d x %.1f dégâts" % [s["nom"], s["coups"], s["degats"]]
+		if s["alize"]:
+			d += ", avance l'attaque suivante"
+		if s["apres_foudre"]:
+			d += ", perce et double après la Foudre"
 		if s["par_transfert"] > 0.0:
 			d += ", +%.1f par Transfert" % s["par_transfert"]
 		if s["vol_de_vie"] > 0.0 and not s["esquive"]:

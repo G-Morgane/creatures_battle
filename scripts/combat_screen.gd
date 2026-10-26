@@ -192,12 +192,12 @@ func _jouer(e: Dictionary) -> void:
 					"a": cible.position + cible.size / 2 + Vector2(0, 20 - 20 + k * 10), "t0": lecture + k * ECART_COUPS * 0.5,
 					"duree": VOL_PROJECTILE, "couleur": n["vif"], "coeur": n["clair"], "taille": 7.0})
 			_texte(moi, 2, "Salve d'épines", n["clair"])
-		"eclair":
-			var vent: Dictionary = Palette.ELEMENTS["vent"]
-			effets.append({"type": "projectile", "de": moi.position + moi.source(false),
-				"a": cible.position + cible.size / 2 + Vector2(0, 20), "t0": lecture,
-				"duree": VOL_PROJECTILE * 0.5, "couleur": vent["vif"], "coeur": vent["clair"], "taille": 8.0})
-			_texte(moi, 1, "Éclair", vent["clair"])
+		"foudre":
+			# un eclair turquoise et blanc qui tombe du ciel sur moi
+			effets.append({"type": "foudre", "pos": moi.position + moi.size / 2 + Vector2(0, 30), "t0": lecture, "duree": 0.45})
+			_texte(moi, 2, "Foudre %d" % roundi(e["valeur"]), Palette.ELEMENTS["vent"]["clair"])
+		"galop":
+			_texte(moi, 1, "Galop libre !", Palette.ELEMENTS["vent"]["vif"])
 		"esquive":
 			_texte(moi, 2, "Esquive !", Palette.TEXTE)
 		"renaissance":
@@ -280,6 +280,9 @@ func _dessiner() -> void:
 		if cr["eclat"]:
 			var seuil := maxf(Data.ECLAT_SEUIL - cr["miroir"], Data.ECLAT_SEUIL_MIN)
 			etats.append(["Éclat %d/%d" % [roundi(img[16 + i]), roundi(seuil)], Palette.ELEMENTS["aube"]["vif"]])
+		if cr["elan"]:
+			var seuil_e := maxf(Data.ELAN_SEUIL - cr["manche"], Data.ELAN_SEUIL_MIN)
+			etats.append(["Élan %d/%d" % [roundi(img[18 + i]), roundi(seuil_e)], Palette.ELEMENTS["vent"]["vif"]])
 		if img[14 + i] != "":
 			calque.draw_string(police, Vector2(x, y + 54), img[14 + i],
 				HORIZONTAL_ALIGNMENT_CENTER, 300, 14, Palette.ELEMENTS["nuit"]["clair"])
@@ -300,11 +303,29 @@ func _dessiner() -> void:
 				calque.draw_circle(pos, e["taille"] * 1.6, Color(e["couleur"], 0.35))
 				calque.draw_circle(pos, e["taille"], e["couleur"])
 				calque.draw_circle(pos, e["taille"] * 0.45, e["coeur"])
+			"foudre":
+				_eclair(e["pos"], p, e["t0"])
 			"texte":
 				var c: Color = e["couleur"]
 				c.a = 1.0 - p * p
 				calque.draw_string(police, e["pos"] + Vector2(-150, -p * 30), e["texte"],
 					HORIZONTAL_ALIGNMENT_CENTER, 300, 18, c)
+
+# Eclair : une ligne brisee du haut de l'ecran jusqu'a la monture, qui s'efface.
+func _eclair(bas: Vector2, p: float, graine: float) -> void:
+	var vent: Dictionary = Palette.ELEMENTS["vent"]
+	var r := RandomNumberGenerator.new()
+	r.seed = int(graine * 1000.0)
+	var pts := PackedVector2Array()
+	var y := 0.0
+	while y < bas.y:
+		pts.append(Vector2(bas.x + r.randf_range(-28, 28), y))
+		y += r.randf_range(30, 60)
+	pts.append(bas)
+	var a := 1.0 - p
+	calque.draw_polyline(pts, Color(vent["vif"], a), 9.0)
+	calque.draw_polyline(pts, Color(vent["clair"], a), 3.0)
+	calque.draw_circle(bas, 30.0 * (1.0 - p * 0.5), Color(vent["clair"], 0.4 * a))
 
 # Monture gelee : halo de glace et eclats autour d'elle.
 func _gel(v: CreatureVue) -> void:
