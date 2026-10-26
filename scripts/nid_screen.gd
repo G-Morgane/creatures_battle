@@ -274,7 +274,10 @@ static func _icone(ci: CanvasItem, tex: Texture2D, zone: Rect2) -> void:
 
 static func info(id: String) -> String:
 	var r: Dictionary = Data.RELIQUES[id]
-	return "%s\n%s, %s" % [r["nom"], Data.NOMS_RARETE[Data.rarete(id)], r["type"]]
+	var genre: String = r["type"]
+	if r.has("famille"):
+		genre = "arme (%s)" % Data.FAMILLES[r["famille"]]
+	return "%s\n%s, %s" % [r["nom"], Data.NOMS_RARETE[Data.rarete(id)], genre]
 
 static func apercu(id: String) -> Control:
 	var a := Apercu.new()

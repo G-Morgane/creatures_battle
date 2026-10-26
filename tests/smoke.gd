@@ -16,6 +16,7 @@ func _ready() -> void:
 	ok = _fusion() and ok
 	ok = _terre_vent() and ok
 	ok = _nature() and ok
+	ok = _familles() and ok
 	print("SMOKE: ", "OK" if ok else "ECHEC")
 	get_tree().quit(0 if ok else 1)
 
@@ -260,3 +261,12 @@ func _nature() -> bool:
 	ok = _verifier(p.offres.all(func(id): return Data.rarete(id) == "commun"), "manche 1 : que des communs") and ok
 	ok = _verifier(Partie.prix("graine_jardin") == 3 + 7 and Partie.prix("arc_saule") == 5 + 2, "prix selon type et rarete") and ok
 	return ok
+
+func _familles() -> bool:
+	var armes := Data.RELIQUES.keys().filter(func(id): return Data.RELIQUES[id]["type"] == "arme")
+	var ok := _verifier(armes.all(func(id): return Data.RELIQUES[id].get("famille", "") in Data.FAMILLES), "chaque arme a une famille connue")
+	var cerf := armes.filter(func(id): return Data.RELIQUES[id]["element"] == "nature")
+	var familles := {}
+	for id in cerf:
+		familles[Data.RELIQUES[id]["famille"]] = true
+	return _verifier(familles.keys().size() <= 2, "le Cerf n'utilise qu'une ou deux familles") and ok

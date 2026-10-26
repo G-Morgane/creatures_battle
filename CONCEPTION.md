@@ -237,10 +237,68 @@ Règles du poison et des épines :
 | Commun | Sarbacane de roseau | *Fléchette* : petit dard rapide (toutes les 2 s), pose 1 dose de poison | Prépare le poison |
 | Commun | Dague d'épine | *Contre* : après 4 coups reçus, le cavalier frappe en retour, plus fort avec des épines | Défense, pont vers les épines |
 | Rare | Arc de saule | *Flèche de chasse* (toutes les 5 s) : dégâts augmentés par dose de poison sur la cible | Récolte le poison |
-| Épique | Fouet de ronces | *Lacération* : 4 coups rapides qui infligent des dégâts d'épines (profitent des bonus d'épines) | Fait des épines une attaque |
+| Épique | Serpe de ronces | *Lacération* : 4 coups rapides qui infligent des dégâts d'épines (profitent des bonus d'épines) | Fait des épines une attaque (Lame, remplace le Fouet) |
 | Légendaire | Arc du Jardin interdit | *Flèche-graine* : se plante dans la cible ; chaque dose de poison qu'elle reçoit ensuite la blesse aussi d'épines | Assorti à la Graine du Jardin interdit |
 
 Les plafonds (x2, 100 doses) sont des valeurs de départ, à régler par simulation.
+
+---
+
+### Familles d'armes
+
+Chaque arme appartient à une **famille**, partagée entre plusieurs éléments. Les futurs objets
+neutres viseront une famille (« Carquois : les arcs tirent une flèche de plus ») : builds
+croisés, objets neutres utiles sans être universels, style lisible quel que soit l'élément.
+**Chaque élément utilise une ou deux familles.**
+
+| Famille | Style | Armes actuelles |
+|---|---|---|
+| Tir | Rapide, plusieurs petits coups | Sarbacane de roseau, Arc de saule, Arc du Jardin interdit |
+| Lame | Rapide, riposte | Dague d'épine, Serpe de ronces |
+| Hast | Allonge, perce l'esquive | Lance du guet (neutre), armes du Loup |
+| Hache | Lent, gros coup | armes du Loup |
+| Bâton | Magie, grandit avec l'affinité | Bâton de braise |
+| Faux | Achève les cibles affaiblies | Faux lunaire |
+
+Familles par élément : **Cerf : Tir et Lame. Loup : Hast et Hache.**
+
+### Glace (Loup) : givre et bouclier qui se brise
+
+Là où la Tortue veut que son bouclier tienne, **le Loup veut qu'il se brise** : chaque bris
+déclenche des effets. C'est le même bouclier que la Terre (plus simple à lire) : les hybrides
+Terre et Glace sont à surveiller en simulation. Le poison du Cerf passe à travers le bouclier
+sans le briser : le Loup souffre contre la Nature, c'est voulu.
+
+Règles du givre :
+- Chaque **charge de givre** ralentit les attaques **et** les recharges de sorts de la cible
+  (3 % par charge pour commencer).
+- À **10 charges**, la cible **gèle** : plus rien ne part pendant 1,5 s, puis ses charges
+  retombent à zéro.
+
+#### Monture (10)
+
+| Rareté | Objet | Effet |
+|---|---|---|
+| Commun | Flocon intact | Les attaques appliquent du givre |
+| Commun | Galet gelé | **Sort** *Armure de givre* : un petit bouclier toutes les 6 s |
+| Commun | Éclat de givre | Inflige des dégâts lorsque ton bouclier est brisé |
+| Commun | Fourrure hivernale | **Catalyseur** : plus de bouclier pour les objets voisins |
+| Rare | Croc du blizzard | **Catalyseur** : plus de ralentissement par charge pour les objets voisins |
+| Rare | Écorce de pergélisol | Reforme un petit bouclier après un délai lorsqu'il est brisé |
+| Rare | Cristal fêlé | Les dégâts de bris du bouclier appliquent aussi du givre |
+| Épique | Cœur de banquise | Geler la cible accorde du bouclier |
+| Épique | Rose des neiges | Quand le bouclier est brisé, le prochain gel demande moins de charges |
+| Légendaire | Noyau de l'Hiver éternel | Quand le bouclier est brisé : une nova qui inflige des dégâts et gèle immédiatement la cible si elle est déjà ralentie |
+
+#### Armes du cavalier (5, Hast et Hache)
+
+| Rareté | Arme | Famille | Sort du cavalier |
+|---|---|---|---|
+| Commun | Javelot de stalactite | Hast | Lancer toutes les 3 s qui pose 2 charges de givre |
+| Commun | Hachette de givre | Hache | Gros coup lent, doublé contre une cible ralentie |
+| Rare | Pique de banquise | Hast | Perce l'esquive, double les charges de givre posées |
+| Épique | Hache brise-glace | Hache | *Fracas* : brise ton propre bouclier et ajoute sa valeur aux dégâts (déclenche les effets de bris) |
+| Légendaire | Lance du Grand Hiver | Hast | Brise le gel de la cible pour un coup énorme |
 
 ---
 
@@ -285,7 +343,9 @@ donne envie de refaire un Nid ? Si non, rien d'autre ne compte.
 ## 8. Plus tard
 
 - Formes de reliques et rotation.
-- Refaire Feu, Nuit, Terre, Vent au format 15 objets.
+- Coder la Glace (Loup) : il faudra le dessin du loup et les planches d'objets.
+- Refaire Feu, Nuit, Terre, Vent au format 15 objets, avec une ou deux familles d'armes chacun.
+- Objets neutres qui visent une famille d'armes.
 - Glace, les quatre moments du jour, et les hybrides.
 - Une arme propre à la Terre et au Vent (ils n'ont que la lance).
 - 9 éléments donnent 36 paires d'hybrides : il faudra sûrement n'en garder qu'une partie.

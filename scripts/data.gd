@@ -115,24 +115,30 @@ const RELIQUES := {
 		"graine": true, "epines": 3.0},
 	# armes : le cavalier en tient une seule et lance son propre sort.
 	# Les catalyseurs voisins s'appliquent aussi a ce sort.
-	"baton_braise":   {"nom": "Bâton de braise","element": "feu",   "affinite": 1, "type": "arme",
+	"baton_braise":   {"nom": "Bâton de braise","element": "feu",   "affinite": 1, "type": "arme", "famille": "baton",
 		"sort": "Boule de feu", "recharge": 3.0, "degats": 6.0, "par_affinite": 1.0, "coups": 1},
-	"lance_guet":     {"nom": "Lance du guet",  "element": "",      "affinite": 0, "type": "arme",
+	"lance_guet":     {"nom": "Lance du guet",  "element": "",      "affinite": 0, "type": "arme", "famille": "hast",
 		"sort": "Estoc", "recharge": 2.5, "degats": 8.0, "coups": 1, "perce": true},
-	"faux_lunaire":   {"nom": "Faux lunaire",   "element": "nuit", "affinite": 1, "type": "arme",
+	"faux_lunaire":   {"nom": "Faux lunaire",   "element": "nuit", "affinite": 1, "type": "arme", "famille": "faux",
 		"sort": "Moisson", "recharge": 6.0, "degats": 6.0, "par_affinite": 1.0, "coups": 1, "execution": true},
 	# armes du Cerf
-	"sarbacane":      {"nom": "Sarbacane de roseau","element": "nature", "affinite": 1, "type": "arme",
+	"sarbacane":      {"nom": "Sarbacane de roseau","element": "nature", "affinite": 1, "type": "arme", "famille": "tir",
 		"sort": "Fléchette", "recharge": 2.0, "degats": 2.0, "coups": 1, "poison": 1.0},
-	"dague_epine":    {"nom": "Dague d'épine",  "element": "nature", "affinite": 1, "type": "arme",
+	"dague_epine":    {"nom": "Dague d'épine",  "element": "nature", "affinite": 1, "type": "arme", "famille": "lame",
 		"sort": "Contre", "contre": 4, "degats": 8.0, "par_epine": 2.0, "coups": 1},
-	"arc_saule":      {"nom": "Arc de saule",   "element": "nature", "affinite": 1, "type": "arme", "rarete": "rare",
+	"arc_saule":      {"nom": "Arc de saule",   "element": "nature", "affinite": 1, "type": "arme", "famille": "tir", "rarete": "rare",
 		"sort": "Flèche de chasse", "recharge": 5.0, "degats": 10.0, "par_poison": 1.0, "coups": 1},
-	"fouet_ronces":   {"nom": "Fouet de ronces","element": "nature", "affinite": 1, "type": "arme", "rarete": "epique",
+	"serpe_ronces":   {"nom": "Serpe de ronces","element": "nature", "affinite": 1, "type": "arme", "famille": "lame", "rarete": "epique",
 		"sort": "Lacération", "recharge": 4.0, "degats": 2.0, "coups": 4, "degats_epines": true},
-	"arc_jardin":     {"nom": "Arc du Jardin interdit","element": "nature", "affinite": 2, "type": "arme", "rarete": "legendaire",
+	"arc_jardin":     {"nom": "Arc du Jardin interdit","element": "nature", "affinite": 2, "type": "arme", "famille": "tir", "rarete": "legendaire",
 		"sort": "Flèche-graine", "recharge": 6.0, "degats": 12.0, "coups": 1, "graine": true},
 }
+
+# --- familles d'armes ------------------------------------------------------
+
+# Chaque arme a une famille, partagee entre elements : les objets neutres
+# viseront une famille (CONCEPTION.md, Familles d'armes).
+const FAMILLES := {"tir": "Tir", "lame": "Lame", "hast": "Hast", "hache": "Hache", "baton": "Bâton", "faux": "Faux"}
 
 # --- rarete ----------------------------------------------------------------
 
