@@ -190,6 +190,18 @@ func _decrire(cr: Dictionary) -> String:
 		effets.append("les épines se renforcent à chaque riposte")
 	if cr["graine"]:
 		effets.append("épines et poison se nourrissent l'un l'autre")
+	if cr["brulure_attaque"] > 0.0:
+		effets.append("%.1f brûlure par attaque" % cr["brulure_attaque"])
+	if cr["degats_en_feu"] > 0.0:
+		effets.append("+%d dégâts contre une cible en feu" % cr["degats_en_feu"])
+	if cr["combustion_soin"] + cr["soin_par_charge"] > 0.0:
+		effets.append("les combustions soignent")
+	if cr["resine"]:
+		effets.append("brûlure doublée vie basse")
+	if cr["fournaise"]:
+		effets.append("sous la moitié de sa vie : combustion totale et Braise")
+	if cr["renaissances"] > 1:
+		effets.append("%d renaissances" % cr["renaissances"])
 	if cr["givre_attaque"] > 0.0:
 		effets.append("%.1f givre par attaque" % cr["givre_attaque"])
 	var bris := []
@@ -242,7 +254,19 @@ func _decrire(cr: Dictionary) -> String:
 		if s["execution"]:
 			d += ", double sous %d %% de PV" % roundi(Data.SEUIL_EXECUTION * 100)
 		if s["brulure"] > 0.0:
-			d += ", brûle"
+			d += ", +%.1f brûlure" % s["brulure"]
+		if s["combustion"] > 0.0:
+			d += " combustion de %d %% des brûlures" % roundi(s["combustion"] * 100)
+		if s["braise"] > 0.0:
+			d += ", +%.1f Braise" % s["braise"]
+		if s["achever_seuil"] > 0.0:
+			d += ", x%.1f sous %d %% de vie" % [s["achever_mult"], roundi(s["achever_seuil"] * 100)]
+		if s["combustion_affaiblie"]:
+			d += ", combustion totale contre une cible affaiblie"
+		if s["combustion_tous"] > 0:
+			d += ", combustion totale tous les %d tirs" % s["combustion_tous"]
+		if s["tir_renaissance"]:
+			d += ", tire à la renaissance"
 		if s["vol_de_vie"] > 0.0 and not s["esquive"]:
 			d += ", vole %d %%" % roundi(s["vol_de_vie"] * 100)
 		lignes.append(d)

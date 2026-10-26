@@ -144,7 +144,6 @@ func eclore() -> Dictionary:
 		"attaque": Data.ATTAQUE_BASE,
 		"intervalle": Data.INTERVALLE_BASE,
 		"vol_de_vie": Data.VOL_DE_VIE_NUIT if f == "nuit" else 0.0,
-		"renaissance": f == "feu",
 		"tortue": f == "terre",
 		"eclair": f == "vent",
 		"bouclier": 0.0,
@@ -164,6 +163,14 @@ func eclore() -> Dictionary:
 		"gel_bouclier": 0.0,
 		"rose": false,
 		"nova": 0.0,
+		"brulure_attaque": 0.0,
+		"combustion_soin": 0.0,
+		"soin_par_charge": 0.0,
+		"degats_en_feu": 0.0,
+		"resine": false,
+		"fournaise": false,
+		"renaissances": 1 if f == "feu" else 0,
+		"oeuf": false,
 		"arme": arme(),
 		"sorts": [],
 	}
@@ -187,14 +194,21 @@ func eclore() -> Dictionary:
 				# Croc du blizzard renforce le givre pose par ses voisines
 				cr["givre_attaque"] += r.get("givre_attaque", 0.0) * m * _renfort(c, "givre")
 				cr["bris_givre"] += r.get("bris_givre", 0.0) * m * _renfort(c, "givre")
-				for champ in ["bris_degats", "reforme", "gel_bouclier", "nova"]:
+				for champ in ["bris_degats", "reforme", "gel_bouclier", "nova", "combustion_soin", "soin_par_charge", "degats_en_feu"]:
 					cr[champ] += r.get(champ, 0.0) * m
+				# Plume incandescente renforce la brulure posee par ses voisines
+				cr["brulure_attaque"] += r.get("brulure_attaque", 0.0) * m * _renfort(c, "brulure")
+				for drapeau in ["resine", "fournaise", "oeuf"]:
+					cr[drapeau] = cr[drapeau] or r.get(drapeau, false)
 				for drapeau in ["belladone", "coeur", "graine", "rose"]:
 					cr[drapeau] = cr[drapeau] or r.get(drapeau, false)
 			"sort", "arme":
 				cr["sorts"].append(_sort(c, r, aff))
 	cr["intervalle"] = Data.INTERVALLE_BASE / (1.0 + vitesse)
 	cr["esquive"] = minf(cr["esquive"], Data.ESQUIVE_MAX)
+	# l'Oeuf du Premier Brasier donne une renaissance de plus
+	if cr["oeuf"]:
+		cr["renaissances"] += 1
 	return cr
 
 # Un sort lit ses catalyseurs voisins au moment de l'eclosion.
@@ -226,12 +240,19 @@ func _sort(c: Vector2i, r: Dictionary, aff: Dictionary) -> Dictionary:
 		"double_ralenti": r.get("double_ralenti", false),
 		"fracas": r.get("fracas", false),
 		"brise_gel": r.get("brise_gel", false),
+		"brulure": _puissance(r, "brulure", aff) * m * _renfort(c, "brulure"),
+		"combustion": r.get("combustion", 0.0),
+		"braise": r.get("braise", 0.0) * m * _renfort(c, "braise"),
+		"achever_seuil": r.get("achever_seuil", 0.0),
+		"achever_mult": r.get("achever_mult", 1.0),
+		"combustion_affaiblie": r.get("combustion_affaiblie", false),
+		"combustion_tous": r.get("combustion_tous", 0),
+		"tir_renaissance": r.get("tir_renaissance", false),
 		"par_epine": r.get("par_epine", 0.0) * m,
 		"degats": _puissance(r, "degats", aff) * m,
 		"bouclier": _puissance(r, "bouclier", aff) * m,
 		"coups": r.get("coups", 0),
 		"esquive": r.get("esquive", false),
-		"brulure": 0.0,   # force de la brulure, 0 = aucune
 		"vol_de_vie": 0.0,
 	}
 	for v in voisins(c):
@@ -239,8 +260,6 @@ func _sort(c: Vector2i, r: Dictionary, aff: Dictionary) -> Dictionary:
 		if cat["type"] != "catalyseur":
 			continue
 		match cat["effet"]:
-			"brulure":
-				s["brulure"] = maxf(s["brulure"], Data.NIVEAU_MULT[niveau(v)])
 			"vol_de_vie":
 				s["vol_de_vie"] += cat["valeur"] * Data.NIVEAU_MULT[niveau(v)]
 			"bouclier":
@@ -252,9 +271,16 @@ func _sort(c: Vector2i, r: Dictionary, aff: Dictionary) -> Dictionary:
 				s["recharge"] /= 1.0 + cat["valeur"] * Data.NIVEAU_MULT[niveau(v)]
 	return s
 
-# Le bonus par point d'affinite va a ce que fait le sort : degats, ou bouclier
-# pour un sort de protection (Rempart).
+# Le bonus par point d'affinite va a la valeur principale du sort : `echelle`
+# si elle est donnee, sinon degats, bouclier ou poison (le premier present).
 func _puissance(r: Dictionary, champ: String, aff: Dictionary) -> float:
 	if not r.has(champ):
 		return 0.0
-	return r[champ] + r.get("par_affinite", 0.0) * aff.get(r["element"], 0)
+	var echelle: String = r.get("echelle", "")
+	if echelle == "":
+		for k in ["degats", "bouclier", "poison"]:
+			if r.has(k):
+				echelle = k
+				break
+	var bonus: float = r.get("par_affinite", 0.0) * aff.get(r["element"], 0) if champ == echelle else 0.0
+	return r[champ] + bonus

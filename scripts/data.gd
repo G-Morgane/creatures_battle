@@ -13,7 +13,7 @@ const INTERVALLE_BASE := 1.0   # secondes entre deux attaques de base
 # forme : ce qui eclot quand l'element domine
 # Pas d'avantage elementaire : aucun element ne bat un autre (CONCEPTION.md §5).
 const FORMES := {
-	"feu":   {"nom": "Phénix",        "passif": "Renaît une fois à 25 % de PV"},
+	"feu":   {"nom": "Phénix",        "passif": "Renaît une fois à 25 % de PV, plus vite à chaque combustion (Braise)"},
 	"nuit":  {"nom": "Chauve-souris", "passif": "Vol de vie sur les attaques de base"},
 	"terre": {"nom": "Tortue",        "passif": "Fatigue de l'adversaire 10 s plus tôt, la sienne réduite de moitié"},
 	"vent":  {"nom": "Cheval",        "passif": "15 % d'esquive, chaque esquive lance un éclair"},
@@ -59,24 +59,50 @@ const PAS := 0.1
 const MORT_SUBITE := 30.0      # apres, degats croissants des deux cotes
 const FATIGUE_RAMPE := 2.0     # degats par seconde gagnes chaque seconde de fatigue
 const DUREE_MAX := 90.0
-const BRULURE_DPS := 3.0
-const BRULURE_DUREE := 3.0
+# Brulure : des charges qui s'empilent, chacune s'eteint au bout de BRULURE_DUREE.
+# Combustion : consume des charges (la moitie, ou toutes) pour des degats immediats.
+# Braise : +1 par combustion declenchee, chaque point accelere attaques et recharges.
+const BRULURE_DPS_CHARGE := 1.5
+const BRULURE_DUREE := 4.0
+const BRULURE_MAX := 50
+const COMBUSTION_PAR_CHARGE := 4.0
+const COMBUSTION_TOTALE_BONUS := 1.5
+const HATE_PAR_BRAISE := 0.04
+const BRAISE_MAX := 10.0
+const RESINE_SEUIL := 0.5          # Resine ambree : brulure doublee sous ce seuil de PV
+const FOURNAISE_SEUIL := 0.5       # Coeur de fournaise
+const FOURNAISE_BRAISE := 5.0
+const FOURNAISE_DUREE := 6.0
 
 # --- reliques --------------------------------------------------------------
 
 # type : essence (stats), sort (actif avec recharge), catalyseur (modifie ses voisins)
 # Essences : attaque, vitesse, vol_de_vie, pv, bouclier (au depart), esquive (chance).
-# Un sort gagne `par_affinite` par point d'affinite dans son element.
+# Un sort gagne `par_affinite` par point d'affinite dans son element, sur sa valeur
+# principale : `echelle` si elle est donnee, sinon degats, bouclier ou poison.
 const RELIQUES := {
-	# feu
-	"braise":         {"nom": "Braise",         "element": "feu",   "affinite": 2, "type": "essence",
-		"attaque": 2.0},
-	"plume_cendre":   {"nom": "Plume de cendre","element": "feu",   "affinite": 1, "type": "essence",
-		"vitesse": 0.15},
-	"souffle_ardent": {"nom": "Souffle ardent", "element": "feu",   "affinite": 1, "type": "sort",
-		"recharge": 4.0, "degats": 10.0, "par_affinite": 1.5, "coups": 1},
-	"foyer":          {"nom": "Foyer",          "element": "feu",   "affinite": 1, "type": "catalyseur",
-		"effet": "brulure"},
+	# feu : on allume (brulure), puis on consume (combustion), et la Braise accelere.
+	# Plume incandescente et Tison tenace renforcent leurs voisins.
+	"charbon":        {"nom": "Charbon ardent", "element": "feu",   "affinite": 2, "type": "essence",
+		"brulure_attaque": 1.0},
+	"plume_incandescente": {"nom": "Plume incandescente", "element": "feu", "affinite": 1, "type": "catalyseur",
+		"effet": "brulure", "valeur": 0.5},
+	"tison":          {"nom": "Tison tenace",   "element": "feu",   "affinite": 1, "type": "catalyseur",
+		"effet": "braise", "valeur": 0.5},
+	"cendre":         {"nom": "Cendre tiède",   "element": "feu",   "affinite": 1, "type": "essence",
+		"combustion_soin": 4.0},
+	"graine_brasier": {"nom": "Graine de brasier", "element": "feu", "affinite": 1, "type": "sort", "rarete": "rare",
+		"sort": "Embrasement", "recharge": 5.0, "combustion": 0.5, "braise": 1.0},
+	"obsidienne":     {"nom": "Éclat d'obsidienne", "element": "feu", "affinite": 1, "type": "essence", "rarete": "rare",
+		"degats_en_feu": 4.0},
+	"resine":         {"nom": "Résine ambrée",  "element": "feu",   "affinite": 1, "type": "essence", "rarete": "rare",
+		"resine": true},
+	"coeur_fournaise":{"nom": "Cœur de fournaise", "element": "feu", "affinite": 1, "type": "essence", "rarete": "epique",
+		"fournaise": true},
+	"fleur_cendres":  {"nom": "Fleur des cendres", "element": "feu", "affinite": 1, "type": "essence", "rarete": "epique",
+		"soin_par_charge": 1.0},
+	"oeuf_brasier":   {"nom": "Œuf du Premier Brasier", "element": "feu", "affinite": 2, "type": "essence", "rarete": "legendaire",
+		"oeuf": true},
 	# nuit
 	"croc_noir":      {"nom": "Croc noir",      "element": "nuit", "affinite": 2, "type": "essence",
 		"attaque": 2.5, "vol_de_vie": 0.10},
@@ -149,8 +175,17 @@ const RELIQUES := {
 		"nova": 20.0},
 	# armes : le cavalier en tient une seule et lance son propre sort.
 	# Les catalyseurs voisins s'appliquent aussi a ce sort.
+	# armes du Phenix : Baton et Faux
 	"baton_braise":   {"nom": "Bâton de braise","element": "feu",   "affinite": 1, "type": "arme", "famille": "baton",
-		"sort": "Boule de feu", "recharge": 3.0, "degats": 6.0, "par_affinite": 1.0, "coups": 1},
+		"sort": "Étincelle", "recharge": 3.0, "degats": 4.0, "par_affinite": 0.8, "coups": 1, "brulure": 1.0},
+	"faux_tison":     {"nom": "Faux de tison",  "element": "feu",   "affinite": 1, "type": "arme", "famille": "faux",
+		"sort": "Taille", "recharge": 4.0, "degats": 8.0, "coups": 1, "achever_seuil": 0.5, "achever_mult": 1.5},
+	"baton_brasier":  {"nom": "Bâton du brasier","element": "feu",  "affinite": 1, "type": "arme", "famille": "baton", "rarete": "rare",
+		"sort": "Brasier", "recharge": 4.0, "degats": 3.0, "coups": 1, "brulure": 1.0, "par_affinite": 0.3, "echelle": "brulure"},
+	"faux_cendres":   {"nom": "Faux des cendres","element": "feu",  "affinite": 1, "type": "arme", "famille": "faux", "rarete": "epique",
+		"sort": "Moisson ardente", "recharge": 6.0, "degats": 10.0, "coups": 1, "combustion_affaiblie": true},
+	"baton_premier":  {"nom": "Bâton du Premier Brasier","element": "feu", "affinite": 2, "type": "arme", "famille": "baton", "rarete": "legendaire",
+		"sort": "Premier brasier", "recharge": 3.0, "degats": 6.0, "coups": 1, "brulure": 1.0, "combustion_tous": 4, "tir_renaissance": true},
 	"lance_guet":     {"nom": "Lance du guet",  "element": "",      "affinite": 0, "type": "arme", "famille": "hast",
 		"sort": "Estoc", "recharge": 2.5, "degats": 8.0, "coups": 1, "perce": true},
 	"faux_lunaire":   {"nom": "Faux lunaire",   "element": "nuit", "affinite": 1, "type": "arme", "famille": "faux",

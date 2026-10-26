@@ -18,6 +18,7 @@ func _ready() -> void:
 	ok = _nature() and ok
 	ok = _familles() and ok
 	ok = _glace() and ok
+	ok = _phenix() and ok
 	print("SMOKE: ", "OK" if ok else "ECHEC")
 	get_tree().quit(0 if ok else 1)
 
@@ -31,20 +32,25 @@ func _formes() -> bool:
 	ok = _verifier(Exemples.nid_nuit().forme() == "nuit", "nid nuit -> chauve-souris") and ok
 	ok = _verifier(Nid.new().forme() == "", "nid vide -> informe") and ok
 	var egal := Nid.new()
-	egal.placer(Vector2i(0, 0), "braise")
+	egal.placer(Vector2i(0, 0), "charbon")
 	egal.placer(Vector2i(1, 0), "croc_noir")
 	ok = _verifier(egal.forme() == "", "egalite -> informe") and ok
-	ok = _verifier(not egal.placer(Vector2i(0, 0), "foyer"), "case occupee refusee") and ok
-	return _verifier(not egal.placer(Vector2i(9, 0), "foyer"), "hors grille refuse") and ok
+	ok = _verifier(not egal.placer(Vector2i(0, 0), "tison"), "case occupee refusee") and ok
+	return _verifier(not egal.placer(Vector2i(9, 0), "tison"), "hors grille refuse") and ok
 
 func _catalyseurs() -> bool:
 	var feu := Exemples.nid_feu().eclore()
 	var nuit := Exemples.nid_nuit().eclore()
 	var nuee: Dictionary = nuit["sorts"].filter(func(s): return s["nom"] == "Nuée")[0]
-	var ok := _verifier(feu["sorts"][0]["brulure"] > 0.0, "foyer voisin -> brulure")
+	# charbon : 1 brulure x 1,5 (plume voisine) ; embrasement : 1 Braise x 1,5 (tison voisin)
+	var ok := _verifier(is_equal_approx(feu["brulure_attaque"], 1.5), "plume voisine -> plus de brulure")
+	ok = _verifier(is_equal_approx(feu["sorts"][0]["braise"], 1.5), "tison voisin -> plus de braise") and ok
 	ok = _verifier(nuee["vol_de_vie"] > 0.0, "lune creuse voisine -> vol de vie") and ok
-	# souffle ardent : 10 + 1,5 x affinite feu (2+2+1+1+1 = 7)
-	return _verifier(is_equal_approx(feu["sorts"][0]["degats"], 20.5), "degats selon affinite") and ok
+	# baton de braise : 4 + 0,8 x affinite feu (7) en degats, la brulure ne grandit pas
+	var b := Exemples.nid_feu()
+	b.placer(Vector2i(3, 3), "baton_braise")
+	var etincelle: Dictionary = b.eclore()["sorts"].filter(func(s): return s["nom"] == "Étincelle")[0]
+	return _verifier(is_equal_approx(etincelle["degats"], 4.0 + 0.8 * 7) and etincelle["brulure"] == 1.0, "le bonus d'affinite va a la valeur principale") and ok
 
 func _deterministe() -> bool:
 	var r := []
@@ -66,7 +72,7 @@ func _renaissance() -> bool:
 func _ecran() -> bool:
 	var e := NidScreen.new()
 	add_child(e)
-	e.deposer(Vector2i(0, 0), "braise", null)
+	e.deposer(Vector2i(0, 0), "charbon", null)
 	var ok := _verifier(e.nid.forme() == "feu" and e.vue.forme == "feu", "poser une braise -> phenix")
 	e.deposer(Vector2i(1, 0), "croc_noir", null)
 	e.deposer(Vector2i(2, 0), "nuee", null)
@@ -74,7 +80,7 @@ func _ecran() -> bool:
 	e.deposer(Vector2i(3, 3), "croc_noir", Vector2i(1, 0))
 	ok = _verifier(e.nid.cases.get(Vector2i(3, 3)) == "croc_noir" and not e.nid.cases.has(Vector2i(1, 0)), "deplacer une relique") and ok
 	e.deposer(Vector2i(0, 0), "croc_noir", Vector2i(3, 3))
-	ok = _verifier(e.nid.cases.get(Vector2i(3, 3)) == "braise", "echanger deux reliques") and ok
+	ok = _verifier(e.nid.cases.get(Vector2i(3, 3)) == "charbon", "echanger deux reliques") and ok
 	e.vendre(Vector2i(3, 3))
 	ok = _verifier(e.vue.forme == "nuit" and e.nid.cases.size() == 2, "revendre une case") and ok
 	e.queue_free()
@@ -87,9 +93,9 @@ func _armes() -> bool:
 	ok = _verifier(n.accepte(Vector2i(0, 0), "faux_lunaire", null), "remplacer l'arme en place") and ok
 	ok = _verifier(n.accepte(Vector2i(2, 2), "lance_guet", Vector2i(0, 0)), "deplacer l'arme") and ok
 	ok = _verifier(n.affinites().is_empty(), "la lance n'a pas d'element") and ok
-	n.placer(Vector2i(1, 0), "foyer")
+	n.placer(Vector2i(1, 0), "girouette")
 	var s: Dictionary = n.eclore()["sorts"][0]
-	ok = _verifier(s["cavalier"] and s["nom"] == "Estoc" and s["brulure"] > 0.0, "sort du cavalier + catalyseur voisin") and ok
+	ok = _verifier(s["cavalier"] and s["nom"] == "Estoc" and s["recharge"] < 2.5, "sort du cavalier + catalyseur voisin") and ok
 	# Estoc perce le Voile : la chauve-souris ne doit jamais esquiver un Estoc.
 	var lance := Nid.new()
 	lance.placer(Vector2i(0, 0), "lance_guet")
@@ -127,7 +133,7 @@ func _partie() -> bool:
 	var p := Partie.new(42)
 	var ok := _verifier(Partie.new(42).offres == p.offres, "meme graine, meme boutique")
 	ok = _verifier(p.offres.size() == Partie.TAILLE_BOUTIQUE and p.bourse == Partie.OR_PAR_MANCHE, "depart : 5 offres, 10 or") and ok
-	p.offres[0] = "braise"
+	p.offres[0] = "charbon"
 	p.offres[1] = "baton_braise"
 	ok = _verifier(p.acheter(0, Vector2i(0, 0)) and p.bourse == 7 and p.offres[0] == "", "acheter : -3 or, offre vendue") and ok
 	ok = _verifier(not p.acheter(0, Vector2i(1, 0)), "offre deja vendue") and ok
@@ -153,13 +159,13 @@ func _partie() -> bool:
 
 func _fusion() -> bool:
 	var n := Nid.new()
-	n.ajouter(Vector2i(0, 0), "braise")
-	n.ajouter(Vector2i(1, 0), "braise")
+	n.ajouter(Vector2i(0, 0), "charbon")
+	n.ajouter(Vector2i(1, 0), "charbon")
 	var ok := _verifier(n.cases.size() == 2, "deux copies : pas de fusion")
-	n.ajouter(Vector2i(2, 0), "braise")
+	n.ajouter(Vector2i(2, 0), "charbon")
 	ok = _verifier(n.cases.size() == 1 and n.niveau(Vector2i(2, 0)) == 2, "trois copies : niveau 2 a la derniere pose") and ok
 	ok = _verifier(n.affinites()["feu"] == 6, "la fusion garde l'affinite") and ok
-	ok = _verifier(is_equal_approx(n.eclore()["attaque"], Data.ATTAQUE_BASE + 2.0 * 2.5), "niveau 2 : attaque x2,5") and ok
+	ok = _verifier(is_equal_approx(n.eclore()["brulure_attaque"], 2.5), "niveau 2 : effet x2,5") and ok
 	# pose sur une copie quand le Nid est plein
 	var m := Nid.new()
 	m.ajouter(Vector2i(0, 0), "nuee")
@@ -177,7 +183,7 @@ func _fusion() -> bool:
 	var a := Nid.new()
 	a.ajouter(Vector2i(0, 0), "lance_guet")
 	ok = _verifier(not a.peut_ajouter(Vector2i(0, 0), "lance_guet") and not a.peut_ajouter(Vector2i(1, 0), "lance_guet"), "les armes ne fusionnent pas") and ok
-	ok = _verifier(Partie.prix_revente("braise", 2) == 4, "revente niveau 2 : 9 / 2 = 4") and ok
+	ok = _verifier(Partie.prix_revente("charbon", 2) == 4, "revente niveau 2 : 9 / 2 = 4") and ok
 	n.deplacer(Vector2i(2, 0), Vector2i(3, 3))
 	ok = _verifier(n.niveau(Vector2i(3, 3)) == 2 and not n.niveaux.has(Vector2i(2, 0)), "deplacer garde le niveau") and ok
 	return ok
@@ -332,3 +338,84 @@ func _glace() -> bool:
 	var k := Combat.new(cr, Exemples.nid_feu().eclore())
 	k.simuler()
 	return _verifier(k.evenements.any(func(ev): return ev["type"] == "gel"), "le loup gele en vrai combat") and ok
+
+func _phenix() -> bool:
+	var vide := Nid.new().eclore()
+	var c := Combat.new(Exemples.nid_feu().eclore(), vide)
+	# brulure : s'empile, chaque charge s'eteint au bout de 4 s
+	c._bruler(c.cotes[0], c.cotes[1], 3.0)
+	c._bruler(c.cotes[0], c.cotes[1], 2.0)
+	var ok := _verifier(c._brulure(c.cotes[1]) == 5.0, "la brulure s'empile")
+	c.t = Data.BRULURE_DUREE + 0.1
+	c._subir(c.cotes[1], c.cotes[0])
+	ok = _verifier(c._brulure(c.cotes[1]) == 0.0, "les charges s'eteignent") and ok
+	# combustion partielle : la moitie, totale : tout x1,5 ; Braise et hate
+	var d := Combat.new(Exemples.nid_feu().eclore(), vide)
+	d._bruler(d.cotes[0], d.cotes[1], 10.0)
+	var pv: float = d.cotes[1]["pv"]
+	d._combustion(d.cotes[0], d.cotes[1], 0.5, false, 1.0)
+	ok = _verifier(d._brulure(d.cotes[1]) == 5.0 and is_equal_approx(pv - d.cotes[1]["pv"], 5.0 * Data.COMBUSTION_PAR_CHARGE), "combustion partielle") and ok
+	pv = d.cotes[1]["pv"]
+	d._combustion(d.cotes[0], d.cotes[1], 1.0, true, 1.0)
+	ok = _verifier(d._brulure(d.cotes[1]) == 0.0 and is_equal_approx(pv - d.cotes[1]["pv"], 5.0 * Data.COMBUSTION_PAR_CHARGE * Data.COMBUSTION_TOTALE_BONUS), "combustion totale") and ok
+	ok = _verifier(d.cotes[0]["braise"] == 2.0 and is_equal_approx(d._vitesse(d.cotes[0]), 1.0 + 2 * Data.HATE_PAR_BRAISE), "braise : hate") and ok
+	# cendre tiede : la combustion soigne (sauf belladone)
+	d.cotes[0]["pv"] = 100.0
+	d._bruler(d.cotes[0], d.cotes[1], 4.0)
+	d._combustion(d.cotes[0], d.cotes[1], 1.0, false, 0.0)
+	ok = _verifier(d.cotes[0]["pv"] > 100.0, "cendre tiede : soin a la combustion") and ok
+	# resine : brulure doublee sous la moitie de sa vie
+	var r := Nid.new()
+	r.placer(Vector2i(0, 0), "resine")
+	var e := Combat.new(r.eclore(), vide)
+	e.cotes[0]["pv"] = 10.0
+	e._bruler(e.cotes[0], e.cotes[1], 2.0)
+	ok = _verifier(e._brulure(e.cotes[1]) == 4.0, "resine : brulure doublee vie basse") and ok
+	# coeur de fournaise : une fois sous la moitie
+	var f := Nid.new()
+	f.placer(Vector2i(0, 0), "coeur_fournaise")
+	var g := Combat.new(f.eclore(), vide)
+	g._bruler(g.cotes[0], g.cotes[1], 6.0)
+	g.cotes[0]["pv"] = 100.0
+	g._subir(g.cotes[0], g.cotes[1])
+	ok = _verifier(g.cotes[0]["fournaise_faite"] and g._brulure(g.cotes[1]) == 0.0 and g._braise(g.cotes[0]) >= Data.FOURNAISE_BRAISE, "coeur de fournaise") and ok
+	# oeuf : seconde renaissance, chacune avec une combustion totale
+	var o := Exemples.nid_feu()
+	o.placer(Vector2i(3, 3), "oeuf_brasier")
+	var h := Combat.new(o.eclore(), vide)
+	ok = _verifier(h.cotes[0]["renaissances"] == 2, "oeuf : deux renaissances") and ok
+	h._bruler(h.cotes[0], h.cotes[1], 6.0)
+	h.cotes[0]["pv"] = -1.0
+	ok = _verifier(not h._mort(h.cotes[0], h.cotes[1]) and h._brulure(h.cotes[1]) == 0.0, "oeuf : renaissance et combustion totale") and ok
+	h.cotes[0]["pv"] = -1.0
+	ok = _verifier(not h._mort(h.cotes[0], h.cotes[1]), "oeuf : seconde renaissance") and ok
+	h.cotes[0]["pv"] = -1.0
+	ok = _verifier(h._mort(h.cotes[0], h.cotes[1]), "plus de renaissance") and ok
+	# baton du premier brasier : combustion au 4e tir, tir a la renaissance
+	var p := Exemples.nid_feu()
+	p.placer(Vector2i(3, 3), "baton_premier")
+	var k := Combat.new(p.eclore(), vide)
+	var baton: Dictionary = k.cotes[0]["sorts"].filter(func(s): return s["nom"] == "Premier brasier")[0]
+	for i in 3:
+		k._lancer(k.cotes[0], k.cotes[1], baton)
+	ok = _verifier(not k.evenements.any(func(ev): return ev["type"] == "combustion"), "pas de combustion avant le 4e tir") and ok
+	k._lancer(k.cotes[0], k.cotes[1], baton)
+	ok = _verifier(k.evenements.any(func(ev): return ev["type"] == "combustion"), "combustion au 4e tir") and ok
+	k.cotes[0]["pv"] = -1.0
+	var n_sorts := k.evenements.filter(func(ev): return ev["type"] == "sort").size()
+	k._mort(k.cotes[0], k.cotes[1])
+	ok = _verifier(k.evenements.filter(func(ev): return ev["type"] == "sort").size() == n_sorts + 1, "tir a la renaissance") and ok
+	# faux de tison : x1,5 sous la moitie ; faux des cendres : combustion contre une cible affaiblie
+	var t := Nid.new()
+	t.placer(Vector2i(0, 0), "faux_tison")
+	var m := Combat.new(t.eclore(), vide)
+	m.cotes[1]["pv"] = 100.0
+	m._lancer(m.cotes[0], m.cotes[1], m.cotes[0]["sorts"][0])
+	ok = _verifier(is_equal_approx(100.0 - m.cotes[1]["pv"], 8.0 * 1.5), "faux de tison : achever") and ok
+	var fc := Nid.new()
+	fc.placer(Vector2i(0, 0), "faux_cendres")
+	var q := Combat.new(fc.eclore(), vide)
+	q._bruler(q.cotes[0], q.cotes[1], 5.0)
+	q.cotes[1]["pv"] = 100.0
+	q._lancer(q.cotes[0], q.cotes[1], q.cotes[0]["sorts"][0])
+	return _verifier(q._brulure(q.cotes[1]) == 0.0, "faux des cendres : combustion contre une cible affaiblie") and ok

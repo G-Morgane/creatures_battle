@@ -134,6 +134,14 @@ func _jouer(e: Dictionary) -> void:
 			effets.append({"type": "projectile", "de": moi.position + moi.size / 2 + Vector2(0, 20),
 				"a": cible.position + cible.size / 2 + Vector2(0, 20), "t0": lecture,
 				"duree": VOL_PROJECTILE * 0.6, "couleur": n["vif"], "coeur": n["clair"], "taille": 5.0})
+		"combustion":
+			var f: Dictionary = Palette.ELEMENTS["feu"]
+			for k in 10:
+				var a := TAU * k / 10.0
+				effets.append({"type": "projectile", "de": moi.position + moi.size / 2 + Vector2(0, 20),
+					"a": moi.position + moi.size / 2 + Vector2(0, 20) + Vector2(cos(a), sin(a)) * 120, "t0": lecture,
+					"duree": VOL_PROJECTILE, "couleur": f["vif"], "coeur": f["clair"], "taille": 9.0 if e["totale"] else 6.0})
+			_texte(moi, 2, ("Combustion totale !" if e["totale"] else "Combustion") + " %d" % roundi(e["valeur"]), f["clair"])
 		"gel":
 			_texte(moi, 2, "Gel !", Palette.ELEMENTS["glace"]["clair"])
 		"brise_gel":
@@ -177,9 +185,10 @@ func _elan(v: CreatureVue) -> void:
 # 0 cavalier, 1 monture, 2 reactions (voile, esquive, renaissance).
 func _texte(v: CreatureVue, ligne: int, texte: String, couleur: Color) -> void:
 	var pos := v.position + Vector2(v.size.x / 2, 30 + ligne * 26)
-	# deux textes au meme endroit en meme temps : le nouveau monte d'un cran
+	# deux textes au meme endroit en meme temps : le nouveau descend d'un cran
+	# (vers le haut, il passerait sur la barre de PV)
 	while effets.any(func(e): return e["type"] == "texte" and absf(e["pos"].x - pos.x) < 1.0 and absf(e["pos"].y - pos.y) < 22.0 and lecture - e["t0"] < 0.4):
-		pos.y -= 22
+		pos.y += 22
 	effets.append({"type": "texte", "pos": pos, "texte": texte, "couleur": couleur,
 		"t0": lecture, "duree": DUREE_TEXTE})
 
@@ -223,6 +232,10 @@ func _dessiner() -> void:
 		if img[2 + i]:
 			_brulure(v)
 		var etats := []
+		if img[2 + i] > 0.0:
+			etats.append(["Brûlure %d" % roundi(img[2 + i]), Palette.ELEMENTS["feu"]["vif"]])
+		if img[12 + i] > 0.0:
+			etats.append(["Braise %d" % roundi(img[12 + i]), Palette.ELEMENTS["feu"]["clair"]])
 		if img[6 + i] > 0.0:
 			etats.append(["Poison %d" % roundi(img[6 + i]), Palette.POISON])
 		if img[10 + i]:

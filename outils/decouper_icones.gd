@@ -40,6 +40,21 @@ const ZONES := {
 	"pique":         ["loup_armes", 50, 400, 570, 510],
 	"hache_glace":   ["loup_armes", 535, 435, 465, 465],
 	"lance_hiver":   ["loup_armes", 40, 995, 975, 372],
+	"charbon":       ["phenix_objets", 40, 95, 225, 215],
+	"plume_incandescente": ["phenix_objets", 290, 45, 250, 265],
+	"tison":         ["phenix_objets", 550, 95, 220, 215],
+	"cendre":        ["phenix_objets", 770, 160, 240, 150],
+	"graine_brasier":["phenix_objets", 100, 420, 215, 262],
+	"obsidienne":    ["phenix_objets", 380, 400, 285, 282],
+	"resine":        ["phenix_objets", 750, 415, 215, 265],
+	"coeur_fournaise":["phenix_objets", 165, 785, 310, 262],
+	"fleur_cendres": ["phenix_objets", 530, 740, 390, 308],
+	"oeuf_brasier":  ["phenix_objets", 318, 1085, 405, 370],
+	"baton_braise":  ["phenix_arme", 70, 15, 425, 420],
+	"faux_tison":    ["phenix_arme", 545, 15, 440, 415],
+	"baton_brasier": ["phenix_arme", 60, 455, 460, 548],
+	"faux_cendres":  ["phenix_arme", 480, 525, 525, 495],
+	"baton_premier": ["phenix_arme", 30, 1030, 965, 445],
 }
 
 # Objets de glace blancs et bleu pale, proches du fond creme : tolerance resserree,
@@ -51,16 +66,23 @@ const TOLERANCE_DEFAUT := [0.10, 0.22, true]
 const TOLERANCE_OBJET := {
 	"galet": [0.025, 0.06, false],      # sa neige touche le bord de la zone
 	"hachette": [0.045, 0.09, true],    # fond enferme entre manche et lame
+	"cendre": [0.045, 0.09, false],     # cendres claires
+	"fleur_cendres": [0.045, 0.09, false],  # petales creme
+	"plume_incandescente": [0.06, 0.12, true],  # tuyau blanc
 }
 
 # Zones de la planche a effacer avant decoupe : morceaux d'un voisin qui deborde.
 const MASQUES := {
 	"pique": [Rect2i(450, 760, 175, 160)],
 	"hache_glace": [Rect2i(535, 400, 95, 110)],
+	"oeuf_brasier": [Rect2i(300, 1100, 50, 45)],
+	"baton_brasier": [Rect2i(130, 440, 270, 60), Rect2i(478, 870, 45, 140)],
+	"faux_cendres": [Rect2i(640, 998, 250, 30), Rect2i(478, 520, 30, 90)],
+	"baton_premier": [Rect2i(340, 1400, 370, 90), Rect2i(130, 1030, 290, 50), Rect2i(610, 1030, 290, 50)],
 }
 
 # image de la bete (fond transparent) -> element
-const MONTURES := {"cerf": "nature", "loup": "glace"}
+const MONTURES := {"cerf": "nature", "loup": "glace", "phenix": "feu"}
 
 func _initialize() -> void:
 	DirAccess.make_dir_recursive_absolute("res://images/icones")

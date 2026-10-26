@@ -79,8 +79,8 @@ Sans élimination, le joueur simple gagne 49 à 54 % de ses combats à chaque ma
 difficulté est plate. Le fantôme n'est jamais meilleur que le joueur automatique simple,
 d'où un joueur aléatoire encore trop à l'aise.
 
-Par élément (joueur simple, avec le Loup) : Vent 4,1, Nature 4,0, Terre 3,8, Feu 3,5, Glace 3,4,
-**Nuit 1,6 (à remonter)**. Joueur simple : 3,3 victoires en moyenne, 24 % de parties gagnées.
+Par élément (joueur simple, avec le Phénix) : Terre 4,1, Nature 4,0, Feu 3,8, Vent 3,5, Glace 3,1,
+**Nuit 2,1 (à remonter)**. Joueur simple : 3,4 victoires en moyenne, 22 % de parties gagnées.
 
 ### Fusion
 
@@ -311,6 +311,13 @@ Règles du givre :
 
 ### Feu (Phénix) : brûlure, combustion, Braise
 
+**Fait** (images de `images/`). Chiffres de départ : brûlure 1,5 dégât par charge et par seconde,
+4 s par charge, 50 charges au plus ; combustion 4 par charge consumée (x1,5 si totale) ; Braise
++4 % de vitesse par point, 10 au plus ; Charbon 1 brûlure par attaque ; Embrasement toutes les 5 s ;
+Cendre tiède 4 PV par combustion, Fleur 1 PV par charge consumée ; Éclat d'obsidienne +4 ;
+Résine : brûlure doublée sous 50 % de PV ; Cœur de fournaise : +5 Braise pendant 6 s.
+La combustion passe à travers le bouclier, comme la brûlure.
+
 **On allume, puis on consume.** La brûlure s'accumule sur la cible, puis une **combustion** la
 fait exploser d'un coup. Le Phénix **brûle plus fort au bord de la mort** (Résine ambrée, Cœur
 de fournaise, renaissance). Familles d'armes : **Bâton et Faux** (la Faux est partagée avec la Nuit).
@@ -387,7 +394,8 @@ On adapte son Nid à ce qu'on affronte, pas à une couleur.
 
 ## 7. Prototype (périmètre actuel)
 
-- 6 éléments : Feu, Nuit, Terre, Vent (4 objets chacun), Nature et Glace (15 objets chacun), 3 armes anciennes.
+- 6 éléments : Nuit, Terre, Vent (4 objets chacun), Feu, Nature et Glace (15 objets chacun),
+  2 armes anciennes (Lance du guet, Faux lunaire).
 - Nid 4 x 4, reliques d'une case. **Les formes de reliques (2 x 1, L...) viendront après.**
 - Pas d'hybride, pas de réseau. Rareté en place.
 - Boutique, manches, combat animé contre un adversaire généré, fin de partie.
@@ -400,7 +408,6 @@ donne envie de refaire un Nid ? Si non, rien d'autre ne compte.
 ## 8. Plus tard
 
 - Formes de reliques et rotation.
-- Coder le Feu (Phénix) : il faudra le dessin du phénix et les planches d'objets et d'armes.
 - Remonter la Nuit, la plus faible en partie complète, en faisant son set (et revoir la Faux).
 - Une image pour la Serpe de ronces (le Fouet a été remplacé).
 - Refaire Feu, Nuit, Terre, Vent au format 15 objets, avec une ou deux familles d'armes chacun.

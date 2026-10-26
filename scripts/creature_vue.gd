@@ -51,7 +51,7 @@ func _draw() -> void:
 	draw_set_transform(centre, 0.0, Vector2(echelle * sens, echelle))
 	match forme:
 		"feu":
-			_phenix(c)
+			_sprite("feu")
 		"nuit":
 			_chauve_souris(c)
 		"terre":
@@ -182,6 +182,8 @@ func _cavalier(c: Dictionary) -> void:
 			dos = Vector2(-10, -78)
 		"nature", "glace":
 			dos = Vector2(-22, -38)
+		"feu":
+			dos = Vector2(20, -20)
 	var vent := sin(t * 3.0) * 6.0
 	draw_colored_polygon(PackedVector2Array([dos + Vector2(-6, -40), dos + Vector2(-50 + vent, 20), dos + Vector2(-20, 24), dos + Vector2(10, -30)]), c["vif"].darkened(0.1))
 	draw_colored_polygon(PackedVector2Array([dos + Vector2(-16, -36), dos + Vector2(16, -36), dos + Vector2(20, 14), dos + Vector2(-20, 14)]), c["vif"])
@@ -200,7 +202,7 @@ func _arme(dos: Vector2) -> void:
 	var main := dos + Vector2(18, -14)
 	# arme dessinee par un artiste : son icone, tenue en main
 	var tex := Palette.icone(arme)
-	if tex != null and not arme in ["baton_braise", "lance_guet", "faux_lunaire"]:
+	if tex != null and not arme in ["lance_guet", "faux_lunaire"]:
 		var cote := 90.0
 		var k := cote / maxf(tex.get_width(), tex.get_height())
 		var taille := tex.get_size() * k
