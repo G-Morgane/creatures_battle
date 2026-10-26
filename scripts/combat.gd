@@ -43,10 +43,13 @@ func simuler() -> int:
 		var morts := [_mort(cotes[0]), _mort(cotes[1])]
 		images.append([cotes[0]["pv"], cotes[1]["pv"], cotes[0]["brulure"] > 0.0, cotes[1]["brulure"] > 0.0])
 		if morts[0] or morts[1]:
-			if morts[0] and morts[1]:
-				_noter("Les deux tombent ensemble.")
-				return -1
 			var v := 1 if morts[0] else 0
+			# Chute simultanee : celui qui finit le moins en negatif tient debout.
+			if morts[0] and morts[1]:
+				if is_equal_approx(cotes[0]["pv"], cotes[1]["pv"]):
+					_noter("Les deux tombent ensemble.")
+					return -1
+				v = 0 if cotes[0]["pv"] > cotes[1]["pv"] else 1
 			_noter("%s l'emporte." % cotes[v]["cr"]["nom"])
 			return v
 	_noter("Temps écoulé.")

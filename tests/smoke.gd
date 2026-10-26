@@ -37,8 +37,8 @@ func _catalyseurs() -> bool:
 	var nuee: Dictionary = ombre["sorts"].filter(func(s): return s["nom"] == "Nuée")[0]
 	var ok := _verifier(feu["sorts"][0]["brulure"], "foyer voisin -> brulure")
 	ok = _verifier(nuee["vol_de_vie"] > 0.0, "lune creuse voisine -> vol de vie") and ok
-	# souffle ardent : 10 + 2 x affinite feu (2+2+1+1+1 = 7)
-	return _verifier(is_equal_approx(feu["sorts"][0]["degats"], 24.0), "degats selon affinite") and ok
+	# souffle ardent : 10 + 1,5 x affinite feu (2+2+1+1+1 = 7)
+	return _verifier(is_equal_approx(feu["sorts"][0]["degats"], 20.5), "degats selon affinite") and ok
 
 func _deterministe() -> bool:
 	var r := []

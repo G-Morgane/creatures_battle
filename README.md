@@ -20,6 +20,14 @@ godot -e --path .           # ouvre l'éditeur
 godot --headless --path . res://tests/smoke.tscn
 ```
 
+## Équilibrer
+
+```bash
+godot --headless --path . -s res://tests/equilibrage.gd
+```
+
+Affiche la durée et le vainqueur de chaque matchup entre builds types. Cible : 15 à 25 s.
+
 ## Structure
 
 - `scripts/data.gd` : constantes, formes, reliques

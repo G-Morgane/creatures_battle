@@ -40,7 +40,7 @@ Chaque relique donne des points d'**affinité** dans un élément.
 
 | Élément | Forme | Passif |
 |---|---|---|
-| Feu | Phénix | Renaît une fois à 30 % de PV |
+| Feu | Phénix | Renaît une fois à 25 % de PV |
 | Ombre | Chauve-souris | Vol de vie sur les attaques de base |
 | Givre | Loup | Les attaques ralentissent |
 | Nature | Cerf ancien | Régénère, gagne de l'épine |
