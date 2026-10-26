@@ -22,7 +22,7 @@ func _verifier(cond: bool, msg: String) -> bool:
 
 func _formes() -> bool:
 	var ok := _verifier(Exemples.nid_feu().forme() == "feu", "nid feu -> phenix")
-	ok = _verifier(Exemples.nid_ombre().forme() == "ombre", "nid ombre -> chauve-souris") and ok
+	ok = _verifier(Exemples.nid_nuit().forme() == "nuit", "nid nuit -> chauve-souris") and ok
 	ok = _verifier(Nid.new().forme() == "", "nid vide -> informe") and ok
 	var egal := Nid.new()
 	egal.placer(Vector2i(0, 0), "braise")
@@ -33,8 +33,8 @@ func _formes() -> bool:
 
 func _catalyseurs() -> bool:
 	var feu := Exemples.nid_feu().eclore()
-	var ombre := Exemples.nid_ombre().eclore()
-	var nuee: Dictionary = ombre["sorts"].filter(func(s): return s["nom"] == "Nuée")[0]
+	var nuit := Exemples.nid_nuit().eclore()
+	var nuee: Dictionary = nuit["sorts"].filter(func(s): return s["nom"] == "Nuée")[0]
 	var ok := _verifier(feu["sorts"][0]["brulure"], "foyer voisin -> brulure")
 	ok = _verifier(nuee["vol_de_vie"] > 0.0, "lune creuse voisine -> vol de vie") and ok
 	# souffle ardent : 10 + 1,5 x affinite feu (2+2+1+1+1 = 7)
@@ -43,14 +43,14 @@ func _catalyseurs() -> bool:
 func _deterministe() -> bool:
 	var r := []
 	for i in 2:
-		var c := Combat.new(Exemples.nid_feu().eclore(), Exemples.nid_ombre().eclore())
+		var c := Combat.new(Exemples.nid_feu().eclore(), Exemples.nid_nuit().eclore())
 		r.append([c.simuler(), c.journal])
 	var ok := _verifier(r[0][0] == r[1][0] and r[0][1] == r[1][1], "meme combat, meme resultat")
 	return _verifier(r[0][0] != -1, "le combat se termine par un vainqueur") and ok
 
 func _renaissance() -> bool:
 	# Le phenix part a 1 PV : le test ne depend pas de l'equilibrage.
-	var c := Combat.new(Exemples.nid_feu().eclore(), Exemples.nid_ombre().eclore())
+	var c := Combat.new(Exemples.nid_feu().eclore(), Exemples.nid_nuit().eclore())
 	c.cotes[0]["pv"] = 1.0
 	c.simuler()
 	var renait := c.journal.any(func(l): return "renaît" in l)
@@ -64,13 +64,13 @@ func _ecran() -> bool:
 	var ok := _verifier(e.nid.forme() == "feu" and e.vue.forme == "feu", "poser une braise -> phenix")
 	e.deposer(Vector2i(1, 0), "croc_noir", null)
 	e.deposer(Vector2i(2, 0), "nuee", null)
-	ok = _verifier(e.vue.forme == "ombre", "plus d'ombre -> chauve-souris") and ok
+	ok = _verifier(e.vue.forme == "nuit", "plus de nuit -> chauve-souris") and ok
 	e.deposer(Vector2i(3, 3), "croc_noir", Vector2i(1, 0))
 	ok = _verifier(e.nid.cases.get(Vector2i(3, 3)) == "croc_noir" and not e.nid.cases.has(Vector2i(1, 0)), "deplacer une relique") and ok
 	e.deposer(Vector2i(0, 0), "croc_noir", Vector2i(3, 3))
 	ok = _verifier(e.nid.cases.get(Vector2i(3, 3)) == "braise", "echanger deux reliques") and ok
 	e.vider_case(Vector2i(3, 3))
-	ok = _verifier(e.vue.forme == "ombre" and e.nid.cases.size() == 2, "vider une case") and ok
+	ok = _verifier(e.vue.forme == "nuit" and e.nid.cases.size() == 2, "vider une case") and ok
 	e.queue_free()
 	return ok
 
@@ -87,7 +87,7 @@ func _armes() -> bool:
 	# Estoc perce le Voile : la chauve-souris ne doit jamais esquiver un Estoc.
 	var lance := Nid.new()
 	lance.placer(Vector2i(0, 0), "lance_guet")
-	var c := Combat.new(lance.eclore(), Exemples.nid_ombre().eclore())
+	var c := Combat.new(lance.eclore(), Exemples.nid_nuit().eclore())
 	c.simuler()
 	ok = _verifier(c.journal.any(func(l): return "Estoc" in l), "le cavalier lance Estoc") and ok
 	# Moisson double sous le seuil
@@ -105,7 +105,7 @@ func _armes() -> bool:
 func _combat_anime() -> bool:
 	var feu := Exemples.nid_feu()
 	feu.placer(Vector2i(2, 0), "baton_braise")
-	var e := CombatScreen.new(feu.eclore(), Exemples.nid_ombre().eclore())
+	var e := CombatScreen.new(feu.eclore(), Exemples.nid_nuit().eclore())
 	add_child(e)
 	var ok := _verifier(e.combat.images.size() == roundi(e.combat.t / Data.PAS), "une image de PV par pas")
 	ok = _verifier(e.combat.evenements.any(func(ev): return ev["type"] == "sort" and ev["cavalier"]), "evenement de sort du cavalier") and ok

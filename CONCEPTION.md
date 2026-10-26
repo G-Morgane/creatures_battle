@@ -5,7 +5,7 @@
 **Autobattler PvP asynchrone. On remplit un Nid de reliques, il en éclot une créature qui se bat seule. Godot 4, 2D.**
 
 > Ce que tu mets dans le Nid décide de ce qui en sort.
-> Un Nid de braises donne un phénix, un Nid d'ombre une chauve-souris,
+> Un Nid de braises donne un phénix, un Nid de nuit une chauve-souris,
 > et les deux se battent avec les sorts que tu leur as donnés.
 
 ---
@@ -36,17 +36,34 @@ Fin de partie : X victoires ou Y défaites (valeurs à régler).
 
 Chaque relique donne des points d'**affinité** dans un élément.
 
-- **Élément dominant** : fixe la forme de base et un passif.
+- **Élément dominant** : fixe la forme de base, son identité de jeu et un passif.
 
-| Élément | Forme | Passif |
-|---|---|---|
-| Feu | Phénix | Renaît une fois à 25 % de PV |
-| Ombre | Chauve-souris | Vol de vie sur les attaques de base |
-| Givre | Loup | Les attaques ralentissent |
-| Nature | Cerf ancien | Régénère, gagne de l'épine |
+### Les neuf éléments
+
+Deux familles : **cinq éléments de la nature** et **quatre moments du jour**.
+
+| Famille | Élément | Monture | Identité | Ce qui la rend unique |
+|---|---|---|---|---|
+| Nature | Vent | Cheval | Esquive, orage | Esquive **au hasard**, et chaque esquive charge l'orage qui frappe en retour |
+| Nature | Terre | Tortue | Bouclier, fatigue | **Veut des combats longs** : bouclier qui se recharge, fait venir la fatigue plus tôt chez l'adversaire et y résiste mieux |
+| Nature | Glace | Loup | Gel | Le gel **bloque les recharges** de sorts adverses (pas les attaques) |
+| Nature | Feu | Phénix | Brûlure, hâte | Dégâts sur la durée, attaque de plus en plus vite. Renaît une fois à 25 % de PV |
+| Nature | Nature | Cerf | Épines, poison | Punit qui le frappe (épines), poison qui s'accumule |
+| Jour | Aube | Lion | Soin | Soins et régénération, se relève des combats serrés |
+| Jour | Lumière | Raie | Illusion | Crée des **leurres** qui absorbent des coups (différent de l'esquive du Vent) |
+| Jour | Crépuscule | Papillon | Transfert | **Vole les bonus** adverses et **renvoie ses malus** à l'envoyeur : le moment où tout s'inverse |
+| Jour | Nuit | Chauve-souris | Vol de vie, malédictions | Se soigne en frappant, affaiblit l'adversaire |
+
+Paires à garder distinctes :
+- **Vent / Lumière** : le Vent évite au hasard puis contre-attaque, la Lumière place des leurres visibles.
+- **Glace / Crépuscule** : la Glace ralentit la machine adverse, le Crépuscule retourne ses effets contre elle.
+- **Aube / Nature** : l'Aube soigne, la Nature punit. Le Cerf ne régénère plus.
+
+Le Crépuscule n'a de sens que face à un build qui a des bonus ou des malus à voler :
+contre un build d'attaques brutes, il doit rester correct mais sans éclat.
 
 - **Hybride** (plus tard) : deux éléments au-dessus d'un seuil donnent une forme mixte
-  (Feu + Ombre : Wyverne cendrée, Givre + Nature : Ours de toundra...).
+  (Feu + Nuit : Wyverne cendrée, Glace + Nature : Ours de toundra...).
   Plus de variété de sorts, passif plus faible. Pur = spécialisé et fort.
 - **Aucune affinité** : créature informe, sans passif.
 
@@ -61,7 +78,7 @@ son propre sort. Les catalyseurs voisins de l'arme s'appliquent à ce sort.
 |---|---|---|
 | Bâton de braise | Feu | Boule de feu, dégâts selon l'affinité Feu |
 | Lance du guet | Aucun | Estoc, rapide, **ignore l'esquive** (contre le Voile) |
-| Faux lunaire | Ombre | Moisson, lente, **double sous 40 % de PV** |
+| Faux lunaire | Nuit | Moisson, lente, **double sous 40 % de PV** |
 
 La lance n'a pas d'élément : elle ne change pas la forme de la monture, c'est un choix
 tactique pur. L'arme garde la couleur de son élément, pas celle de la monture.
@@ -77,12 +94,13 @@ tactique pur. L'arme garde la couleur de son élément, pas celle de la monture.
 | **Catalyseur** | Modifie ses voisins orthogonaux |
 | **Arme** | Une seule par Nid, tenue par le cavalier, lance son propre sort |
 
-### Lot complet visé (16)
+### Lots par élément (4 reliques chacun : essence, essence ou sort, sort, catalyseur)
 
-- **Feu** : Braise, Plume de cendre, Souffle ardent, Foyer
-- **Ombre** : Croc noir, Nuée, Voile, Lune creuse
-- **Givre** : Éclat, Carapace gelée, Prison de glace, Cœur d'hiver
+- **Feu** : Braise, Plume de cendre, Souffle ardent, Foyer (fait)
+- **Nuit** : Croc noir, Nuée, Voile, Lune creuse (fait)
+- **Glace** : Éclat, Carapace gelée, Prison de glace, Cœur d'hiver
 - **Nature** : Racine, Ronces, Sève, Graine mère
+- **Vent, Terre, Aube, Lumière, Crépuscule** : à concevoir
 
 ---
 
@@ -91,9 +109,11 @@ tactique pur. L'arme garde la couleur de son élément, pas celle de la monture.
 **Aucun élément ne bat un autre.** Pas de triangle, pas de multiplicateur caché.
 
 Le contre-jeu passe par les mécaniques des sorts, lisibles à l'écran :
-- Prison de glace (étourdit) coupe une Nuée en pleine série.
+- Prison de glace (gel des recharges) coupe une Nuée avant qu'elle parte.
 - Ronces (renvoie les dégâts) punit les builds à beaucoup de petits coups.
-- Le vol de vie de l'Ombre tient face au soin Nature.
+- Le vol de vie de la Nuit tient face au soin de l'Aube.
+- La Tortue punit les builds lents, le Cheval punit les builds à gros coups uniques.
+- Le Papillon punit les builds qui empilent bonus et malus.
 
 On adapte son Nid à ce qu'on affronte, pas à une couleur.
 
@@ -112,10 +132,10 @@ On adapte son Nid à ce qu'on affronte, pas à une couleur.
 
 ## 7. Prototype (périmètre actuel)
 
-- 2 éléments : Feu et Ombre, 8 reliques et 3 armes.
+- 2 éléments : Feu et Nuit, 8 reliques et 3 armes.
 - Nid 4 x 4, reliques d'une case. **Les formes de reliques (2 x 1, L...) viendront après.**
 - Pas d'hybride, pas de boutique, pas de réseau.
-- Deux Nids d'exemple qui se battent, journal du combat à l'écran.
+- Écran du Nid en glisser-déposer, combat animé contre un Nid d'exemple.
 
 **Question à valider avec le prototype** : est-ce que voir sa créature changer selon son Nid
 donne envie de refaire un Nid ? Si non, rien d'autre ne compte.
@@ -126,6 +146,9 @@ donne envie de refaire un Nid ? Si non, rien d'autre ne compte.
 
 - Boutique et économie d'or.
 - Formes de reliques et rotation.
-- Givre, Nature, hybrides.
+- **Prochains éléments : Terre et Vent**, deux opposés (combat long contre combat rapide),
+  pour vérifier que ça reste lisible avant d'aller jusqu'à neuf.
+- Puis Glace, Nature, les quatre moments du jour, et les hybrides.
+- 9 éléments donnent 36 paires d'hybrides : il faudra sûrement n'en garder qu'une partie.
 - Stades d'évolution (visuel qui grandit).
 - PvP asynchrone : stocker le Nid de chaque joueur par manche (Supabase), tirer un fantôme du même stade.

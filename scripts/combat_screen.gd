@@ -125,7 +125,7 @@ func _jouer(e: Dictionary) -> void:
 			var qui := "Cavalier : " if e["cavalier"] else ""
 			_texte(moi, 0 if e["cavalier"] else 1, qui + e["nom"], couleurs["clair"])
 		"voile":
-			_texte(moi, 2, "Voile", Palette.ELEMENTS["ombre"]["clair"])
+			_texte(moi, 2, "Voile", Palette.ELEMENTS["nuit"]["clair"])
 		"esquive":
 			_texte(moi, 2, "Esquive !", Palette.TEXTE)
 		"renaissance":

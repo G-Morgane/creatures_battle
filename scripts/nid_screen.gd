@@ -143,7 +143,7 @@ func _decrire(cr: Dictionary) -> String:
 	var aff := nid.affinites()
 	var lignes := [
 		"[b]%s[/b]   [color=#%s]%s[/color]" % [cr["nom"], Palette.TEXTE_DOUX.to_html(false), Data.FORMES[cr["forme"]]["passif"]],
-		"Feu %d   Ombre %d" % [aff.get("feu", 0), aff.get("ombre", 0)],
+		"Feu %d   Nuit %d" % [aff.get("feu", 0), aff.get("nuit", 0)],
 		"PV %d   Attaque %.0f   Une attaque toutes les %.2f s   Vol de vie %d %%" % [
 			cr["pv_max"], cr["attaque"], cr["intervalle"], roundi(cr["vol_de_vie"] * 100)],
 	]
@@ -165,7 +165,7 @@ func _decrire(cr: Dictionary) -> String:
 	return "\n".join(lignes)
 
 func _combattre() -> void:
-	combattre.emit(Exemples.nid_feu() if nid.forme() == "ombre" else Exemples.nid_ombre())
+	combattre.emit(Exemples.nid_feu() if nid.forme() == "nuit" else Exemples.nid_nuit())
 
 # --- elements d'interface --------------------------------------------------
 

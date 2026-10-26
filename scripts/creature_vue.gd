@@ -51,7 +51,7 @@ func _draw() -> void:
 	match forme:
 		"feu":
 			_phenix(c)
-		"ombre":
+		"nuit":
 			_chauve_souris(c)
 		_:
 			_informe(c)
@@ -108,7 +108,7 @@ func _informe(c: Dictionary) -> void:
 
 # Cavalier encapuchonne : visage sombre, deux yeux, cape a la couleur de l'element.
 func _cavalier(c: Dictionary) -> void:
-	var dos := Vector2(-38, -30) if forme == "ombre" else Vector2(-10, -60)
+	var dos := Vector2(-38, -30) if forme == "nuit" else Vector2(-10, -60)
 	var vent := sin(t * 3.0) * 6.0
 	draw_colored_polygon(PackedVector2Array([dos + Vector2(-6, -40), dos + Vector2(-50 + vent, 20), dos + Vector2(-20, 24), dos + Vector2(10, -30)]), c["vif"].darkened(0.1))
 	draw_colored_polygon(PackedVector2Array([dos + Vector2(-16, -36), dos + Vector2(16, -36), dos + Vector2(20, 14), dos + Vector2(-20, 14)]), c["vif"])

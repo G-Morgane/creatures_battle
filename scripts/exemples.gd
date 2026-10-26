@@ -12,7 +12,7 @@ static func nid_feu() -> Nid:
 	n.placer(Vector2i(2, 1), "foyer")
 	return n
 
-static func nid_ombre() -> Nid:
+static func nid_nuit() -> Nid:
 	var n := Nid.new()
 	n.placer(Vector2i(0, 0), "croc_noir")
 	n.placer(Vector2i(1, 0), "croc_noir")

@@ -78,7 +78,7 @@ func eclore() -> Dictionary:
 		"pv_max": Data.PV_BASE,
 		"attaque": Data.ATTAQUE_BASE,
 		"intervalle": Data.INTERVALLE_BASE,
-		"vol_de_vie": Data.VOL_DE_VIE_OMBRE if f == "ombre" else 0.0,
+		"vol_de_vie": Data.VOL_DE_VIE_NUIT if f == "nuit" else 0.0,
 		"renaissance": f == "feu",
 		"arme": arme(),
 		"sorts": [],
