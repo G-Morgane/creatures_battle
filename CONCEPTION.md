@@ -166,7 +166,7 @@ tactique pur. L'arme garde la couleur de son élément, pas celle de la monture.
 ### Lots par élément (4 reliques chacun : essence, essence ou sort, sort, catalyseur)
 
 - **Feu** : Braise, Plume de cendre, Souffle ardent, Foyer (ancien lot, remplacé par le set du Phénix ci-dessous)
-- **Nuit** : Croc noir, Nuée, Voile, Lune creuse (fait)
+- **Nuit** : Croc noir, Nuée, Voile, Lune creuse (ancien lot, remplacé par le set de la Chauve-souris ci-dessous)
 - **Terre** : Pierre (+PV), Écaille (bouclier de départ), Rempart (sort de bouclier), Socle (les sorts voisins donnent du bouclier) (fait)
 - **Vent** : Sabot (attaque, vitesse), Crin (esquive), Rafale (3 coups rapides), Girouette (les sorts voisins rechargent plus vite) (fait)
 - **Glace** : Éclat, Carapace gelée, Prison de glace, Cœur d'hiver
@@ -255,13 +255,21 @@ croisés, objets neutres utiles sans être universels, style lisible quel que so
 | Famille | Style | Armes actuelles |
 |---|---|---|
 | Tir | Rapide, plusieurs petits coups | Sarbacane de roseau, Arc de saule, Arc du Jardin interdit |
-| Lame | Rapide, riposte | Dague d'épine, Serpe de ronces |
+| Lame | Rapide, riposte, **coups critiques** | Dague d'épine, Serpe de ronces, armes de la Nuit |
 | Hast | Allonge, perce l'esquive | Lance du guet (neutre), armes du Loup |
 | Hache | Lent, gros coup | armes du Loup |
 | Bâton | Magie, grandit avec l'affinité | Bâton de braise |
-| Faux | Achève les cibles affaiblies | Faux lunaire |
+| Faux | Achève les cibles affaiblies | Faux de tison, Faux des cendres, armes de la Nuit |
 
-Familles par élément : **Cerf : Tir et Lame. Loup : Hast et Hache.**
+Familles par élément : **Cerf : Tir et Lame. Loup : Hast et Hache. Phénix : Bâton et Faux. Nuit : Faux et Lame.**
+
+**Coups critiques** : identité de la famille Lame. Un crit fait **x1,75** de dégâts ; les chances
+viennent des armes Lame et de certains objets (aucune chance de base). Les Lames du Cerf
+(Dague d'épine, Serpe de ronces) en profiteront aussi.
+
+**Faux** : toutes partagent le trait « achever » (plus fortes contre une cible affaiblie), sur
+lequel jouera un futur objet neutre. Chaque élément y ajoute sa saveur : le feu pour le Phénix,
+le drain et les malédictions pour la Nuit.
 
 ### Glace (Loup) : givre et bouclier qui se brise
 
@@ -361,10 +369,55 @@ Règles :
 | Légendaire | Bâton du Premier Brasier | Bâton | Une combustion totale après plusieurs tirs ; la renaissance déclenche aussitôt un tir renforcé |
 
 Points ouverts :
-- **Faux de tison et Faux lunaire** se ressemblent (bonus contre une cible affaiblie). À revoir
-  avec la Nuit, quand on fera son set, pour que les objets neutres de Faux servent aux deux.
+- **Faux de tison et Faux lunaire** : réglé avec le set de la Nuit (trait « achever » commun,
+  saveur propre à chaque élément).
 - **Le Phénix se soigne** (Cendre tiède, Fleur, Faux des cendres) : à surveiller face à l'Aube,
   dont le soin est l'identité. La Belladone du Cerf le contre.
+
+### Nuit (Chauve-souris) : vol de vie et malédictions
+
+Deux axes : **le vol de vie** et **les malédictions**, trois états qui affaiblissent l'adversaire.
+Des objets **comptent les malédictions différentes** (Masque, Grimoire, Pacte) ; le Chapelet
+permet au contraire d'**empiler la même** : un choix de build en largeur ou en profondeur.
+Familles d'armes : **Faux et Lame**. Ce set remplace l'ancienne Nuit (Croc noir, Nuée, Voile,
+Lune creuse). Passif de la Chauve-souris inchangé : vol de vie sur les attaques de base.
+
+Règles des malédictions :
+- **Faiblesse** : la cible inflige moins de dégâts.
+- **Langueur** : la cible attaque moins vite (attaques seulement, pas les sorts ; pourcentage fixe
+  et durée limitée, là où le givre du Loup s'accumule, touche aussi les sorts et finit en gel).
+- **Flétrissure** : la cible reçoit moins de soins (réduction, là où la Belladone du Cerf bloque
+  tout soin, mais seulement sur une cible empoisonnée).
+- **Durée : 6 s**, renouvelée si on la réapplique. Sans le Chapelet, une malédiction ne compte
+  qu'une fois. Avec lui, jusqu'à 3 charges : Faiblesse -10 % de dégâts par charge, Langueur -10 %
+  de vitesse d'attaque par charge, Flétrissure -25 % de soins par charge (valeurs de départ).
+
+#### Monture (10)
+
+| Rareté | Objet | Effet |
+|---|---|---|
+| Commun | Ruban sanguin | Accorde du vol de vie aux attaques |
+| Commun | Aiguille noire | Après plusieurs attaques, applique Faiblesse |
+| Commun | Sceau de cire | **Sort** *Sceau* : applique Langueur toutes les 8 s |
+| Commun | Sablier vermeil | Prolonge les malédictions que tu appliques |
+| Rare | Poupée cousue | Une partie des dégâts reçus est renvoyée à l'adversaire tant qu'il est maudit |
+| Rare | Peigne de la veuve | Les coups critiques appliquent Flétrissure |
+| Rare | Chapelet des rancunes | *Un chapelet de perles noires dont une seule rougeoie* : chaque malédiction peut s'empiler jusqu'à 3 fois |
+| Épique | Masque du festin | Plus de vol de vie pour chaque malédiction différente sur l'adversaire |
+| Épique | Grimoire des noms perdus | Après une certaine quantité de vie volée, applique une malédiction manquante |
+| Légendaire | Pacte de la Nuit profonde | Quand la cible porte les trois malédictions, tes attaques drainent aussi un peu de vie, indépendamment de leurs dégâts (le drain passe le bouclier) |
+
+La Coupelle d'étain (bonus de vol de vie) a été retirée au profit du Chapelet.
+
+#### Armes du cavalier (5, Faux et Lame)
+
+| Rareté | Arme | Famille | Sort du cavalier |
+|---|---|---|---|
+| Commun | Dague de minuit | Lame | Coups rapides, fortes chances de crit |
+| Commun | Faux lunaire | Faux | Achève sous 40 % de vie **et vole de la vie** (retravaillée) |
+| Rare | Lame de la veuve | Lame | Chaque crit pose une malédiction au hasard |
+| Épique | Faux du festin | Faux | Plus forte pour chaque malédiction sur la cible |
+| Légendaire | Faux de la Nuit profonde | Faux | Consume toutes les malédictions de la cible pour un coup énorme et un gros drain |
 
 ## 5. Pas d'avantage élémentaire
 
@@ -408,7 +461,8 @@ donne envie de refaire un Nid ? Si non, rien d'autre ne compte.
 ## 8. Plus tard
 
 - Formes de reliques et rotation.
-- Remonter la Nuit, la plus faible en partie complète, en faisant son set (et revoir la Faux).
+- Coder la Nuit (Chauve-souris) et le crit : il faudra le dessin de la chauve-souris et les
+  planches d'objets et d'armes. C'est aussi ce qui doit remonter la Nuit, la plus faible.
 - Une image pour la Serpe de ronces (le Fouet a été remplacé).
 - Refaire Feu, Nuit, Terre, Vent au format 15 objets, avec une ou deux familles d'armes chacun.
 - Objets neutres qui visent une famille d'armes.
