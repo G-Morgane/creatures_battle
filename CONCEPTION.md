@@ -257,11 +257,12 @@ croisés, objets neutres utiles sans être universels, style lisible quel que so
 | Tir | Rapide, plusieurs petits coups | Sarbacane de roseau, Arc de saule, Arc du Jardin interdit |
 | Lame | Rapide, riposte, **coups critiques** | Dague d'épine, Serpe de ronces, armes de la Nuit |
 | Hast | Allonge, perce l'esquive | Lance du guet (neutre), armes du Loup |
-| Hache | Lent, gros coup | armes du Loup |
-| Bâton | Magie, grandit avec l'affinité | Bâton de braise |
+| Hache | Lent, gros coup | armes du Loup, armes du Lion |
+| Bâton | Magie, grandit avec l'affinité | armes du Phénix, armes du Lion |
 | Faux | Achève les cibles affaiblies | Faux de tison, Faux des cendres, armes de la Nuit |
 
-Familles par élément : **Cerf : Tir et Lame. Loup : Hast et Hache. Phénix : Bâton et Faux. Nuit : Faux et Lame.**
+Familles par élément : **Cerf : Tir et Lame. Loup : Hast et Hache. Phénix : Bâton et Faux. Nuit : Faux et Lame.
+Lion : Bâton et Hache.**
 
 **Coups critiques** : identité de la famille Lame. Un crit fait **x1,75** de dégâts ; les chances
 viennent des armes Lame et de certains objets (aucune chance de base). Les Lames du Cerf
@@ -428,6 +429,50 @@ La Coupelle d'étain (bonus de vol de vie) a été retirée au profit du Chapele
 | Épique | Faux du festin | Faux | Plus forte pour chaque malédiction sur la cible |
 | Légendaire | Faux de la Nuit profonde | Faux | Consume toutes les malédictions de la cible pour un coup énorme et un gros drain |
 
+### Aube (Lion) : soin et Éclat
+
+**On stocke du soin pour frapper.** Un soigneur qui ne fait que se soigner ne gagne jamais : ici,
+chaque soin charge une jauge d'**Éclat**, qui part en coup de lumière sur l'adversaire.
+Familles d'armes : **Bâton et Hache** (chacune partagée avec un autre élément).
+
+Règles :
+- **Passif du Lion** : régénère un peu en continu, et **ses soins chargent l'Éclat**. La jauge est
+  propre au Lion ; hors Lion, les objets d'Éclat ne serviront qu'aux futurs hybrides.
+- **Charge** : tous les soins chargent l'Éclat **à moitié** ; les **soins excédentaires** (au-delà
+  des PV max) comptent **double** (plus avec le Voile de l'aube).
+- **Éclat** : quand la jauge atteint son seuil (60 pour commencer, moins avec le Miroir de poche),
+  il part : un coup de lumière sur l'adversaire (plus fort avec le Prisme d'aurore).
+- **Un soin bloqué** (Belladone) ou réduit (Flétrissure) charge quand même l'Éclat à moitié :
+  le Lion reste gêné par ces contres, sans être neutralisé.
+
+#### Monture (10)
+
+| Rareté | Objet | Apparence | Effet |
+|---|---|---|---|
+| Commun | Mèche de veille | Une courte mèche allumée dans une coupelle de céramique pêche | **Sort** *Veille* : rend un peu de vie à intervalles réguliers |
+| Commun | Huile de première lumière | Une petite burette ivoire laissant perler une goutte dorée | **Catalyseur** : soins des objets voisins +50 % |
+| Commun | Miroir de poche | Un miroir rond en cuivre pâle, avec un manche court | Réduit le seuil de l'Éclat |
+| Commun | Bande de lin | Une bande crème roulée, dont une extrémité se déroule | Sous la moitié de ta vie, renforce la régénération |
+| Rare | Encensoir du matin | Un brûle-parfum trapu, percé de trois ouvertures, avec une volute de fumée rose | Chaque Éclat renforce temporairement la régénération |
+| Rare | Vasque de rosée | Une vasque peu profonde sur un petit pied, contenant une eau nacrée | **Les soins excédentaires deviennent du bouclier** |
+| Rare | Prisme d'aurore | Un prisme triangulaire laissant passer trois larges bandes de lumière pêche et or | Augmente les dégâts de l'Éclat |
+| Épique | Voile de l'aube | Une étoffe légère, crème et rose, tenue par une attache de cuivre | Les soins excédentaires chargent davantage l'Éclat |
+| Épique | Carillon du réveil | Trois petites cloches plates suspendues à une arche dorée | Tous les trois Éclats, un soin important |
+| Légendaire | Lanterne du Premier Matin | Une lanterne ronde en céramique ajourée, abritant un soleil flottant, avec deux anses en volutes | L'Éclat ajoute à ses dégâts les soins excédentaires accumulés depuis le dernier Éclat |
+
+#### Armes du cavalier (5, Bâton et Hache)
+
+| Rareté | Arme | Famille | Sort du cavalier |
+|---|---|---|---|
+| Commun | Sceptre de l'aurore | Bâton | Un rayon dont les dégâts grandissent avec l'affinité Aube |
+| Commun | Hachette du matin | Hache | Un coup lent qui charge l'Éclat |
+| Rare | Bâton de rosée | Bâton | Chaque tir soigne un peu ; l'excédent nourrit l'Éclat |
+| Épique | Hache solaire | Hache | Après chaque Éclat, le prochain coup est doublé |
+| Légendaire | Sceptre du Premier Matin | Bâton | Un Éclat gratuit tous les quelques tirs |
+
+Points à surveiller : la **Vasque** crée un pont avec la Terre et la Glace (bouclier, effets de bris) ;
+le Lion est contré par la Nature (Belladone) et la Nuit (Flétrissure), adouci par la règle ci-dessus.
+
 ## 5. Pas d'avantage élémentaire
 
 **Aucun élément ne bat un autre.** Pas de triangle, pas de multiplicateur caché.
@@ -471,6 +516,7 @@ donne envie de refaire un Nid ? Si non, rien d'autre ne compte.
 
 - Formes de reliques et rotation.
 - Équilibrage : Nuit et Nature un cran sous les autres.
+- Coder l'Aube (Lion) : il faudra le dessin du lion et les planches d'objets et d'armes.
 - Une image pour la Serpe de ronces (le Fouet a été remplacé).
 - Refaire Feu, Nuit, Terre, Vent au format 15 objets, avec une ou deux familles d'armes chacun.
 - Objets neutres qui visent une famille d'armes.
