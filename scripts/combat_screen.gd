@@ -9,6 +9,7 @@ signal retour
 const VOL_PROJECTILE := 0.35
 const DUREE_TEXTE := 1.0
 const ECART_COUPS := 0.08   # entre deux coups d'un meme sort (Nuee)
+const TEXTES_MAX := 4       # textes empiles au meme endroit
 
 var combat: Combat
 var vainqueur := -1
@@ -142,6 +143,11 @@ func _jouer(e: Dictionary) -> void:
 					"a": moi.position + moi.size / 2 + Vector2(0, 20) + Vector2(cos(a), sin(a)) * 120, "t0": lecture,
 					"duree": VOL_PROJECTILE, "couleur": f["vif"], "coeur": f["clair"], "taille": 9.0 if e["totale"] else 6.0})
 			_texte(moi, 2, ("Combustion totale !" if e["totale"] else "Combustion") + " %d" % roundi(e["valeur"]), f["clair"])
+		"malediction":
+			var nv: Dictionary = Palette.ELEMENTS["nuit"]
+			_texte(moi, 2, Data.NOMS_MALEDICTION[e["nom"]] + (" x%d" % e["n"] if e["n"] > 1 else ""), nv["clair"])
+		"crit":
+			_texte(moi, 2, "Critique !", Color("#f2c94c"))
 		"gel":
 			_texte(moi, 2, "Gel !", Palette.ELEMENTS["glace"]["clair"])
 		"brise_gel":
@@ -186,9 +192,13 @@ func _elan(v: CreatureVue) -> void:
 func _texte(v: CreatureVue, ligne: int, texte: String, couleur: Color) -> void:
 	var pos := v.position + Vector2(v.size.x / 2, 30 + ligne * 26)
 	# deux textes au meme endroit en meme temps : le nouveau descend d'un cran
-	# (vers le haut, il passerait sur la barre de PV)
+	# (vers le haut, il passerait sur la barre de PV) ; au-dela de 4, on l'oublie
+	var crans := 0
 	while effets.any(func(e): return e["type"] == "texte" and absf(e["pos"].x - pos.x) < 1.0 and absf(e["pos"].y - pos.y) < 22.0 and lecture - e["t0"] < 0.4):
 		pos.y += 22
+		crans += 1
+		if crans >= TEXTES_MAX:
+			return
 	effets.append({"type": "texte", "pos": pos, "texte": texte, "couleur": couleur,
 		"t0": lecture, "duree": DUREE_TEXTE})
 
@@ -242,6 +252,9 @@ func _dessiner() -> void:
 			etats.append(["Gelé", Palette.ELEMENTS["glace"]["clair"]])
 		elif img[8 + i] > 0.0:
 			etats.append(["Givre %d" % roundi(img[8 + i]), Palette.ELEMENTS["glace"]["vif"]])
+		if img[14 + i] != "":
+			calque.draw_string(police, Vector2(x, y + 54), img[14 + i],
+				HORIZONTAL_ALIGNMENT_CENTER, 300, 14, Palette.ELEMENTS["nuit"]["clair"])
 		for k in etats.size():
 			calque.draw_string(police, Vector2(x + 150 * k - 75 * (etats.size() - 1), y + 34), etats[k][0],
 				HORIZONTAL_ALIGNMENT_CENTER, 300, 15, etats[k][1])

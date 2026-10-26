@@ -55,11 +55,25 @@ const ZONES := {
 	"baton_brasier": ["phenix_arme", 60, 455, 460, 548],
 	"faux_cendres":  ["phenix_arme", 480, 525, 525, 495],
 	"baton_premier": ["phenix_arme", 30, 1030, 965, 445],
+	"ruban":         ["chauvesouris_objets", 40, 80, 265, 232],
+	"aiguille":      ["chauvesouris_objets", 295, 60, 225, 258],
+	"sceau":         ["chauvesouris_objets", 555, 70, 200, 252],
+	"poupee":        ["chauvesouris_objets", 105, 425, 240, 258],
+	"sablier":       ["chauvesouris_objets", 410, 405, 200, 268],
+	"peigne":        ["chauvesouris_objets", 690, 440, 315, 252],
+	"masque":        ["chauvesouris_objets", 65, 780, 460, 258],
+	"grimoire":      ["chauvesouris_objets", 570, 745, 370, 292],
+	"pacte":         ["chauvesouris_objets", 140, 1110, 750, 345],
+	"dague_minuit":  ["chauvesouris_armes", 80, 60, 400, 335],
+	"faux_lunaire":  ["chauvesouris_armes", 520, 20, 470, 375],
+	"lame_veuve":    ["chauvesouris_armes", 60, 475, 440, 390],
+	"faux_festin":   ["chauvesouris_armes", 490, 480, 500, 410],
+	"faux_nuit":     ["chauvesouris_armes", 35, 940, 965, 530],
 }
 
 # Objets de glace blancs et bleu pale, proches du fond creme : tolerance resserree,
 # et pas de retrait du fond enferme (il confond le blanc peint avec le papier).
-# [seuil dur, seuil doux, retirer les trous]
+# [seuil dur, seuil doux, retirer les trous, (seuil des trous, facultatif)]
 const TOLERANCE := {"objets_loup": [0.045, 0.09, false], "loup_armes": [0.045, 0.09, false]}
 const TOLERANCE_DEFAUT := [0.10, 0.22, true]
 # Reglages propres a un objet (prioritaires sur ceux de sa planche).
@@ -69,6 +83,13 @@ const TOLERANCE_OBJET := {
 	"cendre": [0.045, 0.09, false],     # cendres claires
 	"fleur_cendres": [0.045, 0.09, false],  # petales creme
 	"plume_incandescente": [0.06, 0.12, true],  # tuyau blanc
+	# parties creme proches du papier : dents, parchemin, pages, crocs, lame d'os
+	"peigne": [0.03, 0.07, false],
+	"pacte": [0.025, 0.06, false],
+	"grimoire": [0.03, 0.07, false],
+	"masque": [0.04, 0.08, false],
+	"faux_lunaire": [0.045, 0.09, true],
+	"faux_nuit": [0.03, 0.07, true, 0.08],  # fond enferme entre ruban et manche, grain du papier
 }
 
 # Zones de la planche a effacer avant decoupe : morceaux d'un voisin qui deborde.
@@ -79,10 +100,13 @@ const MASQUES := {
 	"baton_brasier": [Rect2i(130, 440, 270, 60), Rect2i(478, 870, 45, 140)],
 	"faux_cendres": [Rect2i(640, 998, 250, 30), Rect2i(478, 520, 30, 90)],
 	"baton_premier": [Rect2i(340, 1400, 370, 90), Rect2i(130, 1030, 290, 50), Rect2i(610, 1030, 290, 50)],
+	"pacte": [Rect2i(130, 1095, 240, 40)],
+	"faux_festin": [Rect2i(640, 862, 240, 40)],
+	"faux_nuit": [Rect2i(340, 1400, 360, 80)],
 }
 
 # image de la bete (fond transparent) -> element
-const MONTURES := {"cerf": "nature", "loup": "glace", "phenix": "feu"}
+const MONTURES := {"cerf": "nature", "loup": "glace", "phenix": "feu", "chauvesouris": "nuit"}
 
 func _initialize() -> void:
 	DirAccess.make_dir_recursive_absolute("res://images/icones")
@@ -147,7 +171,7 @@ func _detourer(img: Image, fond: Color, tol: Array) -> void:
 			for o in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
 				pile.append(p + o)
 	if tol[2]:
-		_trous(img, fond, vu, SEUIL_TROU)
+		_trous(img, fond, vu, tol[3] if tol.size() > 3 else minf(SEUIL_TROU, dur))
 
 # Fond enferme dans un objet (interieur d'un arc) : grandes zones de la couleur
 # exacte du fond. Les petites taches creme (amanite) sont gardees.

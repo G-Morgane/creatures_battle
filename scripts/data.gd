@@ -14,7 +14,7 @@ const INTERVALLE_BASE := 1.0   # secondes entre deux attaques de base
 # Pas d'avantage elementaire : aucun element ne bat un autre (CONCEPTION.md §5).
 const FORMES := {
 	"feu":   {"nom": "Phénix",        "passif": "Renaît une fois à 25 % de PV, plus vite à chaque combustion (Braise)"},
-	"nuit":  {"nom": "Chauve-souris", "passif": "Vol de vie sur les attaques de base"},
+	"nuit":  {"nom": "Chauve-souris", "passif": "Vol de vie sur les attaques, +12 % de dégâts par malédiction sur la cible"},
 	"terre": {"nom": "Tortue",        "passif": "Fatigue de l'adversaire 10 s plus tôt, la sienne réduite de moitié"},
 	"vent":  {"nom": "Cheval",        "passif": "15 % d'esquive, chaque esquive lance un éclair"},
 	"glace": {"nom": "Loup",          "passif": "Ses attaques posent du givre, +50 % de dégâts contre une cible gelée"},
@@ -24,6 +24,21 @@ const FORMES := {
 
 const RENAISSANCE_PV := 0.25
 const VOL_DE_VIE_NUIT := 0.15
+const NUIT_PAR_MALEDICTION := 0.12  # degats de la Chauve-souris par malediction differente
+# Malediction : un etat de 6 s sur l'adversaire, renouvele si on le reapplique.
+# Une seule charge, trois avec le Chapelet des rancunes. Effet par charge :
+const MALEDICTIONS := ["faiblesse", "langueur", "fletrissure"]
+const NOMS_MALEDICTION := {"faiblesse": "Faiblesse", "langueur": "Langueur", "fletrissure": "Flétrissure"}
+const MALEDICTION_DUREE := 6.0
+const CHAPELET_CHARGES := 3
+const FAIBLESSE := 0.15            # degats infliges en moins
+const LANGUEUR := 0.15             # vitesse d'attaque en moins (pas les sorts)
+const FLETRISSURE := 0.30          # soins recus en moins
+# Coups critiques : identite de la famille Lame. Une Lame donne CRIT_LAME de chance
+# (plus si l'arme le precise) a toute la monture.
+const CRIT_MULT := 1.75
+const CRIT_LAME := 0.10
+const FESTIN_DEGATS := 15.0        # Faux de la Nuit profonde : par charge consumee
 # Tortue : veut des combats longs, joue sur la fatigue (mort subite).
 const TORTUE_AVANCE_FATIGUE := 10.0
 const TORTUE_FATIGUE_MULT := 0.5
@@ -103,15 +118,27 @@ const RELIQUES := {
 		"soin_par_charge": 1.0},
 	"oeuf_brasier":   {"nom": "Œuf du Premier Brasier", "element": "feu", "affinite": 2, "type": "essence", "rarete": "legendaire",
 		"oeuf": true},
-	# nuit
-	"croc_noir":      {"nom": "Croc noir",      "element": "nuit", "affinite": 2, "type": "essence",
-		"attaque": 2.5, "vol_de_vie": 0.10},
-	"nuee":           {"nom": "Nuée",           "element": "nuit", "affinite": 1, "type": "sort",
-		"recharge": 5.0, "degats": 3.0, "par_affinite": 0.5, "coups": 5},
-	"voile":          {"nom": "Voile",          "element": "nuit", "affinite": 1, "type": "sort",
-		"recharge": 6.0, "esquive": true},
-	"lune_creuse":    {"nom": "Lune creuse",    "element": "nuit", "affinite": 1, "type": "catalyseur",
-		"effet": "vol_de_vie", "valeur": 0.30},
+	# nuit : vol de vie et maledictions. Le Chapelet permet de les empiler.
+	"ruban":          {"nom": "Ruban sanguin",  "element": "nuit",  "affinite": 2, "type": "essence",
+		"vol_de_vie": 0.08, "attaque": 2.0},
+	"aiguille":       {"nom": "Aiguille noire", "element": "nuit",  "affinite": 2, "type": "essence",
+		"faiblesse_tous": 3, "attaque": 2.0},
+	"sceau":          {"nom": "Sceau de cire",  "element": "nuit",  "affinite": 1, "type": "sort",
+		"sort": "Sceau", "recharge": 6.0, "malediction": "langueur"},
+	"sablier":        {"nom": "Sablier vermeil","element": "nuit",  "affinite": 1, "type": "essence",
+		"sablier": 3.0},
+	"poupee":         {"nom": "Poupée cousue",  "element": "nuit",  "affinite": 1, "type": "essence", "rarete": "rare",
+		"renvoi": 0.3},
+	"peigne":         {"nom": "Peigne de la veuve","element": "nuit", "affinite": 1, "type": "essence", "rarete": "rare",
+		"crit": 0.08, "crit_fletrissure": true},
+	"chapelet":       {"nom": "Chapelet des rancunes","element": "nuit", "affinite": 1, "type": "essence", "rarete": "rare",
+		"chapelet": true},
+	"masque":         {"nom": "Masque du festin","element": "nuit", "affinite": 1, "type": "essence", "rarete": "epique",
+		"vol_par_malediction": 0.06},
+	"grimoire":       {"nom": "Grimoire des noms perdus","element": "nuit", "affinite": 1, "type": "essence", "rarete": "epique",
+		"grimoire": 40.0},
+	"pacte":          {"nom": "Pacte de la Nuit profonde","element": "nuit", "affinite": 2, "type": "essence", "rarete": "legendaire",
+		"pacte": 5.0},
 	# terre : encaisser, durer, laisser la fatigue faire le reste
 	"pierre":         {"nom": "Pierre",         "element": "terre", "affinite": 2, "type": "essence",
 		"pv": 40.0},
@@ -188,8 +215,17 @@ const RELIQUES := {
 		"sort": "Premier brasier", "recharge": 3.0, "degats": 6.0, "coups": 1, "brulure": 1.0, "combustion_tous": 4, "tir_renaissance": true},
 	"lance_guet":     {"nom": "Lance du guet",  "element": "",      "affinite": 0, "type": "arme", "famille": "hast",
 		"sort": "Estoc", "recharge": 2.5, "degats": 8.0, "coups": 1, "perce": true},
-	"faux_lunaire":   {"nom": "Faux lunaire",   "element": "nuit", "affinite": 1, "type": "arme", "famille": "faux",
-		"sort": "Moisson", "recharge": 6.0, "degats": 6.0, "par_affinite": 1.0, "coups": 1, "execution": true},
+	# armes de la Nuit : Faux et Lame
+	"dague_minuit":   {"nom": "Dague de minuit","element": "nuit",  "affinite": 1, "type": "arme", "famille": "lame",
+		"sort": "Entaille", "recharge": 2.0, "degats": 5.0, "coups": 1, "crit": 0.25},
+	"faux_lunaire":   {"nom": "Faux lunaire",   "element": "nuit",  "affinite": 1, "type": "arme", "famille": "faux",
+		"sort": "Moisson", "recharge": 5.0, "degats": 8.0, "par_affinite": 1.0, "coups": 1, "execution": true, "vol_de_vie": 0.3},
+	"lame_veuve":     {"nom": "Lame de la veuve","element": "nuit", "affinite": 1, "type": "arme", "famille": "lame", "rarete": "rare",
+		"sort": "Coup de la veuve", "recharge": 3.0, "degats": 7.0, "coups": 1, "crit": 0.15, "crit_malediction": true},
+	"faux_festin":    {"nom": "Faux du festin", "element": "nuit",  "affinite": 1, "type": "arme", "famille": "faux", "rarete": "epique",
+		"sort": "Festin", "recharge": 5.0, "degats": 10.0, "coups": 1, "par_malediction": 0.35, "achever_seuil": 0.4, "achever_mult": 1.5},
+	"faux_nuit":      {"nom": "Faux de la Nuit profonde","element": "nuit", "affinite": 2, "type": "arme", "famille": "faux", "rarete": "legendaire",
+		"sort": "Nuit profonde", "recharge": 7.0, "degats": 10.0, "coups": 1, "consume_maledictions": true, "achever_seuil": 0.4, "achever_mult": 1.5},
 	# armes du Cerf
 	"sarbacane":      {"nom": "Sarbacane de roseau","element": "nature", "affinite": 1, "type": "arme", "famille": "tir",
 		"sort": "Fléchette", "recharge": 2.0, "degats": 2.0, "coups": 1, "poison": 1.0},

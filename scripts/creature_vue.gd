@@ -53,7 +53,7 @@ func _draw() -> void:
 		"feu":
 			_sprite("feu")
 		"nuit":
-			_chauve_souris(c)
+			_sprite("nuit")
 		"terre":
 			_tortue(c)
 		"vent":
@@ -177,7 +177,7 @@ func _cavalier(c: Dictionary) -> void:
 	var dos := Vector2(-10, -60)
 	match forme:
 		"nuit":
-			dos = Vector2(-38, -30)
+			dos = Vector2(15, -10)
 		"terre":
 			dos = Vector2(-10, -78)
 		"nature", "glace":
@@ -202,7 +202,7 @@ func _arme(dos: Vector2) -> void:
 	var main := dos + Vector2(18, -14)
 	# arme dessinee par un artiste : son icone, tenue en main
 	var tex := Palette.icone(arme)
-	if tex != null and not arme in ["lance_guet", "faux_lunaire"]:
+	if tex != null and arme != "lance_guet":
 		var cote := 90.0
 		var k := cote / maxf(tex.get_width(), tex.get_height())
 		var taille := tex.get_size() * k

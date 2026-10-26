@@ -157,6 +157,7 @@ func eclore() -> Dictionary:
 		"graine": false,
 		"givre_attaque": Data.LOUP_GIVRE if f == "glace" else 0.0,
 		"bonus_gel": Data.LOUP_BONUS_GEL if f == "glace" else 1.0,
+		"par_malediction": Data.NUIT_PAR_MALEDICTION if f == "nuit" else 0.0,
 		"bris_degats": 0.0,
 		"bris_givre": 0.0,
 		"reforme": 0.0,
@@ -171,6 +172,16 @@ func eclore() -> Dictionary:
 		"fournaise": false,
 		"renaissances": 1 if f == "feu" else 0,
 		"oeuf": false,
+		"crit": 0.0,
+		"faiblesse_tous": 0,
+		"sablier": 0.0,
+		"renvoi": 0.0,
+		"crit_fletrissure": false,
+		"crit_malediction": false,
+		"chapelet": false,
+		"vol_par_malediction": 0.0,
+		"grimoire": 0.0,
+		"pacte": 0.0,
 		"arme": arme(),
 		"sorts": [],
 	}
@@ -200,10 +211,20 @@ func eclore() -> Dictionary:
 				cr["brulure_attaque"] += r.get("brulure_attaque", 0.0) * m * _renfort(c, "brulure")
 				for drapeau in ["resine", "fournaise", "oeuf"]:
 					cr[drapeau] = cr[drapeau] or r.get(drapeau, false)
+				for champ in ["crit", "sablier", "renvoi", "vol_par_malediction", "grimoire", "pacte"]:
+					cr[champ] += r.get(champ, 0.0) * m
+				if r.has("faiblesse_tous"):
+					cr["faiblesse_tous"] = r["faiblesse_tous"] if cr["faiblesse_tous"] == 0 else mini(cr["faiblesse_tous"], r["faiblesse_tous"])
+				for drapeau in ["crit_fletrissure", "chapelet"]:
+					cr[drapeau] = cr[drapeau] or r.get(drapeau, false)
 				for drapeau in ["belladone", "coeur", "graine", "rose"]:
 					cr[drapeau] = cr[drapeau] or r.get(drapeau, false)
 			"sort", "arme":
 				cr["sorts"].append(_sort(c, r, aff))
+				# une Lame donne du crit a toute la monture
+				if r.get("famille", "") == "lame":
+					cr["crit"] += r.get("crit", Data.CRIT_LAME)
+				cr["crit_malediction"] = cr["crit_malediction"] or r.get("crit_malediction", false)
 	cr["intervalle"] = Data.INTERVALLE_BASE / (1.0 + vitesse)
 	cr["esquive"] = minf(cr["esquive"], Data.ESQUIVE_MAX)
 	# l'Oeuf du Premier Brasier donne une renaissance de plus
@@ -248,12 +269,15 @@ func _sort(c: Vector2i, r: Dictionary, aff: Dictionary) -> Dictionary:
 		"combustion_affaiblie": r.get("combustion_affaiblie", false),
 		"combustion_tous": r.get("combustion_tous", 0),
 		"tir_renaissance": r.get("tir_renaissance", false),
+		"malediction": r.get("malediction", ""),
+		"par_malediction": r.get("par_malediction", 0.0),
+		"consume_maledictions": r.get("consume_maledictions", false),
 		"par_epine": r.get("par_epine", 0.0) * m,
 		"degats": _puissance(r, "degats", aff) * m,
 		"bouclier": _puissance(r, "bouclier", aff) * m,
 		"coups": r.get("coups", 0),
 		"esquive": r.get("esquive", false),
-		"vol_de_vie": 0.0,
+		"vol_de_vie": r.get("vol_de_vie", 0.0) * m,
 	}
 	for v in voisins(c):
 		var cat: Dictionary = Data.RELIQUES[cases[v]]

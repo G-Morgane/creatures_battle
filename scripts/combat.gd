@@ -10,7 +10,8 @@ var journal: Array[String] = []
 # Pour rejouer le combat a l'ecran : un evenement par action, et les PV
 # des deux cotes a chaque pas
 # ([pv0, pv1, brule0, brule1, bouclier0, bouclier1, poison0, poison1,
-#   givre0, givre1, gele0, gele1, braise0, braise1]) ; brule = nombre de charges de brulure.
+#   givre0, givre1, gele0, gele1, braise0, braise1, maledictions0, maledictions1]) ;
+# brule = nombre de charges de brulure, maledictions = texte ("Faiblesse x2, Langueur").
 var evenements: Array = []
 var images: Array = []
 # L'esquive du Vent est un tirage : graine fixe, donc toujours le meme combat.
@@ -44,6 +45,10 @@ func _etat(cr: Dictionary, i: int) -> Dictionary:
 		"braise_temp": 0.0,        # Coeur de fournaise
 		"braise_temp_jusqu": 0.0,
 		"fournaise_faite": false,
+		"maledictions": {},        # nom -> {n, fin}
+		"horloge_attaque": 0.0,    # comme horloge, mais la Langueur ne ralentit que les attaques
+		"attaques": 0,             # Aiguille noire
+		"vole": 0.0,               # Grimoire : vie volee depuis la derniere malediction
 		"bouclier": cr["bouclier"],
 		"poison": 0.0,             # doses
 		"epines_bonus": 1.0,       # Coeur de roncier, Graine
@@ -64,6 +69,7 @@ func simuler() -> int:
 		t += Data.PAS
 		for i in 2:
 			cotes[i]["horloge"] += Data.PAS * _vitesse(cotes[i])
+			cotes[i]["horloge_attaque"] += Data.PAS * _vitesse(cotes[i]) * (1.0 - Data.LANGUEUR * _charges(cotes[i], "langueur"))
 		for i in 2:
 			_agir(cotes[i], cotes[1 - i])
 		for i in 2:
@@ -71,7 +77,8 @@ func simuler() -> int:
 		var morts := [_mort(cotes[0], cotes[1]), _mort(cotes[1], cotes[0])]
 		images.append([cotes[0]["pv"], cotes[1]["pv"], _brulure(cotes[0]), _brulure(cotes[1]),
 			cotes[0]["bouclier"], cotes[1]["bouclier"], cotes[0]["poison"], cotes[1]["poison"],
-			cotes[0]["givre"], cotes[1]["givre"], _gele(cotes[0]), _gele(cotes[1]), _braise(cotes[0]), _braise(cotes[1])])
+			cotes[0]["givre"], cotes[1]["givre"], _gele(cotes[0]), _gele(cotes[1]), _braise(cotes[0]), _braise(cotes[1]),
+			_resume_maledictions(cotes[0]), _resume_maledictions(cotes[1])])
 		if morts[0] or morts[1]:
 			var v := 1 if morts[0] else 0
 			# Chute simultanee : celui qui finit le moins en negatif tient debout.
@@ -106,13 +113,21 @@ func _gele(moi: Dictionary) -> bool:
 
 func _agir(moi: Dictionary, cible: Dictionary) -> void:
 	var h: float = moi["horloge"]
-	if h >= moi["prochaine_attaque"]:
+	if moi["horloge_attaque"] >= moi["prochaine_attaque"]:
 		moi["prochaine_attaque"] += moi["cr"]["intervalle"]
 		_evenement(moi, {"type": "attaque"})
 		var degats: float = moi["cr"]["attaque"]
 		if _brulure(cible) > 0.0:
 			degats += moi["cr"]["degats_en_feu"]
+		moi["attaques"] += 1
 		if _frapper(moi, cible, degats, moi["cr"]["vol_de_vie"]):
+			var tous: int = moi["cr"]["faiblesse_tous"]
+			if tous > 0 and moi["attaques"] % tous == 0:
+				_maudire(moi, cible, "faiblesse")
+			# Pacte : sous trois maledictions, chaque attaque draine en plus (passe le bouclier)
+			if moi["cr"]["pacte"] > 0.0 and _nb_maledictions(cible) == Data.MALEDICTIONS.size():
+				cible["pv"] -= moi["cr"]["pacte"]
+				_soigner(moi, cible, moi["cr"]["pacte"])
 			if moi["cr"]["brulure_attaque"] > 0.0:
 				_bruler(moi, cible, moi["cr"]["brulure_attaque"])
 			if moi["cr"]["poison_attaque"] > 0.0:
@@ -140,6 +155,12 @@ func _lancer(moi: Dictionary, cible: Dictionary, s: Dictionary, renfort := 1.0) 
 		moi["bouclier"] += s["bouclier"]
 		_evenement(moi, {"type": "bouclier", "valeur": s["bouclier"]})
 	var touche := false
+	# Faux de la Nuit profonde : consume les maledictions de la cible
+	var festin := 0.0
+	if s["consume_maledictions"]:
+		for nom in cible["maledictions"]:
+			festin += _charges(cible, nom) * Data.FESTIN_DEGATS
+		cible["maledictions"].clear()
 	if s["fracas"] and moi["bouclier"] > 0.0:
 		# Fracas : le Loup brise son propre bouclier et frappe avec
 		s["bonus_fracas"] = moi["bouclier"]
@@ -153,14 +174,15 @@ func _lancer(moi: Dictionary, cible: Dictionary, s: Dictionary, renfort := 1.0) 
 			degats *= 2.0
 		if s["degats_epines"]:
 			degats += moi["cr"]["epines"] * moi["epines_bonus"]
-		degats += s["par_poison"] * cible["poison"] + s.get("bonus_fracas", 0.0)
+		degats += s["par_poison"] * cible["poison"] + s.get("bonus_fracas", 0.0) + festin
+		degats *= 1.0 + s["par_malediction"] * _nb_maledictions(cible)
 		if s["double_ralenti"] and (cible["givre"] > 0.0 or _gele(cible)):
 			degats *= 2.0
 		if s["brise_gel"] and _gele(cible):
 			degats *= 4.0
 			cible["gele_jusqu"] = t
 			_evenement(cible, {"type": "brise_gel"})
-		touche = _frapper(moi, cible, degats, s["vol_de_vie"], s["perce"]) or touche
+		touche = _frapper(moi, cible, degats, s["vol_de_vie"] + (0.5 if festin > 0.0 else 0.0), s["perce"]) or touche
 	s.erase("bonus_fracas")
 	if s["coups"] == 0 or touche:
 		if s["poison"] > 0.0:
@@ -171,6 +193,8 @@ func _lancer(moi: Dictionary, cible: Dictionary, s: Dictionary, renfort := 1.0) 
 			_givrer(moi, cible, s["givre"])
 		if s["brulure"] > 0.0:
 			_bruler(moi, cible, s["brulure"])
+		if s["malediction"] != "":
+			_maudire(moi, cible, s["malediction"])
 	if s["combustion"] > 0.0:
 		_combustion(moi, cible, s["combustion"], false, s["braise"])
 	if s["combustion_affaiblie"] and cible["pv"] < cible["cr"]["pv_max"] * 0.5:
@@ -222,16 +246,66 @@ func _frapper(moi: Dictionary, cible: Dictionary, degats: float, vol: float, per
 		return false
 	if _gele(cible):
 		degats *= moi["cr"]["bonus_gel"]
+	# Faiblesse : l'attaquant maudit frappe moins fort.
+	# Chauve-souris : plus fort contre une cible maudite.
+	degats *= maxf(0.0, 1.0 - Data.FAIBLESSE * _charges(moi, "faiblesse"))
+	degats *= 1.0 + moi["cr"]["par_malediction"] * _nb_maledictions(cible)
+	if moi["cr"]["crit"] > 0.0 and rng.randf() < moi["cr"]["crit"]:
+		degats *= Data.CRIT_MULT
+		_evenement(cible, {"type": "crit"})
+		if moi["cr"]["crit_fletrissure"]:
+			_maudire(moi, cible, "fletrissure")
+		if moi["cr"]["crit_malediction"]:
+			_maudire(moi, cible, Data.MALEDICTIONS[rng.randi() % Data.MALEDICTIONS.size()])
 	_blesser(cible, degats, moi)
+	# Masque du festin : plus de vol de vie par malediction differente
+	vol += moi["cr"]["vol_par_malediction"] * _nb_maledictions(cible)
 	_soigner(moi, cible, degats * vol)
 	_riposter(cible, moi)
 	return true
 
+# --- maledictions -------------------------------------------------------------
+
+func _charges(moi: Dictionary, nom: String) -> int:
+	var m = moi["maledictions"].get(nom)
+	return m["n"] if m != null and m["fin"] > t else 0
+
+func _nb_maledictions(moi: Dictionary) -> int:
+	return Data.MALEDICTIONS.filter(func(nom): return _charges(moi, nom) > 0).size()
+
+# Le Sablier prolonge, le Chapelet permet d'empiler jusqu'a 3 charges.
+func _maudire(moi: Dictionary, cible: Dictionary, nom: String) -> void:
+	var fin: float = t + Data.MALEDICTION_DUREE + moi["cr"]["sablier"]
+	var maxi_n := Data.CHAPELET_CHARGES if moi["cr"]["chapelet"] else 1
+	var avant := _charges(cible, nom)
+	var n := mini(avant + 1, maxi_n)
+	cible["maledictions"][nom] = {"n": n, "fin": fin}
+	# un simple renouvellement ne s'affiche pas
+	if n > avant:
+		_evenement(cible, {"type": "malediction", "nom": nom, "n": n})
+
+func _resume_maledictions(moi: Dictionary) -> String:
+	var l := []
+	for nom in Data.MALEDICTIONS:
+		var n := _charges(moi, nom)
+		if n > 0:
+			l.append(Data.NOMS_MALEDICTION[nom] + (" x%d" % n if n > 1 else ""))
+	return ", ".join(l)
+
 # Belladone : un combattant empoisonne ne peut plus se soigner.
+# Fletrissure : soins reduits. Grimoire : la vie volee finit par maudire.
 func _soigner(moi: Dictionary, adverse: Dictionary, soin: float) -> void:
 	if soin <= 0.0 or (moi["poison"] > 0.0 and adverse["cr"]["belladone"]):
 		return
+	soin *= maxf(0.0, 1.0 - Data.FLETRISSURE * _charges(moi, "fletrissure"))
 	moi["pv"] = min(moi["pv"] + soin, moi["cr"]["pv_max"])
+	if moi["cr"]["grimoire"] > 0.0:
+		moi["vole"] += soin
+		if moi["vole"] >= moi["cr"]["grimoire"]:
+			moi["vole"] -= moi["cr"]["grimoire"]
+			var manquantes: Array = Data.MALEDICTIONS.filter(func(nom): return _charges(adverse, nom) == 0)
+			if not manquantes.is_empty():
+				_maudire(moi, adverse, manquantes[0])
 
 # Ce que declenche un coup recu : epines (et Liane, Graine, Coeur), Gousse, Contre.
 # Ces ripostes passent par _blesser : elles ne declenchent rien a leur tour.
@@ -268,6 +342,9 @@ func _blesser(cible: Dictionary, degats: float, source = null) -> void:
 	var absorbe := minf(avant, degats)
 	cible["bouclier"] -= absorbe
 	cible["pv"] -= degats - absorbe
+	# Poupee cousue : renvoie une part des degats a un adversaire maudit
+	if source != null and cible["cr"]["renvoi"] > 0.0 and _nb_maledictions(source) > 0:
+		source["pv"] -= degats * cible["cr"]["renvoi"]
 	if avant > 0.0 and cible["bouclier"] <= 0.0 and source != null:
 		_briser(cible, source)
 

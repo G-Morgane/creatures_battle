@@ -19,6 +19,7 @@ func _ready() -> void:
 	ok = _familles() and ok
 	ok = _glace() and ok
 	ok = _phenix() and ok
+	ok = _nuit() and ok
 	print("SMOKE: ", "OK" if ok else "ECHEC")
 	get_tree().quit(0 if ok else 1)
 
@@ -33,7 +34,7 @@ func _formes() -> bool:
 	ok = _verifier(Nid.new().forme() == "", "nid vide -> informe") and ok
 	var egal := Nid.new()
 	egal.placer(Vector2i(0, 0), "charbon")
-	egal.placer(Vector2i(1, 0), "croc_noir")
+	egal.placer(Vector2i(1, 0), "ruban")
 	ok = _verifier(egal.forme() == "", "egalite -> informe") and ok
 	ok = _verifier(not egal.placer(Vector2i(0, 0), "tison"), "case occupee refusee") and ok
 	return _verifier(not egal.placer(Vector2i(9, 0), "tison"), "hors grille refuse") and ok
@@ -41,11 +42,11 @@ func _formes() -> bool:
 func _catalyseurs() -> bool:
 	var feu := Exemples.nid_feu().eclore()
 	var nuit := Exemples.nid_nuit().eclore()
-	var nuee: Dictionary = nuit["sorts"].filter(func(s): return s["nom"] == "Nuée")[0]
+	var sceau: Dictionary = nuit["sorts"].filter(func(s): return s["nom"] == "Sceau")[0]
 	# charbon : 1 brulure x 1,5 (plume voisine) ; embrasement : 1 Braise x 1,5 (tison voisin)
 	var ok := _verifier(is_equal_approx(feu["brulure_attaque"], 1.5), "plume voisine -> plus de brulure")
 	ok = _verifier(is_equal_approx(feu["sorts"][0]["braise"], 1.5), "tison voisin -> plus de braise") and ok
-	ok = _verifier(nuee["vol_de_vie"] > 0.0, "lune creuse voisine -> vol de vie") and ok
+	ok = _verifier(sceau["malediction"] == "langueur", "sceau : pose langueur") and ok
 	# baton de braise : 4 + 0,8 x affinite feu (7) en degats, la brulure ne grandit pas
 	var b := Exemples.nid_feu()
 	b.placer(Vector2i(3, 3), "baton_braise")
@@ -74,12 +75,12 @@ func _ecran() -> bool:
 	add_child(e)
 	e.deposer(Vector2i(0, 0), "charbon", null)
 	var ok := _verifier(e.nid.forme() == "feu" and e.vue.forme == "feu", "poser une braise -> phenix")
-	e.deposer(Vector2i(1, 0), "croc_noir", null)
-	e.deposer(Vector2i(2, 0), "nuee", null)
+	e.deposer(Vector2i(1, 0), "ruban", null)
+	e.deposer(Vector2i(2, 0), "sceau", null)
 	ok = _verifier(e.vue.forme == "nuit", "plus de nuit -> chauve-souris") and ok
-	e.deposer(Vector2i(3, 3), "croc_noir", Vector2i(1, 0))
-	ok = _verifier(e.nid.cases.get(Vector2i(3, 3)) == "croc_noir" and not e.nid.cases.has(Vector2i(1, 0)), "deplacer une relique") and ok
-	e.deposer(Vector2i(0, 0), "croc_noir", Vector2i(3, 3))
+	e.deposer(Vector2i(3, 3), "ruban", Vector2i(1, 0))
+	ok = _verifier(e.nid.cases.get(Vector2i(3, 3)) == "ruban" and not e.nid.cases.has(Vector2i(1, 0)), "deplacer une relique") and ok
+	e.deposer(Vector2i(0, 0), "ruban", Vector2i(3, 3))
 	ok = _verifier(e.nid.cases.get(Vector2i(3, 3)) == "charbon", "echanger deux reliques") and ok
 	e.vendre(Vector2i(3, 3))
 	ok = _verifier(e.vue.forme == "nuit" and e.nid.cases.size() == 2, "revendre une case") and ok
@@ -168,16 +169,16 @@ func _fusion() -> bool:
 	ok = _verifier(is_equal_approx(n.eclore()["brulure_attaque"], 2.5), "niveau 2 : effet x2,5") and ok
 	# pose sur une copie quand le Nid est plein
 	var m := Nid.new()
-	m.ajouter(Vector2i(0, 0), "nuee")
-	m.ajouter(Vector2i(1, 0), "nuee")
-	ok = _verifier(m.peut_ajouter(Vector2i(0, 0), "nuee") and not m.peut_ajouter(Vector2i(0, 0), "voile"), "poser sur une copie qui complete un trio") and ok
-	m.ajouter(Vector2i(0, 0), "nuee")
+	m.ajouter(Vector2i(0, 0), "sceau")
+	m.ajouter(Vector2i(1, 0), "sceau")
+	ok = _verifier(m.peut_ajouter(Vector2i(0, 0), "sceau") and not m.peut_ajouter(Vector2i(0, 0), "sablier"), "poser sur une copie qui complete un trio") and ok
+	m.ajouter(Vector2i(0, 0), "sceau")
 	ok = _verifier(m.cases.size() == 1 and m.niveau(Vector2i(0, 0)) == 2, "fusion sur place") and ok
-	ok = _verifier(not m.peut_ajouter(Vector2i(0, 0), "nuee"), "une seule copie : pas de pose dessus") and ok
+	ok = _verifier(not m.peut_ajouter(Vector2i(0, 0), "sceau"), "une seule copie : pas de pose dessus") and ok
 	# cascade : 3 niveaux 2 donnent un niveau 3
 	var k := Nid.new()
 	for i in 9:
-		k.ajouter(Vector2i(i % 4, i / 4), "croc_noir")
+		k.ajouter(Vector2i(i % 4, i / 4), "ruban")
 	ok = _verifier(k.cases.size() == 1 and k.niveau(k.cases.keys()[0]) == 3, "9 copies : niveau 3") and ok
 	# armes exclues
 	var a := Nid.new()
@@ -419,3 +420,102 @@ func _phenix() -> bool:
 	q.cotes[1]["pv"] = 100.0
 	q._lancer(q.cotes[0], q.cotes[1], q.cotes[0]["sorts"][0])
 	return _verifier(q._brulure(q.cotes[1]) == 0.0, "faux des cendres : combustion contre une cible affaiblie") and ok
+
+func _nuit() -> bool:
+	var vide := Nid.new().eclore()
+	var nuit := Exemples.nid_nuit().eclore()
+	var ok := _verifier(nuit["nom"] == "Chauve-souris" and nuit["faiblesse_tous"] == 3 and nuit["sablier"] == 3.0, "nuit : aiguille et sablier")
+	# maledictions : une charge sans chapelet, 3 avec ; durees ; sablier
+	var c := Combat.new(vide, vide)
+	c._maudire(c.cotes[0], c.cotes[1], "faiblesse")
+	c._maudire(c.cotes[0], c.cotes[1], "faiblesse")
+	ok = _verifier(c._charges(c.cotes[1], "faiblesse") == 1, "sans chapelet : une charge") and ok
+	c.t = Data.MALEDICTION_DUREE + 0.1
+	ok = _verifier(c._charges(c.cotes[1], "faiblesse") == 0, "la malediction expire") and ok
+	var ch := Nid.new()
+	ch.placer(Vector2i(0, 0), "chapelet")
+	var d := Combat.new(ch.eclore(), vide)
+	for i in 5:
+		d._maudire(d.cotes[0], d.cotes[1], "faiblesse")
+	ok = _verifier(d._charges(d.cotes[1], "faiblesse") == 3, "chapelet : jusqu'a 3 charges") and ok
+	var sb := Combat.new(nuit, vide)
+	sb._maudire(sb.cotes[0], sb.cotes[1], "langueur")
+	sb.t = Data.MALEDICTION_DUREE + 1.0
+	ok = _verifier(sb._charges(sb.cotes[1], "langueur") == 1, "sablier : malediction prolongee") and ok
+	# faiblesse : moins de degats ; fletrissure : moins de soins ; langueur : attaques plus lentes
+	var e := Combat.new(vide, vide)
+	e.cotes[0]["maledictions"]["faiblesse"] = {"n": 1, "fin": 99.0}
+	var pv: float = e.cotes[1]["pv"]
+	e._frapper(e.cotes[0], e.cotes[1], 10.0, 0.0)
+	ok = _verifier(is_equal_approx(pv - e.cotes[1]["pv"], 10.0 * (1.0 - Data.FAIBLESSE)), "faiblesse : moins de degats") and ok
+	e.cotes[0]["maledictions"]["fletrissure"] = {"n": 1, "fin": 99.0}
+	e.cotes[0]["pv"] = 100.0
+	e._soigner(e.cotes[0], e.cotes[1], 20.0)
+	ok = _verifier(is_equal_approx(e.cotes[0]["pv"], 100.0 + 20.0 * (1.0 - Data.FLETRISSURE)), "fletrissure : moins de soins") and ok
+	var l := Combat.new(vide, vide)
+	l.cotes[0]["maledictions"]["langueur"] = {"n": 1, "fin": 99.0}
+	l.simuler()
+	var att := [0, 0]
+	for ev in l.evenements:
+		if ev["type"] == "attaque" and ev["t"] < 10.0:
+			att[ev["cote"]] += 1
+	ok = _verifier(att[0] < att[1], "langueur : moins d'attaques") and ok
+	# crit : la Lame donne du crit, le Peigne pose Fletrissure, la Lame de la veuve une malediction
+	var lame := Nid.new()
+	lame.placer(Vector2i(0, 0), "lame_veuve")
+	lame.placer(Vector2i(1, 0), "peigne")
+	var lcr := lame.eclore()
+	ok = _verifier(is_equal_approx(lcr["crit"], 0.15 + 0.08) and lcr["crit_malediction"] and lcr["crit_fletrissure"], "crit des lames et du peigne") and ok
+	var dague := Nid.new()
+	dague.placer(Vector2i(0, 0), "dague_epine")
+	ok = _verifier(is_equal_approx(dague.eclore()["crit"], Data.CRIT_LAME), "les lames du cerf donnent aussi du crit") and ok
+	var f := Combat.new(lcr, vide)
+	for i in 60:
+		f._frapper(f.cotes[0], f.cotes[1], 1.0, 0.0)
+	ok = _verifier(f.evenements.any(func(ev): return ev["type"] == "crit") and f._charges(f.cotes[1], "fletrissure") > 0, "crit : fletrissure posee") and ok
+	# poupee : renvoie a un adversaire maudit
+	var po := Nid.new()
+	po.placer(Vector2i(0, 0), "poupee")
+	var g := Combat.new(po.eclore(), vide)
+	pv = g.cotes[1]["pv"]
+	g._frapper(g.cotes[1], g.cotes[0], 10.0, 0.0)
+	ok = _verifier(g.cotes[1]["pv"] == pv, "poupee : rien sans malediction") and ok
+	g.cotes[1]["maledictions"]["langueur"] = {"n": 1, "fin": 99.0}
+	g._frapper(g.cotes[1], g.cotes[0], 10.0, 0.0)
+	ok = _verifier(is_equal_approx(pv - g.cotes[1]["pv"], 3.0), "poupee : renvoie 30 %") and ok
+	# masque, grimoire, pacte
+	var mg := Nid.new()
+	mg.placer(Vector2i(0, 0), "masque")
+	mg.placer(Vector2i(1, 0), "grimoire")
+	mg.placer(Vector2i(2, 0), "pacte")
+	var h := Combat.new(mg.eclore(), vide)
+	for nom in Data.MALEDICTIONS:
+		h.cotes[1]["maledictions"][nom] = {"n": 1, "fin": 99.0}
+	h.cotes[0]["pv"] = 100.0
+	h._frapper(h.cotes[0], h.cotes[1], 10.0, 0.0)
+	ok = _verifier(h.cotes[0]["pv"] > 100.0, "masque : vol de vie par malediction") and ok
+	var gr := Combat.new(mg.eclore(), vide)
+	gr.cotes[0]["pv"] = 10.0
+	gr._soigner(gr.cotes[0], gr.cotes[1], 45.0)
+	ok = _verifier(gr._nb_maledictions(gr.cotes[1]) == 1, "grimoire : malediction apres 40 PV voles") and ok
+	h.cotes[0]["prochaine_attaque"] = 0.0
+	pv = h.cotes[1]["pv"]
+	h._agir(h.cotes[0], h.cotes[1])
+	ok = _verifier(pv - h.cotes[1]["pv"] >= Data.ATTAQUE_BASE + 5.0 - 0.01, "pacte : drain sous trois maledictions") and ok
+	# faux du festin : +35 % par malediction ; faux de la nuit profonde : consume
+	var ff := Nid.new()
+	ff.placer(Vector2i(0, 0), "faux_festin")
+	var k := Combat.new(ff.eclore(), vide)
+	k.cotes[1]["maledictions"]["faiblesse"] = {"n": 1, "fin": 99.0}
+	k.cotes[1]["maledictions"]["langueur"] = {"n": 1, "fin": 99.0}
+	pv = k.cotes[1]["pv"]
+	k._lancer(k.cotes[0], k.cotes[1], k.cotes[0]["sorts"][0])
+	# +35 % par malediction (faux) et +12 % par malediction (passif de la Chauve-souris)
+	ok = _verifier(is_equal_approx(pv - k.cotes[1]["pv"], 10.0 * 1.7 * (1.0 + 2 * Data.NUIT_PAR_MALEDICTION)), "faux du festin") and ok
+	var fn := Nid.new()
+	fn.placer(Vector2i(0, 0), "faux_nuit")
+	var n := Combat.new(fn.eclore(), vide)
+	n.cotes[1]["maledictions"]["faiblesse"] = {"n": 2, "fin": 99.0}
+	pv = n.cotes[1]["pv"]
+	n._lancer(n.cotes[0], n.cotes[1], n.cotes[0]["sorts"][0])
+	return _verifier(n._nb_maledictions(n.cotes[1]) == 0 and is_equal_approx(pv - n.cotes[1]["pv"], 10.0 + 2 * Data.FESTIN_DEGATS), "faux de la nuit profonde : consume") and ok

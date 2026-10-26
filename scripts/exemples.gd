@@ -15,11 +15,11 @@ static func nid_feu() -> Nid:
 
 static func nid_nuit() -> Nid:
 	var n := Nid.new()
-	n.placer(Vector2i(0, 0), "croc_noir")
-	n.placer(Vector2i(1, 0), "croc_noir")
-	n.placer(Vector2i(0, 1), "nuee")
-	n.placer(Vector2i(1, 1), "lune_creuse")
-	n.placer(Vector2i(2, 1), "voile")
+	n.placer(Vector2i(0, 0), "ruban")
+	n.placer(Vector2i(1, 0), "aiguille")
+	n.placer(Vector2i(0, 1), "sceau")
+	n.placer(Vector2i(1, 1), "sablier")
+	n.placer(Vector2i(2, 1), "ruban")
 	return n
 
 static func nid_terre() -> Nid:

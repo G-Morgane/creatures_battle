@@ -204,6 +204,26 @@ func _decrire(cr: Dictionary) -> String:
 		effets.append("%d renaissances" % cr["renaissances"])
 	if cr["givre_attaque"] > 0.0:
 		effets.append("%.1f givre par attaque" % cr["givre_attaque"])
+	if cr["crit"] > 0.0:
+		effets.append("%d %% de crit" % roundi(cr["crit"] * 100))
+	if cr["faiblesse_tous"] > 0:
+		effets.append("Faiblesse toutes les %d attaques" % cr["faiblesse_tous"])
+	if cr["sablier"] > 0.0:
+		effets.append("malédictions +%d s" % cr["sablier"])
+	if cr["chapelet"]:
+		effets.append("malédictions empilables (x%d)" % Data.CHAPELET_CHARGES)
+	if cr["renvoi"] > 0.0:
+		effets.append("renvoie %d %% des dégâts à un adversaire maudit" % roundi(cr["renvoi"] * 100))
+	if cr["crit_fletrissure"]:
+		effets.append("les crits posent Flétrissure")
+	if cr["crit_malediction"]:
+		effets.append("les crits posent une malédiction")
+	if cr["vol_par_malediction"] > 0.0:
+		effets.append("+%d %% de vol de vie par malédiction" % roundi(cr["vol_par_malediction"] * 100))
+	if cr["grimoire"] > 0.0:
+		effets.append("une malédiction tous les %d PV volés" % cr["grimoire"])
+	if cr["pacte"] > 0.0:
+		effets.append("draine %d par attaque sous trois malédictions" % cr["pacte"])
 	var bris := []
 	if cr["bris_degats"] + cr["nova"] > 0.0:
 		bris.append("%d dégâts" % (cr["bris_degats"] + cr["nova"]))
@@ -267,6 +287,12 @@ func _decrire(cr: Dictionary) -> String:
 			d += ", combustion totale tous les %d tirs" % s["combustion_tous"]
 		if s["tir_renaissance"]:
 			d += ", tire à la renaissance"
+		if s["malediction"] != "":
+			d += " pose %s" % Data.NOMS_MALEDICTION[s["malediction"]]
+		if s["par_malediction"] > 0.0:
+			d += ", +%d %% par malédiction" % roundi(s["par_malediction"] * 100)
+		if s["consume_maledictions"]:
+			d += ", consume les malédictions"
 		if s["vol_de_vie"] > 0.0 and not s["esquive"]:
 			d += ", vole %d %%" % roundi(s["vol_de_vie"] * 100)
 		lignes.append(d)

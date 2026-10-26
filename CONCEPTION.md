@@ -79,8 +79,8 @@ Sans élimination, le joueur simple gagne 49 à 54 % de ses combats à chaque ma
 difficulté est plate. Le fantôme n'est jamais meilleur que le joueur automatique simple,
 d'où un joueur aléatoire encore trop à l'aise.
 
-Par élément (joueur simple, avec le Phénix) : Terre 4,1, Nature 4,0, Feu 3,8, Vent 3,5, Glace 3,1,
-**Nuit 2,1 (à remonter)**. Joueur simple : 3,4 victoires en moyenne, 22 % de parties gagnées.
+Par élément (joueur simple, avec la nouvelle Nuit) : Terre 3,5, Feu 3,3, Glace 3,3, Vent 3,2,
+Nature 2,4, **Nuit 2,2**. Joueur simple : 2,9 victoires en moyenne, 17 % de parties gagnées.
 
 ### Fusion
 
@@ -376,6 +376,16 @@ Points ouverts :
 
 ### Nuit (Chauve-souris) : vol de vie et malédictions
 
+**Fait** (images de `images/`, sauf le Chapelet des rancunes : la planche montre encore la
+Coupelle d'étain, le Chapelet s'affiche en texte). Chiffres : malédictions 6 s, Faiblesse -15 %
+de dégâts, Langueur -15 % de vitesse d'attaque, Flétrissure -30 % de soins par charge ; passif
+de la Chauve-souris **+12 % de dégâts par malédiction différente sur la cible** (sans lui, et
+sans attaque sur ses essences, elle ne faisait presque aucun dégât : 0,8 victoire en moyenne) ;
+Ruban sanguin +2 attaque et 8 % de vol de vie ; Aiguille noire +2 attaque, Faiblesse toutes les
+3 attaques ; Sceau toutes les 6 s ; Sablier +3 s ; Poupée 30 % ; Masque +6 % de vol de vie par
+malédiction ; Grimoire tous les 40 PV volés ; Pacte 5 par attaque. Crit : x1,75, 10 % par Lame
+(25 % pour la Dague de minuit, 15 % pour la Lame de la veuve), 8 % pour le Peigne.
+
 Deux axes : **le vol de vie** et **les malédictions**, trois états qui affaiblissent l'adversaire.
 Des objets **comptent les malédictions différentes** (Masque, Grimoire, Pacte) ; le Chapelet
 permet au contraire d'**empiler la même** : un choix de build en largeur ou en profondeur.
@@ -447,8 +457,8 @@ On adapte son Nid à ce qu'on affronte, pas à une couleur.
 
 ## 7. Prototype (périmètre actuel)
 
-- 6 éléments : Nuit, Terre, Vent (4 objets chacun), Feu, Nature et Glace (15 objets chacun),
-  2 armes anciennes (Lance du guet, Faux lunaire).
+- 6 éléments : Terre, Vent (4 objets chacun), Feu, Nature, Glace et Nuit (15 objets chacun),
+  1 arme neutre (Lance du guet).
 - Nid 4 x 4, reliques d'une case. **Les formes de reliques (2 x 1, L...) viendront après.**
 - Pas d'hybride, pas de réseau. Rareté en place.
 - Boutique, manches, combat animé contre un adversaire généré, fin de partie.
@@ -461,8 +471,8 @@ donne envie de refaire un Nid ? Si non, rien d'autre ne compte.
 ## 8. Plus tard
 
 - Formes de reliques et rotation.
-- Coder la Nuit (Chauve-souris) et le crit : il faudra le dessin de la chauve-souris et les
-  planches d'objets et d'armes. C'est aussi ce qui doit remonter la Nuit, la plus faible.
+- Images manquantes : Chapelet des rancunes, Serpe de ronces.
+- Équilibrage : Nuit et Nature un cran sous les autres.
 - Une image pour la Serpe de ronces (le Fouet a été remplacé).
 - Refaire Feu, Nuit, Terre, Vent au format 15 objets, avec une ou deux familles d'armes chacun.
 - Objets neutres qui visent une famille d'armes.
