@@ -134,6 +134,20 @@ func _jouer(e: Dictionary) -> void:
 			effets.append({"type": "projectile", "de": moi.position + moi.size / 2 + Vector2(0, 20),
 				"a": cible.position + cible.size / 2 + Vector2(0, 20), "t0": lecture,
 				"duree": VOL_PROJECTILE * 0.6, "couleur": n["vif"], "coeur": n["clair"], "taille": 5.0})
+		"gel":
+			_texte(moi, 2, "Gel !", Palette.ELEMENTS["glace"]["clair"])
+		"brise_gel":
+			_texte(moi, 2, "Gel brisé !", Palette.ELEMENTS["glace"]["vif"])
+		"bris":
+			_texte(moi, 2, "Bouclier brisé", Palette.ELEMENTS["glace"]["clair"])
+		"nova":
+			var g: Dictionary = Palette.ELEMENTS["glace"]
+			for k in 8:
+				var a := TAU * k / 8.0
+				effets.append({"type": "projectile", "de": moi.position + moi.size / 2,
+					"a": moi.position + moi.size / 2 + Vector2(cos(a), sin(a)) * 160, "t0": lecture,
+					"duree": VOL_PROJECTILE, "couleur": g["vif"], "coeur": g["clair"], "taille": 8.0})
+			_texte(moi, 1, "Nova", g["clair"])
 		"salve":
 			var n: Dictionary = Palette.ELEMENTS["nature"]
 			for k in 5:
@@ -208,9 +222,18 @@ func _dessiner() -> void:
 			HORIZONTAL_ALIGNMENT_CENTER, 300, 13, Palette.TEXTE)
 		if img[2 + i]:
 			_brulure(v)
+		var etats := []
 		if img[6 + i] > 0.0:
-			calque.draw_string(police, Vector2(x, y + 34), "Poison %d" % roundi(img[6 + i]),
-				HORIZONTAL_ALIGNMENT_CENTER, 300, 15, Palette.POISON)
+			etats.append(["Poison %d" % roundi(img[6 + i]), Palette.POISON])
+		if img[10 + i]:
+			etats.append(["Gelé", Palette.ELEMENTS["glace"]["clair"]])
+		elif img[8 + i] > 0.0:
+			etats.append(["Givre %d" % roundi(img[8 + i]), Palette.ELEMENTS["glace"]["vif"]])
+		for k in etats.size():
+			calque.draw_string(police, Vector2(x + 150 * k - 75 * (etats.size() - 1), y + 34), etats[k][0],
+				HORIZONTAL_ALIGNMENT_CENTER, 300, 15, etats[k][1])
+		if img[10 + i]:
+			_gel(v)
 	if lecture > Data.MORT_SUBITE and not fini:
 		calque.draw_string(police, Vector2(0, 50), "Mort subite", HORIZONTAL_ALIGNMENT_CENTER, size.x, 22, Color("#e5834f"))
 	for e in effets:
@@ -228,6 +251,19 @@ func _dessiner() -> void:
 				c.a = 1.0 - p * p
 				calque.draw_string(police, e["pos"] + Vector2(-150, -p * 30), e["texte"],
 					HORIZONTAL_ALIGNMENT_CENTER, 300, 18, c)
+
+# Monture gelee : halo de glace et eclats autour d'elle.
+func _gel(v: CreatureVue) -> void:
+	var g: Dictionary = Palette.ELEMENTS["glace"]
+	var centre := v.position + v.size / 2 + Vector2(0, 30)
+	calque.draw_circle(centre, 140, Color(g["vif"], 0.16))
+	calque.draw_arc(centre, 140, 0.0, TAU, 64, Color(g["clair"], 0.7), 3.0)
+	for k in 7:
+		var a := TAU * k / 7.0
+		var p := centre + Vector2(cos(a) * 130, sin(a) * 90)
+		var dir := Vector2(cos(a), sin(a))
+		calque.draw_colored_polygon(PackedVector2Array([p - dir.orthogonal() * 7, p + dir * 26, p + dir.orthogonal() * 7]),
+			Color(g["clair"], 0.85))
 
 # Petites flammes qui dansent autour d'une monture qui brule.
 func _brulure(v: CreatureVue) -> void:

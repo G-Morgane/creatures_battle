@@ -21,6 +21,9 @@ func _builds() -> Dictionary:
 	b["Nature"] = Exemples.nid_nature()
 	b["Nature + sarbacane"] = _avec(Exemples.nid_nature(), "sarbacane", Vector2i(3, 0))
 	b["Nature + arc"] = _avec(Exemples.nid_nature(), "arc_saule", Vector2i(3, 0))
+	b["Glace"] = Exemples.nid_glace()
+	b["Glace + javelot"] = _avec(Exemples.nid_glace(), "javelot", Vector2i(3, 0))
+	b["Glace + hachette"] = _avec(Exemples.nid_glace(), "hachette", Vector2i(3, 0))
 	return b
 
 func _avec(n: Nid, id: String, c: Vector2i) -> Nid:

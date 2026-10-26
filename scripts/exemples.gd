@@ -48,3 +48,13 @@ static func nid_nature() -> Nid:
 	n.placer(Vector2i(1, 1), "spore")
 	n.placer(Vector2i(2, 1), "amanite")
 	return n
+
+# Galet (bouclier) a cote de la Fourrure ; Croc a cote du Flocon (givre).
+static func nid_glace() -> Nid:
+	var n := Nid.new()
+	n.placer(Vector2i(0, 0), "flocon")
+	n.placer(Vector2i(1, 0), "croc_blizzard")
+	n.placer(Vector2i(0, 1), "eclat_givre")
+	n.placer(Vector2i(1, 1), "galet")
+	n.placer(Vector2i(2, 1), "fourrure")
+	return n

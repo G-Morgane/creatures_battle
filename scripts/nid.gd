@@ -156,6 +156,14 @@ func eclore() -> Dictionary:
 		"belladone": false,
 		"coeur": false,
 		"graine": false,
+		"givre_attaque": Data.LOUP_GIVRE if f == "glace" else 0.0,
+		"bonus_gel": Data.LOUP_BONUS_GEL if f == "glace" else 1.0,
+		"bris_degats": 0.0,
+		"bris_givre": 0.0,
+		"reforme": 0.0,
+		"gel_bouclier": 0.0,
+		"rose": false,
+		"nova": 0.0,
 		"arme": arme(),
 		"sorts": [],
 	}
@@ -176,7 +184,12 @@ func eclore() -> Dictionary:
 				cr["poison_attaque"] += r.get("poison_attaque", 0.0) * m * _renfort(c, "poison")
 				cr["epines_poison"] += r.get("epines_poison", 0.0) * m * _renfort(c, "poison")
 				cr["gousse"] += r.get("gousse", 0.0) * m
-				for drapeau in ["belladone", "coeur", "graine"]:
+				# Croc du blizzard renforce le givre pose par ses voisines
+				cr["givre_attaque"] += r.get("givre_attaque", 0.0) * m * _renfort(c, "givre")
+				cr["bris_givre"] += r.get("bris_givre", 0.0) * m * _renfort(c, "givre")
+				for champ in ["bris_degats", "reforme", "gel_bouclier", "nova"]:
+					cr[champ] += r.get(champ, 0.0) * m
+				for drapeau in ["belladone", "coeur", "graine", "rose"]:
 					cr[drapeau] = cr[drapeau] or r.get(drapeau, false)
 			"sort", "arme":
 				cr["sorts"].append(_sort(c, r, aff))
@@ -209,6 +222,10 @@ func _sort(c: Vector2i, r: Dictionary, aff: Dictionary) -> Dictionary:
 		"degats_epines": r.get("degats_epines", false),
 		"graine": r.get("graine", false),
 		"contre": r.get("contre", 0),
+		"givre": r.get("givre", 0.0) * m * _renfort(c, "givre"),
+		"double_ralenti": r.get("double_ralenti", false),
+		"fracas": r.get("fracas", false),
+		"brise_gel": r.get("brise_gel", false),
 		"par_epine": r.get("par_epine", 0.0) * m,
 		"degats": _puissance(r, "degats", aff) * m,
 		"bouclier": _puissance(r, "bouclier", aff) * m,

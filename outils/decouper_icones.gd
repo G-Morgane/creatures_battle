@@ -2,8 +2,8 @@ extends SceneTree
 
 # Decoupe les planches d'objets (fond creme) en icones transparentes.
 # Lancer : godot --headless --path . -s res://outils/decouper_icones.gd
-# Entree : images/objets_cerf.png, images/armes_cerf.png, images/cerf.png
-# Sortie : images/icones/<id>.png, images/montures/nature.png, images/controle.png
+# Entree : planches images/objets_*.png, *armes*.png (fond creme), montures images/<bete>.png
+# Sortie : images/icones/<id>.png, images/montures/<element>.png, images/controle.png
 
 const TAILLE_ICONE := 160
 const TAILLE_MONTURE := 520
@@ -25,7 +25,42 @@ const ZONES := {
 	"arc_saule":     ["armes_cerf", 35, 420, 510, 420],
 	"fouet_ronces":  ["armes_cerf", 530, 455, 460, 385],
 	"arc_jardin":    ["armes_cerf", 55, 920, 925, 460],
+	"flocon":        ["objets_loup", 35, 65, 235, 262],
+	"galet":         ["objets_loup", 290, 100, 240, 225],
+	"eclat_givre":   ["objets_loup", 555, 55, 210, 272],
+	"fourrure":      ["objets_loup", 775, 110, 240, 215],
+	"croc_blizzard": ["objets_loup", 70, 415, 280, 270],
+	"ecorce":        ["objets_loup", 355, 405, 330, 280],
+	"cristal":       ["objets_loup", 720, 420, 275, 262],
+	"coeur_banquise":["objets_loup", 130, 780, 340, 290],
+	"rose_neiges":   ["objets_loup", 525, 745, 400, 325],
+	"noyau_hiver":   ["objets_loup", 342, 1105, 370, 357],
+	"javelot":       ["loup_armes", 60, 40, 560, 285],
+	"hachette":      ["loup_armes", 600, 90, 345, 230],
+	"pique":         ["loup_armes", 50, 400, 570, 510],
+	"hache_glace":   ["loup_armes", 535, 435, 465, 465],
+	"lance_hiver":   ["loup_armes", 40, 995, 975, 372],
 }
+
+# Objets de glace blancs et bleu pale, proches du fond creme : tolerance resserree,
+# et pas de retrait du fond enferme (il confond le blanc peint avec le papier).
+# [seuil dur, seuil doux, retirer les trous]
+const TOLERANCE := {"objets_loup": [0.045, 0.09, false], "loup_armes": [0.045, 0.09, false]}
+const TOLERANCE_DEFAUT := [0.10, 0.22, true]
+# Reglages propres a un objet (prioritaires sur ceux de sa planche).
+const TOLERANCE_OBJET := {
+	"galet": [0.025, 0.06, false],      # sa neige touche le bord de la zone
+	"hachette": [0.045, 0.09, true],    # fond enferme entre manche et lame
+}
+
+# Zones de la planche a effacer avant decoupe : morceaux d'un voisin qui deborde.
+const MASQUES := {
+	"pique": [Rect2i(450, 760, 175, 160)],
+	"hache_glace": [Rect2i(535, 400, 95, 110)],
+}
+
+# image de la bete (fond transparent) -> element
+const MONTURES := {"cerf": "nature", "loup": "glace"}
 
 func _initialize() -> void:
 	DirAccess.make_dir_recursive_absolute("res://images/icones")
@@ -36,25 +71,34 @@ func _initialize() -> void:
 		var z: Array = ZONES[id]
 		if not planches.has(z[0]):
 			planches[z[0]] = Image.load_from_file("res://images/%s.png" % z[0])
-		var img: Image = planches[z[0]].get_region(Rect2i(z[1], z[2], z[3], z[4]))
+		var zone := Rect2i(z[1], z[2], z[3], z[4])
+		var img: Image = planches[z[0]].get_region(zone)
 		img.convert(Image.FORMAT_RGBA8)
-		_detourer(img, planches[z[0]].get_pixel(5, 5))
+		var fond: Color = planches[z[0]].get_pixel(5, 5)
+		for m in MASQUES.get(id, []):
+			img.fill_rect(Rect2i(m.position - zone.position, m.size), fond)
+		_detourer(img, fond, TOLERANCE_OBJET.get(id, TOLERANCE.get(z[0], TOLERANCE_DEFAUT)))
 		img = img.get_region(img.get_used_rect())
 		_reduire(img, TAILLE_ICONE)
 		img.save_png("res://images/icones/%s.png" % id)
 		icones.append(img)
-	var cerf := Image.load_from_file("res://images/cerf.png")
-	cerf = cerf.get_region(cerf.get_used_rect())
-	_reduire(cerf, TAILLE_MONTURE)
-	cerf.save_png("res://images/montures/nature.png")
-	_controle(icones, cerf)
+	var betes := []
+	for bete in MONTURES:
+		var m := Image.load_from_file("res://images/%s.png" % bete)
+		m = m.get_region(m.get_used_rect())
+		_reduire(m, TAILLE_MONTURE)
+		m.save_png("res://images/montures/%s.png" % MONTURES[bete])
+		betes.append(m)
+	_controle(icones, betes)
 	print("icones : ", icones.size())
 	quit()
 
 # Fond creme -> transparent, avec un bord adouci pour eviter le liseré.
 # Remplissage depuis les bords : le creme a l'interieur d'un objet (taches de
 # l'amanite) reste opaque.
-func _detourer(img: Image, fond: Color) -> void:
+func _detourer(img: Image, fond: Color, tol: Array) -> void:
+	var dur: float = tol[0]
+	var doux: float = tol[1]
 	var w := img.get_width()
 	var h := img.get_height()
 	var vu := PackedByteArray()
@@ -73,26 +117,27 @@ func _detourer(img: Image, fond: Color) -> void:
 		vu[p.y * w + p.x] = 1
 		var c := img.get_pixelv(p)
 		var d := Vector3(c.r - fond.r, c.g - fond.g, c.b - fond.b).length()
-		if d >= 0.22:
+		if d >= doux:
 			continue
-		c.a = 0.0 if d < 0.10 else (d - 0.10) / 0.12
+		c.a = 0.0 if d < dur else (d - dur) / (doux - dur)
 		img.set_pixelv(p, c)
-		if d < 0.10:
+		if d < dur:
 			for o in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
 				pile.append(p + o)
-	_trous(img, fond, vu)
+	if tol[2]:
+		_trous(img, fond, vu, SEUIL_TROU)
 
 # Fond enferme dans un objet (interieur d'un arc) : grandes zones de la couleur
 # exacte du fond. Les petites taches creme (amanite) sont gardees.
 const SEUIL_TROU := 0.06
 const AIRE_TROU := 150
 
-func _trous(img: Image, fond: Color, vu: PackedByteArray) -> void:
+func _trous(img: Image, fond: Color, vu: PackedByteArray, seuil: float) -> void:
 	var w := img.get_width()
 	var h := img.get_height()
 	for y0 in h:
 		for x0 in w:
-			if vu[y0 * w + x0] or not _proche(img.get_pixel(x0, y0), fond, SEUIL_TROU):
+			if vu[y0 * w + x0] or not _proche(img.get_pixel(x0, y0), fond, seuil):
 				continue
 			var zone: Array[Vector2i] = []
 			var pile: Array[Vector2i] = [Vector2i(x0, y0)]
@@ -100,7 +145,7 @@ func _trous(img: Image, fond: Color, vu: PackedByteArray) -> void:
 				var p: Vector2i = pile.pop_back()
 				if p.x < 0 or p.y < 0 or p.x >= w or p.y >= h or vu[p.y * w + p.x]:
 					continue
-				if not _proche(img.get_pixelv(p), fond, SEUIL_TROU):
+				if not _proche(img.get_pixelv(p), fond, seuil):
 					continue
 				vu[p.y * w + p.x] = 1
 				zone.append(p)
@@ -121,13 +166,17 @@ func _reduire(img: Image, maxi_cote: int) -> void:
 		img.resize(maxi(1, int(img.get_width() * k)), maxi(1, int(img.get_height() * k)), Image.INTERPOLATE_LANCZOS)
 
 # Planche de controle sur fond sombre, pour verifier les decoupes a l'oeil.
-func _controle(icones: Array, cerf: Image) -> void:
-	var c := Image.create(5 * 180, 3 * 180 + 360, false, Image.FORMAT_RGBA8)
+func _controle(icones: Array, betes: Array) -> void:
+	var lignes := ceili(icones.size() / 5.0)
+	var c := Image.create(5 * 180, lignes * 180 + 360, false, Image.FORMAT_RGBA8)
 	c.fill(Color("#171a21"))
 	for i in icones.size():
 		var ic: Image = icones[i]
 		c.blend_rect(ic, Rect2i(Vector2i.ZERO, ic.get_size()), Vector2i((i % 5) * 180 + 10, (i / 5) * 180 + 10))
-	var m := cerf.duplicate()
-	m.resize(cerf.get_width() * 340 / cerf.get_height(), 340)
-	c.blend_rect(m, Rect2i(Vector2i.ZERO, m.get_size()), Vector2i(10, 3 * 180 + 10))
+	var x := 10
+	for bete in betes:
+		var m: Image = bete.duplicate()
+		m.resize(m.get_width() * 340 / m.get_height(), 340)
+		c.blend_rect(m, Rect2i(Vector2i.ZERO, m.get_size()), Vector2i(x, lignes * 180 + 10))
+		x += m.get_width() + 20
 	c.save_png("res://images/controle.png")

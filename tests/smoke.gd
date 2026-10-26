@@ -17,6 +17,7 @@ func _ready() -> void:
 	ok = _terre_vent() and ok
 	ok = _nature() and ok
 	ok = _familles() and ok
+	ok = _glace() and ok
 	print("SMOKE: ", "OK" if ok else "ECHEC")
 	get_tree().quit(0 if ok else 1)
 
@@ -270,3 +271,64 @@ func _familles() -> bool:
 	for id in cerf:
 		familles[Data.RELIQUES[id]["famille"]] = true
 	return _verifier(familles.keys().size() <= 2, "le Cerf n'utilise qu'une ou deux familles") and ok
+
+func _glace() -> bool:
+	var cr := Exemples.nid_glace().eclore()
+	var ok := _verifier(cr["nom"] == "Loup", "glace -> loup")
+	# givre par attaque : 1 (passif) + 1 x 1,5 (flocon a cote du croc)
+	ok = _verifier(is_equal_approx(cr["givre_attaque"], 2.5), "croc du blizzard renforce le flocon voisin") and ok
+	# armure de givre : (6 + 1 x glace 7) x 1,5 (fourrure voisine)
+	ok = _verifier(is_equal_approx(cr["sorts"][0]["bouclier"], (6.0 + 1.0 * 7) * 1.5), "armure de givre et fourrure") and ok
+	# givre : ralentit, puis gele au seuil
+	var c := Combat.new(cr, Nid.new().eclore())
+	c._givrer(c.cotes[0], c.cotes[1], 5.0)
+	ok = _verifier(is_equal_approx(c._vitesse(c.cotes[1]), 1.0 - 5 * Data.GIVRE_RALENTI), "le givre ralentit") and ok
+	c._givrer(c.cotes[0], c.cotes[1], 5.0)
+	ok = _verifier(c._gele(c.cotes[1]) and c._vitesse(c.cotes[1]) == 0.0 and c.cotes[1]["givre"] == 0.0, "10 charges : gel, charges a zero") and ok
+	# bris : eclat de givre blesse l'attaquant
+	var d := Combat.new(cr, Nid.new().eclore())
+	d.cotes[0]["bouclier"] = 5.0
+	var pv: float = d.cotes[1]["pv"]
+	d._frapper(d.cotes[1], d.cotes[0], 10.0, 0.0)
+	ok = _verifier(d.evenements.any(func(e): return e["type"] == "bris") and d.cotes[1]["pv"] <= pv - 12.0, "bouclier brise : eclat de givre") and ok
+	# ecorce, rose, noyau, coeur de banquise
+	var n := Nid.new()
+	n.placer(Vector2i(0, 0), "ecorce")
+	n.placer(Vector2i(1, 0), "rose_neiges")
+	n.placer(Vector2i(2, 0), "noyau_hiver")
+	n.placer(Vector2i(3, 0), "coeur_banquise")
+	var e := Combat.new(n.eclore(), Nid.new().eclore())
+	e.cotes[1]["givre"] = 2.0
+	e.cotes[0]["bouclier"] = 1.0
+	e._frapper(e.cotes[1], e.cotes[0], 5.0, 0.0)
+	ok = _verifier(e._gele(e.cotes[1]), "noyau : nova qui gele une cible ralentie") and ok
+	ok = _verifier(e.cotes[0]["bouclier"] >= 25.0, "coeur de banquise : bouclier au gel") and ok
+	ok = _verifier(e.cotes[0]["reforme_a"] == e.t + Data.REFORME_DELAI, "ecorce : bouclier reforme plus tard") and ok
+	var rose := Combat.new(n.eclore(), Nid.new().eclore())
+	rose.cotes[0]["bouclier"] = 1.0
+	rose._blesser(rose.cotes[0], 5.0, rose.cotes[1])
+	rose.cotes[1]["gele_jusqu"] = 0.0
+	rose.cotes[1]["givre"] = 0.0
+	rose._givrer(rose.cotes[0], rose.cotes[1], Data.GEL_SEUIL - Data.ROSE_RABAIS)
+	ok = _verifier(rose._gele(rose.cotes[1]), "rose des neiges : gel plus tot apres un bris") and ok
+	# armes : fracas, brise-gel, hachette
+	var f := Nid.new()
+	f.placer(Vector2i(0, 0), "hache_glace")
+	var g := Combat.new(f.eclore(), Nid.new().eclore())
+	g.cotes[0]["bouclier"] = 30.0
+	g.cotes[0]["sorts"][0]["prochain"] = 0.0
+	var avant: float = g.cotes[1]["pv"]
+	g._agir(g.cotes[0], g.cotes[1])
+	ok = _verifier(g.cotes[0]["bouclier"] == 0.0 and avant - g.cotes[1]["pv"] >= 40.0 - 0.01, "fracas : bouclier ajoute aux degats") and ok
+	var l := Nid.new()
+	l.placer(Vector2i(0, 0), "lance_hiver")
+	var h := Combat.new(l.eclore(), Nid.new().eclore())
+	h.cotes[1]["gele_jusqu"] = 5.0
+	h.cotes[0]["sorts"][0]["prochain"] = 0.0
+	avant = h.cotes[1]["pv"]
+	h._agir(h.cotes[0], h.cotes[1])
+	ok = _verifier(avant - h.cotes[1]["pv"] >= 48.0 - 0.01 and not h._gele(h.cotes[1]), "brise-gel : x4 et fin du gel") and ok
+	# un combat complet gele bien l'adversaire
+	var k := Combat.new(cr, Exemples.nid_feu().eclore())
+	k.simuler()
+	return _verifier(k.evenements.any(func(ev): return ev["type"] == "gel"), "le loup gele en vrai combat") and ok

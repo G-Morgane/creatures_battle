@@ -60,6 +60,8 @@ func _draw() -> void:
 			_cheval(c)
 		"nature":
 			_sprite("nature")
+		"glace":
+			_sprite("glace")
 		_:
 			_informe(c)
 	_cavalier(c)
@@ -178,7 +180,7 @@ func _cavalier(c: Dictionary) -> void:
 			dos = Vector2(-38, -30)
 		"terre":
 			dos = Vector2(-10, -78)
-		"nature":
+		"nature", "glace":
 			dos = Vector2(-22, -38)
 	var vent := sin(t * 3.0) * 6.0
 	draw_colored_polygon(PackedVector2Array([dos + Vector2(-6, -40), dos + Vector2(-50 + vent, 20), dos + Vector2(-20, 24), dos + Vector2(10, -30)]), c["vif"].darkened(0.1))

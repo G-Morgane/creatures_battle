@@ -17,6 +17,7 @@ const FORMES := {
 	"nuit":  {"nom": "Chauve-souris", "passif": "Vol de vie sur les attaques de base"},
 	"terre": {"nom": "Tortue",        "passif": "Fatigue de l'adversaire 10 s plus tôt, la sienne réduite de moitié"},
 	"vent":  {"nom": "Cheval",        "passif": "15 % d'esquive, chaque esquive lance un éclair"},
+	"glace": {"nom": "Loup",          "passif": "Ses attaques posent du givre, +50 % de dégâts contre une cible gelée"},
 	"nature":{"nom": "Cerf",          "passif": "Épines : blesse qui le frappe (2 dégâts par coup reçu)"},
 	"":      {"nom": "Informe",       "passif": "Aucun"},
 }
@@ -40,6 +41,17 @@ const COEUR_PAR_RIPOSTE := 0.1
 const GRAINE_POUSSE := 0.05        # bonus d'epines par seconde ou l'adversaire est empoisonne
 const GRAINE_DEGATS_PAR_DOSE := 1.0  # Fleche-graine : chaque dose recue blesse aussi
 const GOUSSE_COUPS := 5            # Gousse eclatante : une salve tous les 5 coups recus
+# Loup : chaque charge de givre ralentit attaques et recharges de sorts ;
+# au seuil, la cible gele (plus rien ne part) et ses charges retombent a zero.
+const LOUP_GIVRE := 1.0
+const LOUP_BONUS_GEL := 1.5        # degats du Loup contre une cible gelee
+const GIVRE_RALENTI := 0.03        # par charge
+const RALENTI_MAX := 0.6
+const GEL_SEUIL := 10.0
+const GEL_SEUIL_MIN := 4.0
+const GEL_DUREE := 1.5
+const ROSE_RABAIS := 3.0           # Rose des neiges : charges en moins pour le prochain gel
+const REFORME_DELAI := 3.0         # Ecorce de pergelisol
 
 # --- combat ----------------------------------------------------------------
 
@@ -113,6 +125,28 @@ const RELIQUES := {
 		"coeur": true, "epines": 2.0},
 	"graine_jardin":  {"nom": "Graine du Jardin interdit","element": "nature", "affinite": 2, "type": "essence", "rarete": "legendaire",
 		"graine": true, "epines": 3.0},
+	# glace : givre jusqu'au gel, et un bouclier fait pour se briser.
+	# Croc du blizzard : les voisins posent plus de givre. Fourrure : plus de bouclier.
+	"flocon":         {"nom": "Flocon intact",  "element": "glace", "affinite": 2, "type": "essence",
+		"givre_attaque": 1.0},
+	"galet":          {"nom": "Galet gelé",     "element": "glace", "affinite": 1, "type": "sort",
+		"sort": "Armure de givre", "recharge": 6.0, "bouclier": 6.0, "par_affinite": 1.0},
+	"eclat_givre":    {"nom": "Éclat de givre", "element": "glace", "affinite": 2, "type": "essence",
+		"bris_degats": 20.0},
+	"fourrure":       {"nom": "Fourrure hivernale","element": "glace", "affinite": 1, "type": "catalyseur",
+		"effet": "bouclier", "valeur": 0.5},
+	"croc_blizzard":  {"nom": "Croc du blizzard","element": "glace", "affinite": 1, "type": "catalyseur", "rarete": "rare",
+		"effet": "givre", "valeur": 0.5},
+	"ecorce":         {"nom": "Écorce de pergélisol","element": "glace", "affinite": 1, "type": "essence", "rarete": "rare",
+		"reforme": 20.0},
+	"cristal":        {"nom": "Cristal fêlé",   "element": "glace", "affinite": 1, "type": "essence", "rarete": "rare",
+		"bris_givre": 3.0},
+	"coeur_banquise": {"nom": "Cœur de banquise","element": "glace", "affinite": 1, "type": "essence", "rarete": "epique",
+		"gel_bouclier": 25.0},
+	"rose_neiges":    {"nom": "Rose des neiges","element": "glace", "affinite": 1, "type": "essence", "rarete": "epique",
+		"rose": true},
+	"noyau_hiver":    {"nom": "Noyau de l'Hiver éternel","element": "glace", "affinite": 2, "type": "essence", "rarete": "legendaire",
+		"nova": 20.0},
 	# armes : le cavalier en tient une seule et lance son propre sort.
 	# Les catalyseurs voisins s'appliquent aussi a ce sort.
 	"baton_braise":   {"nom": "Bâton de braise","element": "feu",   "affinite": 1, "type": "arme", "famille": "baton",
@@ -130,6 +164,17 @@ const RELIQUES := {
 		"sort": "Flèche de chasse", "recharge": 5.0, "degats": 10.0, "par_poison": 1.0, "coups": 1},
 	"serpe_ronces":   {"nom": "Serpe de ronces","element": "nature", "affinite": 1, "type": "arme", "famille": "lame", "rarete": "epique",
 		"sort": "Lacération", "recharge": 4.0, "degats": 2.0, "coups": 4, "degats_epines": true},
+	# armes du Loup : Hast et Hache
+	"javelot":        {"nom": "Javelot de stalactite","element": "glace", "affinite": 1, "type": "arme", "famille": "hast",
+		"sort": "Javelot", "recharge": 3.0, "degats": 8.0, "coups": 1, "givre": 2.0},
+	"hachette":       {"nom": "Hachette de givre","element": "glace", "affinite": 1, "type": "arme", "famille": "hache",
+		"sort": "Taille", "recharge": 6.0, "degats": 18.0, "coups": 1, "double_ralenti": true},
+	"pique":          {"nom": "Pique de banquise","element": "glace", "affinite": 1, "type": "arme", "famille": "hast", "rarete": "rare",
+		"sort": "Estoc glacé", "recharge": 4.0, "degats": 8.0, "coups": 1, "perce": true, "givre": 4.0},
+	"hache_glace":    {"nom": "Hache brise-glace","element": "glace", "affinite": 1, "type": "arme", "famille": "hache", "rarete": "epique",
+		"sort": "Fracas", "recharge": 7.0, "degats": 10.0, "coups": 1, "fracas": true},
+	"lance_hiver":    {"nom": "Lance du Grand Hiver","element": "glace", "affinite": 2, "type": "arme", "famille": "hast", "rarete": "legendaire",
+		"sort": "Brise-gel", "recharge": 5.0, "degats": 12.0, "coups": 1, "brise_gel": true},
 	"arc_jardin":     {"nom": "Arc du Jardin interdit","element": "nature", "affinite": 2, "type": "arme", "famille": "tir", "rarete": "legendaire",
 		"sort": "Flèche-graine", "recharge": 6.0, "degats": 12.0, "coups": 1, "graine": true},
 }

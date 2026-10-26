@@ -9,7 +9,8 @@ var cotes: Array = []
 var journal: Array[String] = []
 # Pour rejouer le combat a l'ecran : un evenement par action, et les PV
 # des deux cotes a chaque pas
-# ([pv0, pv1, brule0, brule1, bouclier0, bouclier1, poison0, poison1]).
+# ([pv0, pv1, brule0, brule1, bouclier0, bouclier1, poison0, poison1,
+#   givre0, givre1, gele0, gele1]).
 var evenements: Array = []
 var images: Array = []
 # L'esquive du Vent est un tirage : graine fixe, donc toujours le meme combat.
@@ -45,6 +46,11 @@ func _etat(cr: Dictionary, i: int) -> Dictionary:
 		"epines_bonus": 1.0,       # Coeur de roncier, Graine
 		"coups_recus": 0,
 		"graine_plantee": false,   # Fleche-graine
+		"horloge": 0.0,            # temps propre : ralenti par le givre, arrete par le gel
+		"givre": 0.0,              # charges de givre subies
+		"gele_jusqu": 0.0,
+		"rabais_gel": 0.0,         # Rose des neiges : charges en moins pour geler l'adversaire
+		"reforme_a": INF,          # Ecorce de pergelisol
 		"esquive": false,
 		"renaissance": cr["renaissance"],
 	}
@@ -54,12 +60,15 @@ func simuler() -> int:
 	while t < Data.DUREE_MAX:
 		t += Data.PAS
 		for i in 2:
+			cotes[i]["horloge"] += Data.PAS * _vitesse(cotes[i])
+		for i in 2:
 			_agir(cotes[i], cotes[1 - i])
 		for i in 2:
 			_subir(cotes[i], cotes[1 - i])
 		var morts := [_mort(cotes[0]), _mort(cotes[1])]
 		images.append([cotes[0]["pv"], cotes[1]["pv"], cotes[0]["brulure"] > 0.0, cotes[1]["brulure"] > 0.0,
-			cotes[0]["bouclier"], cotes[1]["bouclier"], cotes[0]["poison"], cotes[1]["poison"]])
+			cotes[0]["bouclier"], cotes[1]["bouclier"], cotes[0]["poison"], cotes[1]["poison"],
+			cotes[0]["givre"], cotes[1]["givre"], _gele(cotes[0]), _gele(cotes[1])])
 		if morts[0] or morts[1]:
 			var v := 1 if morts[0] else 0
 			# Chute simultanee : celui qui finit le moins en negatif tient debout.
@@ -73,14 +82,27 @@ func simuler() -> int:
 	_noter("Temps écoulé.")
 	return -1
 
+# Le givre ralentit le temps propre (attaques et recharges), le gel l'arrete.
+func _vitesse(moi: Dictionary) -> float:
+	if _gele(moi):
+		return 0.0
+	return 1.0 - minf(moi["givre"] * Data.GIVRE_RALENTI, Data.RALENTI_MAX)
+
+func _gele(moi: Dictionary) -> bool:
+	return t < moi["gele_jusqu"]
+
 func _agir(moi: Dictionary, cible: Dictionary) -> void:
-	if t >= moi["prochaine_attaque"]:
+	var h: float = moi["horloge"]
+	if h >= moi["prochaine_attaque"]:
 		moi["prochaine_attaque"] += moi["cr"]["intervalle"]
 		_evenement(moi, {"type": "attaque"})
-		if _frapper(moi, cible, moi["cr"]["attaque"], moi["cr"]["vol_de_vie"]) and moi["cr"]["poison_attaque"] > 0.0:
-			_empoisonner(cible, moi["cr"]["poison_attaque"])
+		if _frapper(moi, cible, moi["cr"]["attaque"], moi["cr"]["vol_de_vie"]):
+			if moi["cr"]["poison_attaque"] > 0.0:
+				_empoisonner(cible, moi["cr"]["poison_attaque"])
+			if moi["cr"]["givre_attaque"] > 0.0:
+				_givrer(moi, cible, moi["cr"]["givre_attaque"])
 	for s in moi["sorts"]:
-		if t < s["prochain"]:
+		if h < s["prochain"]:
 			continue
 		s["prochain"] += s["recharge"]
 		if s["esquive"]:
@@ -96,19 +118,33 @@ func _agir(moi: Dictionary, cible: Dictionary) -> void:
 			moi["bouclier"] += s["bouclier"]
 			_evenement(moi, {"type": "bouclier", "valeur": s["bouclier"]})
 		var touche := false
+		if s["fracas"] and moi["bouclier"] > 0.0:
+			# Fracas : le Loup brise son propre bouclier et frappe avec
+			s["bonus_fracas"] = moi["bouclier"]
+			moi["bouclier"] = 0.0
+			_briser(moi, cible)
 		for k in s["coups"]:
 			var degats: float = s["degats"]
 			if s["execution"] and cible["pv"] < cible["cr"]["pv_max"] * Data.SEUIL_EXECUTION:
 				degats *= 2.0
 			if s["degats_epines"]:
 				degats += moi["cr"]["epines"] * moi["epines_bonus"]
-			degats += s["par_poison"] * cible["poison"]
+			degats += s["par_poison"] * cible["poison"] + s.get("bonus_fracas", 0.0)
+			if s["double_ralenti"] and (cible["givre"] > 0.0 or _gele(cible)):
+				degats *= 2.0
+			if s["brise_gel"] and _gele(cible):
+				degats *= 4.0
+				cible["gele_jusqu"] = t
+				_evenement(cible, {"type": "brise_gel"})
 			touche = _frapper(moi, cible, degats, s["vol_de_vie"], s["perce"]) or touche
+		s.erase("bonus_fracas")
 		if s["coups"] == 0 or touche:
 			if s["poison"] > 0.0:
 				_empoisonner(cible, s["poison"])
 			if s["graine"]:
 				cible["graine_plantee"] = true
+			if s["givre"] > 0.0:
+				_givrer(moi, cible, s["givre"])
 		if s["brulure"] > 0.0:
 			cible["brulure"] = Data.BRULURE_DUREE
 			cible["brulure_force"] = maxf(cible["brulure_force"], s["brulure"])
@@ -124,10 +160,12 @@ func _frapper(moi: Dictionary, cible: Dictionary, degats: float, vol: float, per
 		_evenement(cible, {"type": "esquive"})
 		if cible["cr"]["eclair"]:
 			# le Cheval riposte : l'eclair ne s'esquive pas
-			_blesser(moi, Data.ECLAIR_DEGATS)
+			_blesser(moi, Data.ECLAIR_DEGATS, cible)
 			_evenement(cible, {"type": "eclair"})
 		return false
-	_blesser(cible, degats)
+	if _gele(cible):
+		degats *= moi["cr"]["bonus_gel"]
+	_blesser(cible, degats, moi)
 	_soigner(moi, cible, degats * vol)
 	_riposter(cible, moi)
 	return true
@@ -144,7 +182,7 @@ func _riposter(moi: Dictionary, attaquant: Dictionary) -> void:
 	moi["coups_recus"] += 1
 	var cr: Dictionary = moi["cr"]
 	if cr["epines"] > 0.0:
-		_blesser(attaquant, cr["epines"] * moi["epines_bonus"])
+		_blesser(attaquant, cr["epines"] * moi["epines_bonus"], moi)
 		_evenement(moi, {"type": "epines"})
 		if cr["epines_poison"] > 0.0:
 			_empoisonner(attaquant, cr["epines_poison"])
@@ -153,11 +191,11 @@ func _riposter(moi: Dictionary, attaquant: Dictionary) -> void:
 		if cr["coeur"]:
 			moi["epines_bonus"] = minf(moi["epines_bonus"] + Data.COEUR_PAR_RIPOSTE, Data.EPINES_BONUS_MAX)
 	if cr["gousse"] > 0.0 and moi["coups_recus"] % Data.GOUSSE_COUPS == 0:
-		_blesser(attaquant, cr["gousse"] * moi["epines_bonus"])
+		_blesser(attaquant, cr["gousse"] * moi["epines_bonus"], moi)
 		_evenement(moi, {"type": "salve"})
 	for s in moi["sorts"]:
 		if s["contre"] > 0 and moi["coups_recus"] % s["contre"] == 0:
-			_blesser(attaquant, s["degats"] + s["par_epine"] * cr["epines"] * moi["epines_bonus"])
+			_blesser(attaquant, s["degats"] + s["par_epine"] * cr["epines"] * moi["epines_bonus"], moi)
 			_evenement(moi, {"type": "sort", "nom": s["nom"], "cavalier": true, "element": s["element"], "coups": 1})
 
 # Le poison s'empile (plafond) ; une Fleche-graine plantee blesse a chaque dose recue.
@@ -167,13 +205,59 @@ func _empoisonner(cible: Dictionary, doses: float) -> void:
 		_blesser(cible, doses * Data.GRAINE_DEGATS_PAR_DOSE)
 
 # Le bouclier encaisse avant les PV. Brulure et fatigue passent a travers.
-func _blesser(cible: Dictionary, degats: float) -> void:
-	var absorbe := minf(cible["bouclier"], degats)
+# source : qui frappe ; un bouclier brise par un coup declenche les effets de bris.
+func _blesser(cible: Dictionary, degats: float, source = null) -> void:
+	var avant: float = cible["bouclier"]
+	var absorbe := minf(avant, degats)
 	cible["bouclier"] -= absorbe
 	cible["pv"] -= degats - absorbe
+	if avant > 0.0 and cible["bouclier"] <= 0.0 and source != null:
+		_briser(cible, source)
+
+# Bouclier brise : Eclat de givre, Cristal fele, Ecorce, Rose des neiges, Noyau.
+# Ces ripostes peuvent briser le bouclier adverse a leur tour : la chaine
+# s'arrete d'elle-meme, un bouclier brise vaut zero.
+func _briser(moi: Dictionary, source: Dictionary) -> void:
+	var cr: Dictionary = moi["cr"]
+	_evenement(moi, {"type": "bris"})
+	if cr["bris_degats"] > 0.0:
+		_blesser(source, cr["bris_degats"], moi)
+	if cr["bris_givre"] > 0.0:
+		_givrer(moi, source, cr["bris_givre"])
+	if cr["reforme"] > 0.0:
+		moi["reforme_a"] = t + Data.REFORME_DELAI
+	if cr["rose"]:
+		moi["rabais_gel"] = minf(moi["rabais_gel"] + Data.ROSE_RABAIS, Data.GEL_SEUIL - Data.GEL_SEUIL_MIN)
+	if cr["nova"] > 0.0:
+		_evenement(moi, {"type": "nova"})
+		_blesser(source, cr["nova"], moi)
+		if source["givre"] > 0.0 and not _gele(source):
+			_geler(moi, source)
+
+# Givre : des charges qui ralentissent ; au seuil (moins la Rose), la cible gele.
+func _givrer(moi: Dictionary, cible: Dictionary, charges: float) -> void:
+	if _gele(cible):
+		return
+	cible["givre"] += charges
+	if cible["givre"] >= maxf(Data.GEL_SEUIL - moi["rabais_gel"], Data.GEL_SEUIL_MIN):
+		_geler(moi, cible)
+
+func _geler(moi: Dictionary, cible: Dictionary) -> void:
+	cible["gele_jusqu"] = t + Data.GEL_DUREE
+	cible["givre"] = 0.0
+	moi["rabais_gel"] = 0.0
+	_evenement(cible, {"type": "gel"})
+	_noter("%s gèle." % cible["cr"]["nom"])
+	if moi["cr"]["gel_bouclier"] > 0.0:
+		moi["bouclier"] += moi["cr"]["gel_bouclier"]
+		_evenement(moi, {"type": "bouclier", "valeur": moi["cr"]["gel_bouclier"]})
 
 # Brulure, poison et fatigue passent a travers le bouclier.
 func _subir(moi: Dictionary, adverse: Dictionary) -> void:
+	if t >= moi["reforme_a"]:
+		moi["reforme_a"] = INF
+		moi["bouclier"] += moi["cr"]["reforme"]
+		_evenement(moi, {"type": "bouclier", "valeur": moi["cr"]["reforme"]})
 	if moi["poison"] > 0.0:
 		moi["pv"] -= moi["poison"] * Data.POISON_DPS_PAR_DOSE * Data.PAS
 		# Graine : tant que l'adversaire est empoisonne, les epines poussent

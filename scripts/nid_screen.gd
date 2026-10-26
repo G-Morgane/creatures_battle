@@ -170,7 +170,7 @@ func _decrire(cr: Dictionary) -> String:
 	var aff := nid.affinites()
 	var lignes := [
 		"[b]%s[/b]   [color=#%s]%s[/color]" % [cr["nom"], Palette.TEXTE_DOUX.to_html(false), Data.FORMES[cr["forme"]]["passif"]],
-		"Feu %d   Nuit %d   Terre %d   Vent %d   Nature %d" % [aff.get("feu", 0), aff.get("nuit", 0), aff.get("terre", 0), aff.get("vent", 0), aff.get("nature", 0)],
+		"Feu %d   Nuit %d   Terre %d   Vent %d   Nature %d   Glace %d" % [aff.get("feu", 0), aff.get("nuit", 0), aff.get("terre", 0), aff.get("vent", 0), aff.get("nature", 0), aff.get("glace", 0)],
 		"PV %d   Attaque %.0f   Une attaque toutes les %.2f s   Vol de vie %d %%" % [
 			cr["pv_max"], cr["attaque"], cr["intervalle"], roundi(cr["vol_de_vie"] * 100)],
 	]
@@ -190,6 +190,23 @@ func _decrire(cr: Dictionary) -> String:
 		effets.append("les épines se renforcent à chaque riposte")
 	if cr["graine"]:
 		effets.append("épines et poison se nourrissent l'un l'autre")
+	if cr["givre_attaque"] > 0.0:
+		effets.append("%.1f givre par attaque" % cr["givre_attaque"])
+	var bris := []
+	if cr["bris_degats"] + cr["nova"] > 0.0:
+		bris.append("%d dégâts" % (cr["bris_degats"] + cr["nova"]))
+	if cr["bris_givre"] > 0.0:
+		bris.append("%.1f givre" % cr["bris_givre"])
+	if cr["nova"] > 0.0:
+		bris.append("gèle une cible ralentie")
+	if not bris.is_empty():
+		effets.append("bouclier brisé : " + ", ".join(bris))
+	if cr["reforme"] > 0.0:
+		effets.append("bouclier de %d reformé %d s après un bris" % [cr["reforme"], Data.REFORME_DELAI])
+	if cr["gel_bouclier"] > 0.0:
+		effets.append("+%d bouclier à chaque gel" % cr["gel_bouclier"])
+	if cr["rose"]:
+		effets.append("un bris rapproche le prochain gel")
 	if not effets.is_empty():
 		lignes.append(", ".join(effets))
 	for s in cr["sorts"]:
@@ -212,6 +229,14 @@ func _decrire(cr: Dictionary) -> String:
 			d += ", plus les épines"
 		if s["graine"]:
 			d += ", plante une graine"
+		if s["givre"] > 0.0:
+			d += ", +%.1f givre" % s["givre"]
+		if s["double_ralenti"]:
+			d += ", double contre une cible ralentie"
+		if s["fracas"]:
+			d += ", brise ton bouclier et ajoute sa valeur"
+		if s["brise_gel"]:
+			d += ", x4 contre une cible gelée"
 		if s["perce"]:
 			d += ", ignore l'esquive"
 		if s["execution"]:

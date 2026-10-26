@@ -79,7 +79,8 @@ Sans élimination, le joueur simple gagne 49 à 54 % de ses combats à chaque ma
 difficulté est plate. Le fantôme n'est jamais meilleur que le joueur automatique simple,
 d'où un joueur aléatoire encore trop à l'aise.
 
-Par élément (joueur simple) : Nature 4,1, Terre 4,0, Vent 3,2, Feu 3,1, **Nuit 1,9 (à remonter)**.
+Par élément (joueur simple, avec le Loup) : Vent 4,1, Nature 4,0, Terre 3,8, Feu 3,5, Glace 3,4,
+**Nuit 1,6 (à remonter)**. Joueur simple : 3,3 victoires en moyenne, 24 % de parties gagnées.
 
 ### Fusion
 
@@ -264,6 +265,12 @@ Familles par élément : **Cerf : Tir et Lame. Loup : Hast et Hache.**
 
 ### Glace (Loup) : givre et bouclier qui se brise
 
+**Fait** (images de `images/`). Chiffres de départ : passif du Loup, 1 charge de givre par attaque
+et **+50 % de dégâts contre une cible gelée** (le gel est une fenêtre d'attaque, sinon le Loup
+jouait comme une seconde Tortue : combats de 24 à 40 s, trop peu de dégâts) ; Armure de givre
+6 + 1 par point de Glace ; Éclat de givre 20 ; Javelot 8 ; Écorce 20 de bouclier 3 s après un bris ;
+Cœur de banquise 25 ; Noyau 20 ; Rose des neiges 3 charges de moins.
+
 Là où la Tortue veut que son bouclier tienne, **le Loup veut qu'il se brise** : chaque bris
 déclenche des effets. C'est le même bouclier que la Terre (plus simple à lire) : les hybrides
 Terre et Glace sont à surveiller en simulation. Le poison du Cerf passe à travers le bouclier
@@ -283,7 +290,7 @@ Règles du givre :
 | Commun | Galet gelé | **Sort** *Armure de givre* : un petit bouclier toutes les 6 s |
 | Commun | Éclat de givre | Inflige des dégâts lorsque ton bouclier est brisé |
 | Commun | Fourrure hivernale | **Catalyseur** : plus de bouclier pour les objets voisins |
-| Rare | Croc du blizzard | **Catalyseur** : plus de ralentissement par charge pour les objets voisins |
+| Rare | Croc du blizzard | **Catalyseur** : les objets voisins posent 50 % de givre en plus |
 | Rare | Écorce de pergélisol | Reforme un petit bouclier après un délai lorsqu'il est brisé |
 | Rare | Cristal fêlé | Les dégâts de bris du bouclier appliquent aussi du givre |
 | Épique | Cœur de banquise | Geler la cible accorde du bouclier |
@@ -330,7 +337,7 @@ On adapte son Nid à ce qu'on affronte, pas à une couleur.
 
 ## 7. Prototype (périmètre actuel)
 
-- 5 éléments : Feu, Nuit, Terre, Vent (4 objets chacun), Nature (15 objets), 3 armes partagées.
+- 6 éléments : Feu, Nuit, Terre, Vent (4 objets chacun), Nature et Glace (15 objets chacun), 3 armes anciennes.
 - Nid 4 x 4, reliques d'une case. **Les formes de reliques (2 x 1, L...) viendront après.**
 - Pas d'hybride, pas de réseau. Rareté en place.
 - Boutique, manches, combat animé contre un adversaire généré, fin de partie.
@@ -343,7 +350,8 @@ donne envie de refaire un Nid ? Si non, rien d'autre ne compte.
 ## 8. Plus tard
 
 - Formes de reliques et rotation.
-- Coder la Glace (Loup) : il faudra le dessin du loup et les planches d'objets.
+- Remonter la Nuit, la plus faible en partie complète.
+- Une image pour la Serpe de ronces (le Fouet a été remplacé).
 - Refaire Feu, Nuit, Terre, Vent au format 15 objets, avec une ou deux familles d'armes chacun.
 - Objets neutres qui visent une famille d'armes.
 - Glace, les quatre moments du jour, et les hybrides.
