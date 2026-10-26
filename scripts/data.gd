@@ -19,6 +19,7 @@ const FORMES := {
 	"vent":  {"nom": "Cheval",        "passif": "15 % d'esquive, chaque esquive lance un éclair"},
 	"glace": {"nom": "Loup",          "passif": "Ses attaques posent du givre, +50 % de dégâts contre une cible gelée"},
 	"aube":  {"nom": "Lion",          "passif": "Régénère, et ses soins chargent l'Éclat (un coup de lumière)"},
+	"crepuscule": {"nom": "Papillon", "passif": "Un Transfert sans rien à voler ni à renvoyer lance un projectile d'arcane"},
 	"nature":{"nom": "Cerf",          "passif": "Épines : blesse qui le frappe (2 dégâts par coup reçu)"},
 	"":      {"nom": "Informe",       "passif": "Aucun"},
 }
@@ -52,6 +53,16 @@ const ECLAT_PAR_EXCES := 2.0
 const BANDE_SEUIL := 0.5           # Bande de lin : regeneration renforcee sous ce seuil
 const ENCENSOIR_DUREE := 4.0
 const CARILLON_TOUS := 3
+# Papillon : Transfert = renvoyer un malus (poison, brulure, givre, maledictions) ou
+# voler un bonus (bouclier, Braise, jauge d'Eclat, bonus d'epines). Chaque source a
+# une puissance : quantite volee, et degats du projectile d'arcane si rien a deplacer.
+const ARCANE_PAR_PUISSANCE := 1.0
+const MUE := 1.5                   # malus renvoye renforce
+const BRUME_SOIN := 8.0
+const AILE_BRAISE := 2.0           # hate volee : Braise temporaire
+const AILE_DUREE := 3.0
+const CHRYSALIDE_SEUIL := 0.5
+const INVERSION_T := 12.0
 # Tortue : veut des combats longs, joue sur la fatigue (mort subite).
 const TORTUE_AVANCE_FATIGUE := 10.0
 const TORTUE_FATIGUE_MULT := 0.5
@@ -234,6 +245,27 @@ const RELIQUES := {
 		"carillon": 40.0},
 	"lanterne":       {"nom": "Lanterne du Premier Matin","element": "aube", "affinite": 2, "type": "essence", "rarete": "legendaire",
 		"lanterne": 1.0},
+	# crepuscule : Transfert. Pollen dore renforce les Transferts voisins.
+	"battement":      {"nom": "Battement d'ailes","element": "crepuscule", "affinite": 1, "type": "sort",
+		"sort": "Battement d'ailes", "recharge": 5.0, "transfert": "renvoyer", "puissance": 10.0, "par_affinite": 0.5, "echelle": "puissance"},
+	"poudre":         {"nom": "Poudre d'écailles","element": "crepuscule", "affinite": 2, "type": "essence",
+		"poudre": 4.0},
+	"cocon":          {"nom": "Cocon",          "element": "crepuscule", "affinite": 2, "type": "essence",
+		"bouclier": 20.0, "cocon": 3.0},
+	"pollen":         {"nom": "Pollen doré",    "element": "crepuscule", "affinite": 1, "type": "catalyseur",
+		"effet": "transfert", "valeur": 0.5},
+	"mue":            {"nom": "Mue",            "element": "crepuscule", "affinite": 1, "type": "essence", "rarete": "rare",
+		"mue": true},
+	"brume":          {"nom": "Brume du soir",  "element": "crepuscule", "affinite": 1, "type": "essence", "rarete": "rare",
+		"brume": true},
+	"phalene":        {"nom": "Phalène",        "element": "crepuscule", "affinite": 1, "type": "essence", "rarete": "rare",
+		"phalene": true},
+	"chrysalide":     {"nom": "Chrysalide",     "element": "crepuscule", "affinite": 1, "type": "essence", "rarete": "epique",
+		"chrysalide": true},
+	"aile_lune":      {"nom": "Aile de lune",   "element": "crepuscule", "affinite": 1, "type": "essence", "rarete": "epique",
+		"aile_lune": true},
+	"inversion":      {"nom": "Inversion",      "element": "crepuscule", "affinite": 2, "type": "essence", "rarete": "legendaire",
+		"inversion": true},
 	# armes : le cavalier en tient une seule et lance son propre sort.
 	# Les catalyseurs voisins s'appliquent aussi a ce sort.
 	# armes du Phenix : Baton et Faux
@@ -291,6 +323,17 @@ const RELIQUES := {
 		"sort": "Hache solaire", "recharge": 5.0, "degats": 12.0, "coups": 1, "apres_eclat": true},
 	"sceptre_premier":{"nom": "Sceptre du Premier Matin","element": "aube", "affinite": 2, "type": "arme", "famille": "baton", "rarete": "legendaire",
 		"sort": "Premier matin", "recharge": 3.0, "degats": 6.0, "coups": 1, "eclat_tous": 4},
+	# armes du Papillon : Tir et Hast
+	"arc_crepuscule": {"nom": "Arc du crépuscule","element": "crepuscule", "affinite": 1, "type": "arme", "famille": "tir",
+		"sort": "Flèche du soir", "recharge": 3.0, "degats": 6.0, "coups": 1, "transfert": "bouclier", "puissance": 6.0},
+	"flechettes":     {"nom": "Fléchettes d'écailles","element": "crepuscule", "affinite": 1, "type": "arme", "famille": "tir",
+		"sort": "Fléchettes", "recharge": 1.5, "degats": 3.0, "coups": 1, "transfert": "renvoyer", "puissance": 8.0, "transfert_tous": 3},
+	"glaive_brume":   {"nom": "Glaive de brume","element": "crepuscule", "affinite": 1, "type": "arme", "famille": "hast", "rarete": "rare",
+		"sort": "Glaive", "recharge": 4.0, "degats": 8.0, "coups": 1, "perce": true, "transfert": "voler", "puissance": 8.0},
+	"arc_lunes":      {"nom": "Arc des deux lunes","element": "crepuscule", "affinite": 1, "type": "arme", "famille": "tir", "rarete": "epique",
+		"sort": "Deux lunes", "recharge": 4.0, "degats": 6.0, "coups": 1, "par_transfert": 1.5},
+	"lance_entre":    {"nom": "Lance de l'entre-deux","element": "crepuscule", "affinite": 2, "type": "arme", "famille": "hast", "rarete": "legendaire",
+		"sort": "Entre-deux", "recharge": 3.0, "degats": 8.0, "coups": 1, "transfert": "echange", "puissance": 10.0},
 	"arc_jardin":     {"nom": "Arc du Jardin interdit","element": "nature", "affinite": 2, "type": "arme", "famille": "tir", "rarete": "legendaire",
 		"sort": "Flèche-graine", "recharge": 6.0, "degats": 12.0, "coups": 1, "graine": true},
 }

@@ -151,6 +151,21 @@ func _jouer(e: Dictionary) -> void:
 				effets.append({"type": "projectile", "de": de, "a": moi.position + moi.size / 2 + Vector2(0, 20),
 					"t0": lecture + k * 0.03, "duree": VOL_PROJECTILE * 0.7, "couleur": a["vif"], "coeur": a["clair"], "taille": 11.0})
 			_texte(moi, 2, "Éclat %d" % roundi(e["valeur"]), a["clair"])
+		"arcane":
+			# comete d'arcane : de l'autre monture vers moi
+			var cp: Dictionary = Palette.ELEMENTS["crepuscule"]
+			effets.append({"type": "projectile", "de": cible.position + cible.source(false),
+				"a": moi.position + moi.size / 2 + Vector2(0, 20), "t0": lecture,
+				"duree": VOL_PROJECTILE, "couleur": Color("#7b5cff"), "coeur": cp["clair"], "taille": 10.0})
+		"renvoi":
+			var noms := {"poison": "poison", "brulure": "brûlure", "givre": "givre", "maledictions": "malédictions"}
+			_texte(moi, 2, "Renvoyé : " + noms[e["malus"]], Palette.ELEMENTS["crepuscule"]["clair"])
+		"vol":
+			var noms := {"bouclier": "bouclier", "braise": "Braise", "eclat": "Éclat", "epines": "épines"}
+			_texte(moi, 2, "Volé : " + noms[e["bonus"]], Palette.ELEMENTS["crepuscule"]["clair"])
+		"inversion":
+			_texte(moi, 1, "Inversion !", Palette.ELEMENTS["crepuscule"]["vif"])
+			_texte(cible, 1, "Inversion !", Palette.ELEMENTS["crepuscule"]["vif"])
 		"malediction":
 			var nv: Dictionary = Palette.ELEMENTS["nuit"]
 			_texte(moi, 2, Data.NOMS_MALEDICTION[e["nom"]] + (" x%d" % e["n"] if e["n"] > 1 else ""), nv["clair"])

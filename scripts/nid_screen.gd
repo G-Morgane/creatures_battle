@@ -170,7 +170,7 @@ func _decrire(cr: Dictionary) -> String:
 	var aff := nid.affinites()
 	var lignes := [
 		"[b]%s[/b]   [color=#%s]%s[/color]" % [cr["nom"], Palette.TEXTE_DOUX.to_html(false), Data.FORMES[cr["forme"]]["passif"]],
-		"Feu %d   Nuit %d   Terre %d   Vent %d   Nature %d   Glace %d   Aube %d" % [aff.get("feu", 0), aff.get("nuit", 0), aff.get("terre", 0), aff.get("vent", 0), aff.get("nature", 0), aff.get("glace", 0), aff.get("aube", 0)],
+		_affinites(aff),
 		"PV %d   Attaque %.0f   Une attaque toutes les %.2f s   Vol de vie %d %%" % [
 			cr["pv_max"], cr["attaque"], cr["intervalle"], roundi(cr["vol_de_vie"] * 100)],
 	]
@@ -204,6 +204,17 @@ func _decrire(cr: Dictionary) -> String:
 		effets.append("%d renaissances" % cr["renaissances"])
 	if cr["givre_attaque"] > 0.0:
 		effets.append("%.1f givre par attaque" % cr["givre_attaque"])
+	if cr["arcane"]:
+		effets.append("un Transfert à vide tire un projectile d'arcane")
+	if cr["poudre"] > 0.0:
+		effets.append("ses attaques volent %.1f de bouclier" % cr["poudre"])
+	if cr["cocon"] > 0.0:
+		effets.append("+%d bouclier à chaque Transfert" % cr["cocon"])
+	for d in [["mue", "malus renvoyés renforcés"], ["brume", "voler soigne"], ["phalene", "chaque Transfert déclenche une attaque"],
+			["chrysalide", "sous la moitié de sa vie : tout renvoyer, tout voler"], ["aile_lune", "voler accélère"],
+			["inversion", "à %d s : échange des pourcentages de vie" % Data.INVERSION_T]]:
+		if cr[d[0]]:
+			effets.append(d[1])
 	if cr["eclat"]:
 		effets.append("Éclat de %d tous les %d de soin chargé" % [Data.ECLAT_DEGATS + cr["prisme"], maxf(Data.ECLAT_SEUIL - cr["miroir"], Data.ECLAT_SEUIL_MIN)])
 	if cr["regen"] + cr["bande"] > 0.0:
@@ -311,10 +322,29 @@ func _decrire(cr: Dictionary) -> String:
 			d += ", double après un Éclat"
 		if s["eclat_tous"] > 0:
 			d += ", un Éclat tous les %d tirs" % s["eclat_tous"]
+		if s["transfert"] != "":
+			var verbes := {"renvoyer": "renvoie un malus", "voler": "vole un bonus", "bouclier": "vole du bouclier",
+				"echange": "vole un bonus et renvoie un malus"}
+			d += (" %s (%.1f)" % [verbes[s["transfert"]], s["puissance"]])
+			if s["transfert_tous"] > 0:
+				d += " tous les %d tirs" % s["transfert_tous"]
+		if s["par_transfert"] > 0.0:
+			d += ", +%.1f par Transfert" % s["par_transfert"]
 		if s["vol_de_vie"] > 0.0 and not s["esquive"]:
 			d += ", vole %d %%" % roundi(s["vol_de_vie"] * 100)
 		lignes.append(d)
 	return "\n".join(lignes)
+
+# Seulement les elements presents, pour que la ligne tienne avec neuf elements.
+func _affinites(aff: Dictionary) -> String:
+	var l := []
+	for e in aff:
+		if aff[e] > 0:
+			l.append("%s %d" % [_NOMS_ELEMENTS.get(e, e), aff[e]])
+	return "   ".join(l) if not l.is_empty() else "Aucune affinité"
+
+const _NOMS_ELEMENTS := {"feu": "Feu", "nuit": "Nuit", "terre": "Terre", "vent": "Vent", "nature": "Nature",
+	"glace": "Glace", "aube": "Aube", "crepuscule": "Crépuscule"}
 
 func _combattre() -> void:
 	if partie.terminee():

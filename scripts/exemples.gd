@@ -69,3 +69,13 @@ static func nid_aube() -> Nid:
 	n.placer(Vector2i(0, 1), "miroir")
 	n.placer(Vector2i(1, 1), "bande")
 	return n
+
+# Pollen entre le Battement et la Poudre (Transferts renforces).
+static func nid_crepuscule() -> Nid:
+	var n := Nid.new()
+	n.placer(Vector2i(0, 0), "battement")
+	n.placer(Vector2i(1, 0), "pollen")
+	n.placer(Vector2i(2, 0), "poudre")
+	n.placer(Vector2i(0, 1), "cocon")
+	n.placer(Vector2i(1, 1), "poudre")
+	return n

@@ -192,6 +192,15 @@ func eclore() -> Dictionary:
 		"voile_aube": 0.0,
 		"carillon": 0.0,
 		"lanterne": 0.0,
+		"arcane": f == "crepuscule",
+		"poudre": 0.0,
+		"cocon": 0.0,
+		"mue": false,
+		"brume": false,
+		"phalene": false,
+		"chrysalide": false,
+		"aile_lune": false,
+		"inversion": false,
 		"arme": arme(),
 		"sorts": [],
 	}
@@ -228,6 +237,10 @@ func eclore() -> Dictionary:
 					cr[champ] += r.get(champ, 0.0) * m
 				if r.has("faiblesse_tous"):
 					cr["faiblesse_tous"] = r["faiblesse_tous"] if cr["faiblesse_tous"] == 0 else mini(cr["faiblesse_tous"], r["faiblesse_tous"])
+				cr["poudre"] += r.get("poudre", 0.0) * m * _renfort(c, "transfert")
+				cr["cocon"] += r.get("cocon", 0.0) * m
+				for drapeau in ["mue", "brume", "phalene", "chrysalide", "aile_lune", "inversion"]:
+					cr[drapeau] = cr[drapeau] or r.get(drapeau, false)
 				for drapeau in ["crit_fletrissure", "chapelet"]:
 					cr[drapeau] = cr[drapeau] or r.get(drapeau, false)
 				for drapeau in ["belladone", "coeur", "graine", "rose"]:
@@ -289,6 +302,10 @@ func _sort(c: Vector2i, r: Dictionary, aff: Dictionary) -> Dictionary:
 		"charge_eclat": r.get("charge_eclat", 0.0) * m,
 		"apres_eclat": r.get("apres_eclat", false),
 		"eclat_tous": r.get("eclat_tous", 0),
+		"transfert": r.get("transfert", ""),
+		"puissance": _puissance(r, "puissance", aff) * m * _renfort(c, "transfert"),
+		"transfert_tous": r.get("transfert_tous", 0),
+		"par_transfert": r.get("par_transfert", 0.0) * m,
 		"par_epine": r.get("par_epine", 0.0) * m,
 		"degats": _puissance(r, "degats", aff) * m,
 		"bouclier": _puissance(r, "bouclier", aff) * m,

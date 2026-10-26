@@ -85,6 +85,21 @@ const ZONES := {
 	"baton_rosee":   ["lion_arme", 70, 440, 470, 460],
 	"hache_solaire": ["lion_arme", 480, 460, 520, 440],
 	"sceptre_premier":["lion_arme", 55, 985, 930, 445],
+	"battement":     ["papillon_objets", 20, 85, 285, 240],
+	"poudre":        ["papillon_objets", 325, 75, 245, 252],
+	"cocon":         ["papillon_objets", 595, 25, 165, 305],
+	"pollen":        ["papillon_objets", 790, 95, 220, 237],
+	"mue":           ["papillon_objets", 45, 440, 320, 232],
+	"brume":         ["papillon_objets", 370, 420, 280, 262],
+	"phalene":       ["papillon_objets", 660, 445, 345, 232],
+	"chrysalide":    ["papillon_objets", 265, 720, 190, 312],
+	"aile_lune":     ["papillon_objets", 505, 730, 445, 302],
+	"inversion":     ["papillon_objets", 325, 1060, 400, 397],
+	"arc_crepuscule":["papillon_armes", 35, 15, 520, 390],
+	"flechettes":    ["papillon_armes", 605, 65, 375, 317],
+	"glaive_brume":  ["papillon_armes", 45, 445, 570, 527],
+	"arc_lunes":     ["papillon_armes", 585, 475, 410, 472],
+	"lance_entre":   ["papillon_armes", 35, 1030, 970, 450],
 }
 
 # Objets de glace blancs et bleu pale, proches du fond creme : tolerance resserree,
@@ -92,7 +107,8 @@ const ZONES := {
 # [seuil dur, seuil doux, retirer les trous, (seuil des trous, facultatif)]
 const TOLERANCE := {"objets_loup": [0.045, 0.09, false], "loup_armes": [0.045, 0.09, false],
 	# Aube : ivoire, creme, peche, tout est proche du papier
-	"lion_objets": [0.03, 0.06, false], "lion_arme": [0.03, 0.06, false]}
+	"lion_objets": [0.03, 0.06, false], "lion_arme": [0.03, 0.06, false],
+	"papillon_objets": [0.05, 0.10, true, 0.05], "papillon_armes": [0.05, 0.10, true, 0.05]}
 const TOLERANCE_DEFAUT := [0.10, 0.22, true]
 # Reglages propres a un objet (prioritaires sur ceux de sa planche).
 const TOLERANCE_OBJET := {
@@ -110,6 +126,8 @@ const TOLERANCE_OBJET := {
 	"faux_nuit": [0.03, 0.07, true, 0.08],  # fond enferme entre ruban et manche, grain du papier
 	"serpe_ronces": [0.05, 0.10, true],     # lame vert pale
 	"chapelet": [0.04, 0.08, true, 0.06],   # croc creme, fond enferme dans l'anneau
+	"cocon": [0.03, 0.06, false],           # soie creme
+	"mue": [0.04, 0.08, false],             # peau lilas pale
 }
 
 # Zones de la planche a effacer avant decoupe : morceaux d'un voisin qui deborde.
@@ -127,12 +145,17 @@ const MASQUES := {
 	"hache_solaire": [Rect2i(478, 440, 85, 115)],
 	"lanterne": [Rect2i(270, 1090, 80, 45)],
 	"sceptre_premier": [Rect2i(320, 1400, 390, 90)],
+	"chrysalide": [Rect2i(250, 728, 60, 45)],
+	"inversion": [Rect2i(315, 1080, 55, 45)],
+	"lance_entre": [Rect2i(330, 1405, 380, 85)],
+	"glaive_brume": [Rect2i(150, 438, 280, 32), Rect2i(586, 700, 32, 280), Rect2i(130, 950, 300, 30)],
+	"arc_lunes": [Rect2i(583, 470, 40, 80)],
 	"faux_festin": [Rect2i(640, 862, 240, 40)],
 	"faux_nuit": [Rect2i(340, 1400, 360, 80)],
 }
 
 # image de la bete (fond transparent) -> element
-const MONTURES := {"cerf": "nature", "loup": "glace", "phenix": "feu", "chauvesouris": "nuit", "lion": "aube"}
+const MONTURES := {"cerf": "nature", "loup": "glace", "phenix": "feu", "chauvesouris": "nuit", "lion": "aube", "papillon": "crepuscule"}
 
 # Poussieres : ilots opaques isoles plus petits que cette aire (en pixels, avant reduction).
 const POUSSIERE_ICONE := 40

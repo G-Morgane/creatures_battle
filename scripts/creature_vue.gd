@@ -42,7 +42,7 @@ func _draw() -> void:
 	var c: Dictionary = Palette.ELEMENTS[forme]
 	var echelle := minf(0.75 + 0.04 * affinite, 1.25) * pulse
 	# seules les montures ailees flottent
-	var flotte := sin(t * 2.0) * 6.0 if forme in ["feu", "nuit"] else 0.0
+	var flotte := sin(t * 2.0) * 6.0 if forme in ["feu", "nuit", "crepuscule"] else 0.0
 	var sens := -1.0 if miroir else 1.0
 	var centre := size / 2 + Vector2(elan * sens, 45 + flotte)
 	# ombre au sol, qui ne flotte pas
@@ -64,6 +64,8 @@ func _draw() -> void:
 			_sprite("glace")
 		"aube":
 			_sprite("aube")
+		"crepuscule":
+			_sprite("crepuscule")
 		_:
 			_informe(c)
 	_cavalier(c)
@@ -186,6 +188,8 @@ func _cavalier(c: Dictionary) -> void:
 			dos = Vector2(-22, -38)
 		"aube":
 			dos = Vector2(-30, -40)
+		"crepuscule":
+			dos = Vector2(40, -40)
 		"feu":
 			dos = Vector2(20, -20)
 	var vent := sin(t * 3.0) * 6.0

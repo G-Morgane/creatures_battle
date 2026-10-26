@@ -55,6 +55,9 @@ func _etat(cr: Dictionary, i: int) -> Dictionary:
 		"eclats": 0,               # Carillon
 		"encensoir_jusqu": 0.0,
 		"eclat_pret": false,       # Hache solaire
+		"transferts": 0,           # Arc des deux lunes
+		"chrysalide_faite": false,
+		"inversion_faite": false,
 		"bouclier": cr["bouclier"],
 		"poison": 0.0,             # doses
 		"epines_bonus": 1.0,       # Coeur de roncier, Graine
@@ -137,6 +140,8 @@ func _agir(moi: Dictionary, cible: Dictionary) -> void:
 				_soigner(moi, cible, moi["cr"]["pacte"])
 			if moi["cr"]["brulure_attaque"] > 0.0:
 				_bruler(moi, cible, moi["cr"]["brulure_attaque"])
+			if moi["cr"]["poudre"] > 0.0:
+				_transfert(moi, cible, "bouclier", moi["cr"]["poudre"])
 			if moi["cr"]["poison_attaque"] > 0.0:
 				_empoisonner(cible, moi["cr"]["poison_attaque"])
 			if moi["cr"]["givre_attaque"] > 0.0:
@@ -174,7 +179,7 @@ func _lancer(moi: Dictionary, cible: Dictionary, s: Dictionary, renfort := 1.0) 
 		moi["bouclier"] = 0.0
 		_briser(moi, cible)
 	for k in s["coups"]:
-		var degats: float = s["degats"] * renfort
+		var degats: float = (s["degats"] + s["par_transfert"] * moi["transferts"]) * renfort
 		if s["apres_eclat"] and moi["eclat_pret"]:
 			degats *= 2.0
 		if s["achever_seuil"] > 0.0 and cible["pv"] < cible["cr"]["pv_max"] * s["achever_seuil"]:
@@ -208,6 +213,13 @@ func _lancer(moi: Dictionary, cible: Dictionary, s: Dictionary, renfort := 1.0) 
 			_soigner(moi, cible, s["soin"])
 		if s["charge_eclat"] > 0.0 and moi["cr"]["eclat"]:
 			_charger_eclat(moi, cible, s["charge_eclat"])
+		if s["transfert"] != "":
+			if s["transfert_tous"] > 0:
+				s["tirs_transfert"] = s.get("tirs_transfert", 0) + 1
+				if s["tirs_transfert"] % s["transfert_tous"] == 0:
+					_transfert(moi, cible, s["transfert"], s["puissance"])
+			else:
+				_transfert(moi, cible, s["transfert"], s["puissance"])
 	if s["apres_eclat"]:
 		moi["eclat_pret"] = false
 	if s["eclat_tous"] > 0:
@@ -305,6 +317,107 @@ func _eclat(moi: Dictionary, adverse: Dictionary) -> void:
 		moi["encensoir_jusqu"] = t + Data.ENCENSOIR_DUREE
 	if moi["cr"]["carillon"] > 0.0 and moi["eclats"] % Data.CARILLON_TOUS == 0:
 		_soigner(moi, adverse, moi["cr"]["carillon"])
+
+# --- Transfert (Papillon) --------------------------------------------------------
+
+# mode : renvoyer (un malus), voler (un bonus), bouclier (voler du bouclier),
+# echange (voler et renvoyer), tout (Chrysalide). p : puissance de la source.
+# Rien a deplacer : le Papillon tire un projectile d'arcane, qui compte comme Transfert
+# pour la Phalene et l'Arc des deux lunes, pas pour la Brume ni l'Aile de lune.
+func _transfert(moi: Dictionary, adverse: Dictionary, mode: String, p: float) -> void:
+	var fait := false
+	if mode in ["renvoyer", "echange", "tout"]:
+		var types := _malus(moi)
+		if mode != "tout" and not types.is_empty():
+			types = [types[0]]
+		for type in types:
+			_renvoyer(moi, adverse, type)
+			fait = true
+	if mode in ["voler", "echange", "tout", "bouclier"]:
+		var vols := ["bouclier"] if mode == "bouclier" else _bonus(adverse)
+		if mode != "tout" and not vols.is_empty():
+			vols = [vols[0]]
+		for type in vols:
+			if _voler(moi, adverse, type, p, mode == "tout"):
+				fait = true
+	if not fait:
+		if not moi["cr"]["arcane"]:
+			return
+		_evenement(adverse, {"type": "arcane", "valeur": p * Data.ARCANE_PAR_PUISSANCE})
+		_blesser(adverse, p * Data.ARCANE_PAR_PUISSANCE, moi)
+	moi["transferts"] += 1
+	if moi["cr"]["cocon"] > 0.0:
+		moi["bouclier"] += moi["cr"]["cocon"]
+	if moi["cr"]["phalene"]:
+		_frapper(moi, adverse, moi["cr"]["attaque"], moi["cr"]["vol_de_vie"])
+
+# Malus portes, du plus lourd au plus leger.
+func _malus(moi: Dictionary) -> Array:
+	var poids := {"poison": moi["poison"], "brulure": _brulure(moi), "givre": moi["givre"],
+		"maledictions": 3.0 * _nb_maledictions(moi)}
+	var l := poids.keys().filter(func(k): return poids[k] > 0.0)
+	l.sort_custom(func(a, b): return poids[a] > poids[b])
+	return l
+
+func _bonus(moi: Dictionary) -> Array:
+	var poids := {"bouclier": moi["bouclier"], "braise": moi["braise"] * 10.0,
+		"eclat": moi["eclat_jauge"], "epines": (moi["epines_bonus"] - 1.0) * 50.0}
+	var l := poids.keys().filter(func(k): return poids[k] > 0.0)
+	l.sort_custom(func(a, b): return poids[a] > poids[b])
+	return l
+
+# Le malus quitte le Papillon et arrive chez l'adversaire (renforce par la Mue).
+func _renvoyer(moi: Dictionary, adverse: Dictionary, type: String) -> void:
+	var k: float = Data.MUE if moi["cr"]["mue"] else 1.0
+	match type:
+		"poison":
+			adverse["poison"] = minf(adverse["poison"] + moi["poison"] * k, Data.POISON_MAX)
+			moi["poison"] = 0.0
+		"brulure":
+			for b in moi["brulures"]:
+				adverse["brulures"].append({"fin": b["fin"], "q": b["q"] * k})
+			moi["brulures"].clear()
+		"givre":
+			var g: float = moi["givre"] * k
+			moi["givre"] = 0.0
+			_givrer(moi, adverse, g)
+		"maledictions":
+			for nom in moi["maledictions"]:
+				var n := _charges(moi, nom)
+				if n > 0:
+					adverse["maledictions"][nom] = {"n": mini(ceili(n * k), Data.CHAPELET_CHARGES), "fin": t + Data.MALEDICTION_DUREE}
+			moi["maledictions"].clear()
+	_evenement(adverse, {"type": "renvoi", "malus": type})
+
+# Vole un bonus (la part p, ou tout). Brume : soigne ; Aile de lune : hate volee.
+func _voler(moi: Dictionary, adverse: Dictionary, type: String, p: float, tout: bool) -> bool:
+	match type:
+		"bouclier":
+			var v: float = adverse["bouclier"] if tout else minf(adverse["bouclier"], p)
+			if v <= 0.0:
+				return false
+			adverse["bouclier"] -= v
+			moi["bouclier"] += v
+		"braise":
+			var v: float = adverse["braise"] if tout else minf(adverse["braise"], 1.0)
+			adverse["braise"] -= v
+			moi["braise"] = minf(moi["braise"] + v, Data.BRAISE_MAX)
+		"eclat":
+			var v: float = adverse["eclat_jauge"] if tout else minf(adverse["eclat_jauge"], p * 2.0)
+			adverse["eclat_jauge"] -= v
+			if moi["cr"]["eclat"]:
+				_charger_eclat(moi, adverse, v)
+		"epines":
+			var v: float = adverse["epines_bonus"] - 1.0 if tout else minf(adverse["epines_bonus"] - 1.0, 0.2)
+			adverse["epines_bonus"] -= v
+			moi["epines_bonus"] = minf(moi["epines_bonus"] + v, Data.EPINES_BONUS_MAX)
+	_evenement(adverse, {"type": "vol", "bonus": type})
+	if moi["cr"]["brume"]:
+		_soigner(moi, adverse, Data.BRUME_SOIN)
+	if moi["cr"]["aile_lune"]:
+		moi["braise_temp"] = Data.AILE_BRAISE
+		moi["braise_temp_jusqu"] = t + Data.AILE_DUREE
+	return true
 
 # --- maledictions -------------------------------------------------------------
 
@@ -453,6 +566,18 @@ func _subir(moi: Dictionary, adverse: Dictionary) -> void:
 	if not moi["brulures"].is_empty():
 		moi["pv"] -= _brulure(moi) * Data.BRULURE_DPS_CHARGE * Data.PAS
 		moi["brulures"] = moi["brulures"].filter(func(b): return b["fin"] > t)
+	# Chrysalide : une fois, sous la moitie de sa vie, tout renvoyer et tout voler
+	if moi["cr"]["chrysalide"] and not moi["chrysalide_faite"] and moi["pv"] < moi["cr"]["pv_max"] * Data.CHRYSALIDE_SEUIL:
+		moi["chrysalide_faite"] = true
+		_transfert(moi, adverse, "tout", 0.0)
+	# Inversion : une fois, au milieu du combat, on echange les pourcentages de vie
+	if moi["cr"]["inversion"] and not moi["inversion_faite"] and t >= Data.INVERSION_T:
+		moi["inversion_faite"] = true
+		var a: float = moi["pv"] / moi["cr"]["pv_max"]
+		var b: float = adverse["pv"] / adverse["cr"]["pv_max"]
+		moi["pv"] = b * moi["cr"]["pv_max"]
+		adverse["pv"] = a * adverse["cr"]["pv_max"]
+		_evenement(moi, {"type": "inversion"})
 	# Coeur de fournaise : une fois, en passant sous la moitie de sa vie
 	if moi["cr"]["fournaise"] and not moi["fournaise_faite"] and moi["pv"] < moi["cr"]["pv_max"] * Data.FOURNAISE_SEUIL:
 		moi["fournaise_faite"] = true

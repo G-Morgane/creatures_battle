@@ -21,6 +21,7 @@ func _ready() -> void:
 	ok = _phenix() and ok
 	ok = _nuit() and ok
 	ok = _aube() and ok
+	ok = _crepuscule() and ok
 	print("SMOKE: ", "OK" if ok else "ECHEC")
 	get_tree().quit(0 if ok else 1)
 
@@ -589,3 +590,94 @@ func _aube() -> bool:
 	for i in 4:
 		q._lancer(q.cotes[0], q.cotes[1], q.cotes[0]["sorts"][0])
 	return _verifier(q.evenements.filter(func(ev): return ev["type"] == "eclat").size() == 1, "sceptre du premier matin : eclat au 4e tir") and ok
+
+func _crepuscule() -> bool:
+	var vide := Nid.new().eclore()
+	var cr := Exemples.nid_crepuscule().eclore()
+	var ok := _verifier(cr["nom"] == "Papillon" and cr["arcane"], "crepuscule -> papillon")
+	# poudres : 4 x 1,5 chacune (toutes deux a cote du pollen) ; battement : (10 + 0,5 x crepuscule 8) x 1,5
+	ok = _verifier(is_equal_approx(cr["poudre"], 4.0 * 1.5 * 2), "pollen renforce les poudres voisines") and ok
+	ok = _verifier(is_equal_approx(cr["sorts"][0]["puissance"], (10.0 + 0.5 * 8) * 1.5), "battement : puissance et pollen") and ok
+	ok = _verifier(cr["bouclier"] == 20.0, "cocon : bouclier de depart") and ok
+	# renvoyer le malus le plus lourd
+	var c := Combat.new(cr, vide)
+	c.cotes[0]["poison"] = 12.0
+	c.cotes[0]["givre"] = 3.0
+	c._transfert(c.cotes[0], c.cotes[1], "renvoyer", 10.0)
+	ok = _verifier(c.cotes[0]["poison"] == 0.0 and c.cotes[1]["poison"] == 12.0 and c.cotes[0]["givre"] == 3.0, "renvoie le malus le plus lourd") and ok
+	# rien a renvoyer : projectile d'arcane, et le Cocon rend du bouclier
+	var pv: float = c.cotes[1]["pv"]
+	c.cotes[0]["givre"] = 0.0
+	var b0: float = c.cotes[0]["bouclier"]
+	c._transfert(c.cotes[0], c.cotes[1], "renvoyer", 10.0)
+	ok = _verifier(c.cotes[1]["pv"] == pv - 10.0 and c.evenements.any(func(e): return e["type"] == "arcane"), "rien a renvoyer : projectile d'arcane") and ok
+	ok = _verifier(c.cotes[0]["bouclier"] == b0 + 3.0, "cocon : bouclier a chaque transfert") and ok
+	# un non-Papillon ne tire pas d'arcane
+	var n := Nid.new()
+	n.placer(Vector2i(0, 0), "poudre")
+	n.placer(Vector2i(1, 0), "charbon")
+	n.placer(Vector2i(2, 0), "charbon")
+	var d := Combat.new(n.eclore(), vide)
+	pv = d.cotes[1]["pv"]
+	d._transfert(d.cotes[0], d.cotes[1], "renvoyer", 10.0)
+	ok = _verifier(d.cotes[1]["pv"] == pv and d.cotes[0]["transferts"] == 0, "pas d'arcane hors Papillon") and ok
+	# vol : bouclier, braise ; brume et aile de lune
+	var v := Nid.new()
+	v.placer(Vector2i(0, 0), "brume")
+	v.placer(Vector2i(1, 0), "aile_lune")
+	v.placer(Vector2i(2, 0), "battement")
+	var e := Combat.new(v.eclore(), vide)
+	e.cotes[1]["bouclier"] = 30.0
+	e.cotes[1]["braise"] = 3.0
+	e.cotes[0]["pv"] = 100.0
+	e._transfert(e.cotes[0], e.cotes[1], "voler", 8.0)
+	ok = _verifier(e.cotes[1]["bouclier"] == 22.0 and e.cotes[0]["bouclier"] == 8.0, "vole le bonus le plus lourd (bouclier)") and ok
+	ok = _verifier(e.cotes[0]["pv"] > 100.0 and e._braise(e.cotes[0]) >= Data.AILE_BRAISE, "brume soigne, aile de lune accelere") and ok
+	# mue : malus renvoye renforce
+	var m := Nid.new()
+	m.placer(Vector2i(0, 0), "mue")
+	var f := Combat.new(m.eclore(), vide)
+	f.cotes[0]["poison"] = 10.0
+	f._transfert(f.cotes[0], f.cotes[1], "renvoyer", 5.0)
+	ok = _verifier(f.cotes[1]["poison"] == 15.0, "mue : renvoi renforce") and ok
+	# phalene : chaque transfert declenche une attaque
+	var ph := Nid.new()
+	ph.placer(Vector2i(0, 0), "phalene")
+	var g := Combat.new(ph.eclore(), vide)
+	pv = g.cotes[1]["pv"]
+	g._transfert(g.cotes[0], g.cotes[1], "renvoyer", 5.0)
+	ok = _verifier(is_equal_approx(pv - g.cotes[1]["pv"], 5.0 + Data.ATTAQUE_BASE), "phalene : arcane puis attaque") and ok
+	# chrysalide : sous la moitie, renvoie tout et vole tout
+	var ch := Nid.new()
+	ch.placer(Vector2i(0, 0), "chrysalide")
+	var h := Combat.new(ch.eclore(), vide)
+	h.cotes[0]["poison"] = 5.0
+	h.cotes[0]["givre"] = 2.0
+	h.cotes[1]["bouclier"] = 40.0
+	h.cotes[0]["pv"] = 100.0
+	h._subir(h.cotes[0], h.cotes[1])
+	ok = _verifier(h.cotes[0]["poison"] == 0.0 and h.cotes[0]["givre"] == 0.0 and h.cotes[0]["bouclier"] == 40.0, "chrysalide : tout renvoyer, tout voler") and ok
+	# inversion : a 12 s, echange des pourcentages de vie
+	var iv := Nid.new()
+	iv.placer(Vector2i(0, 0), "inversion")
+	var k := Combat.new(iv.eclore(), vide)
+	k.cotes[0]["pv"] = 30.0
+	k.cotes[1]["pv"] = 270.0
+	k.t = Data.INVERSION_T
+	k._subir(k.cotes[0], k.cotes[1])
+	ok = _verifier(is_equal_approx(k.cotes[0]["pv"], 270.0) and is_equal_approx(k.cotes[1]["pv"], 30.0), "inversion : echange des pourcentages") and ok
+	# arc des deux lunes : plus fort par transfert ; fleches tous les 3 tirs
+	var al := Nid.new()
+	al.placer(Vector2i(0, 0), "arc_lunes")
+	var q := Combat.new(al.eclore(), vide)
+	q.cotes[0]["transferts"] = 4
+	pv = q.cotes[1]["pv"]
+	q._lancer(q.cotes[0], q.cotes[1], q.cotes[0]["sorts"][0])
+	ok = _verifier(is_equal_approx(pv - q.cotes[1]["pv"], 6.0 + 4 * 1.5), "arc des deux lunes") and ok
+	var fl := Exemples.nid_crepuscule()
+	fl.placer(Vector2i(3, 3), "flechettes")
+	var r := Combat.new(fl.eclore(), vide)
+	var fle: Dictionary = r.cotes[0]["sorts"].filter(func(s): return s["nom"] == "Fléchettes")[0]
+	for i in 3:
+		r._lancer(r.cotes[0], r.cotes[1], fle)
+	return _verifier(r.cotes[0]["transferts"] == 1, "flechettes : transfert tous les 3 tirs") and ok

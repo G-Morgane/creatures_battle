@@ -79,8 +79,9 @@ Sans élimination, le joueur simple gagne 49 à 54 % de ses combats à chaque ma
 difficulté est plate. Le fantôme n'est jamais meilleur que le joueur automatique simple,
 d'où un joueur aléatoire encore trop à l'aise.
 
-Par élément (joueur simple, avec l'Aube) : **Terre 4,1**, Feu 3,2, Vent 3,2, Nature 2,8, Glace 2,7,
-Aube 2,6, Nuit 2,6. Joueur simple : 3,0 victoires en moyenne, 20 % de parties gagnées.
+Par élément (joueur simple, avec le Crépuscule) : Vent 4,1 (peu de parties), Crépuscule 3,1,
+Glace 3,0, Feu 2,9, Nature 2,7, Nuit 2,7, Terre 2,6, Aube 2,5. Joueur simple : 2,9 victoires en
+moyenne, 21 % de parties gagnées.
 
 ### Fusion
 
@@ -482,6 +483,14 @@ le Lion est contré par la Nature (Belladone) et la Nuit (Flétrissure), adouci 
 
 ### Crépuscule (Papillon) : Transfert
 
+**Fait** (images de `images/`). Chaque source de Transfert a une **puissance** : quantité volée,
+et dégâts du projectile d'arcane quand il n'y a rien à déplacer. Battement d'ailes 10 + 0,5 par
+point de Crépuscule toutes les 5 s ; Poudre d'écailles 4 de bouclier volé par attaque ; Cocon 20 de
+bouclier au départ et **+3 de bouclier à chaque Transfert** (tel qu'écrit au départ, « plus gros
+pour chaque malus adverse », il ne servait à rien en début de combat, quand personne ne porte de
+malus) ; Mue x1,5 ; Brume 8 PV par vol ; Aile de lune +2 Braise pendant 3 s ; Inversion à 12 s.
+« Le malus le plus lourd » : poison, brûlure, givre ou malédictions selon la quantité portée.
+
 **Le moment où tout s'inverse.** Le Papillon **vole les bonus** de l'adversaire et lui **renvoie ses
 propres malus**. Familles d'armes : **Tir et Hast** (chacune partagée avec un autre élément).
 
@@ -503,7 +512,7 @@ Règles :
 |---|---|---|
 | Commun | Battement d'ailes | **Sort** : toutes les 5 s, renvoie ton malus le plus lourd à l'adversaire |
 | Commun | Poudre d'écailles | Tes attaques volent un peu de bouclier adverse |
-| Commun | Cocon | Commence le combat avec un petit bouclier, plus gros pour chaque malus porté par l'adversaire |
+| Commun | Cocon | Commence le combat avec un petit bouclier, et en regagne un peu à chaque Transfert |
 | Commun | Pollen doré | **Catalyseur** : les Transferts des objets voisins déplacent 50 % de plus (et leurs projectiles d'arcane font 50 % de dégâts en plus) |
 | Rare | Mue | Un malus renvoyé arrive renforcé chez l'adversaire |
 | Rare | Brume du soir | Voler un bonus te soigne |
@@ -557,8 +566,8 @@ On adapte son Nid à ce qu'on affronte, pas à une couleur.
 
 ## 7. Prototype (périmètre actuel)
 
-- 7 éléments : Terre, Vent (4 objets chacun), Feu, Nature, Glace, Nuit et Aube (15 objets chacun),
-  1 arme neutre (Lance du guet).
+- 8 éléments : Terre, Vent (4 objets chacun), Feu, Nature, Glace, Nuit, Aube et Crépuscule
+  (15 objets chacun), 1 arme neutre (Lance du guet).
 - Nid 4 x 4, reliques d'une case. **Les formes de reliques (2 x 1, L...) viendront après.**
 - Pas d'hybride, pas de réseau. Rareté en place.
 - Boutique, manches, combat animé contre un adversaire généré, fin de partie.
@@ -571,8 +580,8 @@ donne envie de refaire un Nid ? Si non, rien d'autre ne compte.
 ## 8. Plus tard
 
 - Formes de reliques et rotation.
-- Équilibrage : la Terre un cran au-dessus des autres.
-- Coder le Crépuscule (Papillon) : il faudra le dessin du papillon et les planches d'objets et d'armes.
+- Affichage : un bouclier ne se voit pas quand la monture a tous ses PV (la bande s'ajoute au bout
+  d'une barre pleine).
 - Une image pour la Serpe de ronces (le Fouet a été remplacé).
 - Refaire Feu, Nuit, Terre, Vent au format 15 objets, avec une ou deux familles d'armes chacun.
 - Objets neutres qui visent une famille d'armes.

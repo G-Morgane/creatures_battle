@@ -27,6 +27,9 @@ func _builds() -> Dictionary:
 	b["Aube"] = Exemples.nid_aube()
 	b["Aube + sceptre"] = _avec(Exemples.nid_aube(), "sceptre_aurore", Vector2i(3, 0))
 	b["Aube + hachette"] = _avec(Exemples.nid_aube(), "hachette_matin", Vector2i(3, 0))
+	b["Crépuscule"] = Exemples.nid_crepuscule()
+	b["Crépuscule + arc"] = _avec(Exemples.nid_crepuscule(), "arc_crepuscule", Vector2i(3, 0))
+	b["Crépuscule + fléchettes"] = _avec(Exemples.nid_crepuscule(), "flechettes", Vector2i(3, 0))
 	return b
 
 func _avec(n: Nid, id: String, c: Vector2i) -> Nid:
