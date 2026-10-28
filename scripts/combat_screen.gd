@@ -22,6 +22,9 @@ var fini := false
 var calque: Control
 var bandeau: Label
 var bouton_vitesse: Button
+var bouton_recap: Button
+var nids: Array = []      # MiniNid de chaque cote
+var recap: Recap
 
 func _init(a: Dictionary, b: Dictionary) -> void:
 	combat = Combat.new(a, b)
@@ -33,6 +36,14 @@ func _ready() -> void:
 	fond.color = Palette.FOND
 	fond.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(fond)
+	# arene peinte, qui couvre tout l'ecran sans se deformer
+	var peint := TextureRect.new()
+	peint.texture = Palette.image("res://images/fond_cbt.png")
+	peint.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	peint.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	peint.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	peint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(peint)
 	for i in 2:
 		var cr: Dictionary = combat.cotes[i]["cr"]
 		var v := CreatureVue.new()
@@ -50,6 +61,8 @@ func _ready() -> void:
 
 	bandeau = Label.new()
 	bandeau.add_theme_font_size_override("font_size", 40)
+	bandeau.add_theme_constant_override("outline_size", 10)
+	bandeau.add_theme_color_override("font_outline_color", Color(Palette.FOND, 0.85))
 	bandeau.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	bandeau.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
 	bandeau.offset_top = 80
@@ -65,8 +78,18 @@ func _ready() -> void:
 	bouton_vitesse = _bouton("Vitesse x1", _changer_vitesse)
 	boutons.add_child(bouton_vitesse)
 	boutons.add_child(_bouton("Rejouer", _rejouer))
+	bouton_recap = _bouton("Récap", func(): recap.visible = not recap.visible)
+	bouton_recap.visible = false
+	boutons.add_child(bouton_recap)
 	boutons.add_child(_bouton("Retour au Nid", func(): retour.emit()))
 	add_child(boutons)
+	for i in 2:
+		var m := MiniNid.new(self, i)
+		nids.append(m)
+		add_child(m)
+	recap = Recap.new(combat)
+	recap.visible = false
+	add_child(recap)
 	resized.connect(_placer)
 	_placer()
 
@@ -81,6 +104,9 @@ func _placer() -> void:
 	var milieu := size.y * 0.52
 	vues[0].position = Vector2(size.x * 0.27 - 220, milieu - 190)
 	vues[1].position = Vector2(size.x * 0.73 - 220, milieu - 190)
+	nids[0].position = Vector2(24, size.y - MiniNid.COTE - 64)
+	nids[1].position = Vector2(size.x - MiniNid.COTE - 24, size.y - MiniNid.COTE - 64)
+	recap.position = (size - recap.size) / 2 - Vector2(0, 30)
 
 # x1, x2, x3, puis retour a x1. Le bouton affiche la vitesse en cours.
 const VITESSES := [1.0, 2.0, 3.0]
@@ -95,6 +121,8 @@ func _rejouer() -> void:
 	effets.clear()
 	fini = false
 	bandeau.visible = false
+	recap.visible = false
+	bouton_recap.visible = false
 
 # --- lecture ---------------------------------------------------------------
 
@@ -234,6 +262,8 @@ func _texte(v: CreatureVue, ligne: int, texte: String, couleur: Color) -> void:
 
 func _fin() -> void:
 	bandeau.visible = true
+	recap.visible = true
+	bouton_recap.visible = true
 	if vainqueur == -1:
 		bandeau.text = "Égalité"
 		bandeau.add_theme_color_override("font_color", Palette.TEXTE)
@@ -245,6 +275,11 @@ func _fin() -> void:
 	create_tween().tween_property(perdant, "modulate", Color(1, 1, 1, 0.25), 0.6)
 
 # --- dessin ----------------------------------------------------------------
+
+# Recharge des sorts du cote i au moment rejoue.
+func recharges(i: int) -> Array:
+	var k := clampi(int(lecture / Data.PAS), 0, combat.recharges.size() - 1)
+	return combat.recharges[k][i]
 
 func _image() -> Array:
 	var i := clampi(int(lecture / Data.PAS), 0, combat.images.size() - 1)
@@ -258,21 +293,6 @@ func _dessiner() -> void:
 		var v: CreatureVue = vues[i]
 		var x := v.position.x + v.size.x / 2 - 150
 		var y := v.position.y - 30
-		calque.draw_string(police, Vector2(x, y - 12), cr["nom"], HORIZONTAL_ALIGNMENT_CENTER, 300, 20, Palette.TEXTE)
-		var part := clampf(img[i] / cr["pv_max"], 0.0, 1.0)
-		calque.draw_rect(Rect2(x, y, 300, 16), Palette.CASE)
-		calque.draw_rect(Rect2(x, y, 300 * part, 16), Palette.ELEMENTS[cr["forme"]]["vif"])
-		calque.draw_rect(Rect2(x, y, 300, 16), Palette.CASE_BORD, false, 1.0)
-		# bouclier : fine barre sous les PV, visible meme quand les PV sont pleins
-		var bouclier: float = img[4 + i]
-		var texte := "%d / %d" % [maxi(ceili(img[i]), 0), cr["pv_max"]]
-		if bouclier > 0.0:
-			calque.draw_rect(Rect2(x, y + 17, 300 * clampf(bouclier / cr["pv_max"], 0.0, 1.0), 4), Color("#cfe3f2"))
-			texte += "  +%d" % roundi(bouclier)
-		calque.draw_string(police, Vector2(x, y + 13), texte,
-			HORIZONTAL_ALIGNMENT_CENTER, 300, 13, Palette.TEXTE)
-		if img[2 + i]:
-			_brulure(v)
 		var etats := []
 		if img[2 + i] > 0.0:
 			etats.append(["Brûlure %d" % roundi(img[2 + i]), Palette.ELEMENTS["feu"]["vif"]])
@@ -290,6 +310,27 @@ func _dessiner() -> void:
 		if cr["elan"]:
 			var seuil_e := maxf(Data.ELAN_SEUIL - cr["manche"], Data.ELAN_SEUIL_MIN)
 			etats.append(["Élan %d/%d" % [roundi(img[18 + i]), roundi(seuil_e)], Palette.ELEMENTS["vent"]["vif"]])
+		# cadre sombre sous le nom, la barre et les etats : lisible sur le fond peint
+		var demi := maxf(162.0, 75.0 * etats.size() + 20.0)
+		var bas := 62.0 if img[14 + i] != "" else 44.0
+		calque.draw_rect(Rect2(x + 150 - demi, y - 36, demi * 2, bas + 36), Color(Palette.FOND, 0.7))
+		calque.draw_string(police, Vector2(x, y - 12), cr["nom"], HORIZONTAL_ALIGNMENT_CENTER, 300, 20, Palette.TEXTE)
+		var part := clampf(img[i] / cr["pv_max"], 0.0, 1.0)
+		calque.draw_rect(Rect2(x, y, 300, 16), Palette.CASE)
+		calque.draw_rect(Rect2(x, y, 300 * part, 16), Palette.ELEMENTS[cr["forme"]]["vif"])
+		calque.draw_rect(Rect2(x, y, 300, 16), Palette.CASE_BORD, false, 1.0)
+		# bouclier : fine barre sous les PV, visible meme quand les PV sont pleins
+		var bouclier: float = img[4 + i]
+		var texte := "%d / %d" % [maxi(ceili(img[i]), 0), cr["pv_max"]]
+		if bouclier > 0.0:
+			calque.draw_rect(Rect2(x, y + 17, 300 * clampf(bouclier / cr["pv_max"], 0.0, 1.0), 4), Color("#cfe3f2"))
+			texte += "  +%d" % roundi(bouclier)
+		calque.draw_string_outline(police, Vector2(x, y + 13), texte,
+			HORIZONTAL_ALIGNMENT_CENTER, 300, 13, 3, Color(0, 0, 0, 0.7))
+		calque.draw_string(police, Vector2(x, y + 13), texte,
+			HORIZONTAL_ALIGNMENT_CENTER, 300, 13, Palette.TEXTE)
+		if img[2 + i]:
+			_brulure(v)
 		if img[14 + i] != "":
 			calque.draw_string(police, Vector2(x, y + 54), img[14 + i],
 				HORIZONTAL_ALIGNMENT_CENTER, 300, 14, Palette.ELEMENTS["nuit"]["clair"])
@@ -358,3 +399,166 @@ func _brulure(v: CreatureVue) -> void:
 			Palette.ELEMENTS["feu"]["vif"])
 		calque.draw_colored_polygon(PackedVector2Array([p + Vector2(-4, 0), p + Vector2(0, -h * 0.5), p + Vector2(4, 0)]),
 			Palette.ELEMENTS["feu"]["clair"])
+
+# --- Nid en combat ---------------------------------------------------------
+
+# Le Nid d'un cote, en petit : chaque relique a sorts se remplit avec sa
+# recharge et s'allume quand elle part. Survol : l'infobulle de la relique.
+class MiniNid extends Control:
+	const CASE := 44.0
+	const ECART := 4.0
+	const COTE := CASE * 4 + ECART * 3
+	var ecran: CombatScreen
+	var cote: int
+	var cr: Dictionary
+	var sort_de := {}   # case -> index du sort
+	func _init(e: CombatScreen, i: int) -> void:
+		ecran = e
+		cote = i
+		cr = e.combat.cotes[i]["cr"]
+		for k in cr["sorts"].size():
+			sort_de[cr["sorts"][k]["case"]] = k
+		size = Vector2(COTE, COTE + 26)
+		tooltip_text = " "
+	func _case_sous(p: Vector2):
+		var c := Vector2i(int(p.x / (CASE + ECART)), int((p.y - 26) / (CASE + ECART)))
+		return c if cr["cases"].has(c) else null
+	func _get_tooltip(p: Vector2) -> String:
+		var c = _case_sous(p)
+		return "" if c == null else NidScreen.info(cr["cases"][c])
+	func _make_custom_tooltip(_t: String) -> Object:
+		var c = _case_sous(get_local_mouse_position())
+		return null if c == null else NidScreen.bulle(cr["cases"][c], cr["niveaux"].get(c, 1))
+	func _process(_d: float) -> void:
+		queue_redraw()
+	func _draw() -> void:
+		var police := ThemeDB.fallback_font
+		draw_rect(Rect2(-8, -4, size.x + 16, size.y + 12), Color(Palette.FOND, 0.7))
+		draw_string(police, Vector2(0, 16), "Ton Nid" if cote == 0 else "Nid adverse", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Palette.TEXTE)
+		var prog := ecran.recharges(cote)
+		for y in Data.NID_H:
+			for x in Data.NID_L:
+				var c := Vector2i(x, y)
+				var r := Rect2(Vector2(x, y) * (CASE + ECART) + Vector2(0, 26), Vector2(CASE, CASE))
+				if not cr["cases"].has(c):
+					draw_rect(r, Color(Palette.CASE, 0.8))
+					continue
+				var id: String = cr["cases"][c]
+				var el: Dictionary = Palette.ELEMENTS[Data.RELIQUES[id]["element"]]
+				draw_rect(r, el["fond"])
+				var tex := Palette.icone(id)
+				if tex != null:
+					var k := minf((CASE - 6) / tex.get_width(), (CASE - 6) / tex.get_height())
+					var t := tex.get_size() * k
+					draw_texture_rect(tex, Rect2(r.get_center() - t / 2, t), false)
+				# recharge : la case se devoile de bas en haut, et s'allume au depart
+				if sort_de.has(c):
+					var p: float = prog[sort_de[c]]
+					if p >= 0.0:
+						draw_rect(Rect2(r.position, Vector2(CASE, CASE * (1.0 - p))), Color(0, 0, 0, 0.55))
+						if p < 0.12:
+							draw_rect(r.grow(2), el["clair"], false, 3.0)
+				var rarete := Data.rarete(id)
+				draw_rect(r, Palette.RARETES[rarete] if rarete != "commun" else el["vif"], false, 1.5)
+				var niv: int = cr["niveaux"].get(c, 1)
+				if niv > 1:
+					draw_string(police, r.position + Vector2(2, 12), "★".repeat(niv - 1), HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color("#f2c94c"))
+
+# --- recap -----------------------------------------------------------------
+
+# Fin de combat : pour chaque cote, ce qui a fait le plus de degats, de soins,
+# de bouclier, et combien de fois c'est parti. Survol d'une relique : son infobulle.
+class Recap extends Control:
+	const MECANIQUES := {"~attaque": "Attaques", "~poison": "Poison", "~brulure": "Brûlure",
+		"~combustion": "Combustion", "~epines": "Épines", "~eclat": "Éclat", "~foudre": "Foudre",
+		"~regen": "Régénération", "~bris": "Bouclier brisé"}
+	const LIGNES := 10
+	const LARGEUR := 470.0
+	const HAUTEUR_LIGNE := 34.0
+	const DEGATS := Color("#e5834f")
+	const SOINS := Color("#8fd16a")
+	const BOUCLIER := Color("#9cc8ec")
+	var combat: Combat
+	var lignes: Array = [[], []]   # par cote : [source, valeurs]
+	func _init(c: Combat) -> void:
+		combat = c
+		var n := 0
+		for i in 2:
+			var l := []
+			for source in c.stats[i]:
+				l.append([source, c.stats[i][source]])
+			l.sort_custom(func(a, b): return _poids(a[1]) > _poids(b[1]))
+			lignes[i] = l.slice(0, LIGNES)
+			n = maxi(n, lignes[i].size())
+		size = Vector2(LARGEUR * 2 + 60, 84 + n * HAUTEUR_LIGNE + 34)
+		tooltip_text = " "
+		mouse_filter = Control.MOUSE_FILTER_PASS
+	static func _poids(v: Dictionary) -> float:
+		return v["degats"] + v["soins"] + v["bouclier"]
+	func _source_sous(p: Vector2):
+		var i := 0 if p.x < size.x / 2 else 1
+		var k := int((p.y - 84) / HAUTEUR_LIGNE)
+		if p.y < 84 or k >= lignes[i].size():
+			return null
+		var source: String = lignes[i][k][0]
+		return null if source.begins_with("~") else source
+	func _get_tooltip(p: Vector2) -> String:
+		var s = _source_sous(p)
+		return "" if s == null else NidScreen.info(s)
+	func _make_custom_tooltip(_t: String) -> Object:
+		var s = _source_sous(get_local_mouse_position())
+		return null if s == null else NidScreen.bulle(s)
+	func _nom(source: String) -> String:
+		return MECANIQUES.get(source, Data.RELIQUES[source]["nom"] if Data.RELIQUES.has(source) else source)
+	func _draw() -> void:
+		var police := ThemeDB.fallback_font
+		draw_rect(Rect2(Vector2.ZERO, size), Color(Palette.FOND, 0.97))
+		draw_rect(Rect2(Vector2.ZERO, size), Palette.CASE_BORD, false, 2.0)
+		draw_string(police, Vector2(0, 34), "Récap du combat", HORIZONTAL_ALIGNMENT_CENTER, size.x, 22, Palette.TEXTE)
+		for i in 2:
+			var x0 := 24.0 + i * (LARGEUR + 12)
+			var cr: Dictionary = combat.cotes[i]["cr"]
+			draw_string(police, Vector2(x0, 70), ("Toi" if i == 0 else "Adversaire") + " (%s)" % cr["nom"],
+				HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Palette.ELEMENTS[cr["forme"]]["clair"])
+			var maxi := 1.0
+			for l in lignes[i]:
+				maxi = maxf(maxi, maxf(l[1]["degats"], maxf(l[1]["soins"], l[1]["bouclier"])))
+			for k in lignes[i].size():
+				var source: String = lignes[i][k][0]
+				var v: Dictionary = lignes[i][k][1]
+				var y: float = 84.0 + k * HAUTEUR_LIGNE
+				var tex := Palette.icone(source) if Data.RELIQUES.has(source) else null
+				if tex != null:
+					var kk := minf(26.0 / tex.get_width(), 26.0 / tex.get_height())
+					draw_texture_rect(tex, Rect2(Vector2(x0, y + 3), tex.get_size() * kk), false)
+				else:
+					draw_circle(Vector2(x0 + 13, y + 16), 6, Palette.TEXTE_DOUX)
+				draw_string(police, Vector2(x0 + 34, y + 21), _nom(source), HORIZONTAL_ALIGNMENT_LEFT, 150, 14, Palette.TEXTE)
+				# une barre par valeur, a l'echelle de la plus grande du cote
+				var bx: float = x0 + 190
+				var by: float = y + 6
+				for champ in [["degats", DEGATS], ["soins", SOINS], ["bouclier", BOUCLIER]]:
+					var val: float = v[champ[0]]
+					if val <= 0.0:
+						continue
+					draw_rect(Rect2(bx, by, 150 * val / maxi, 6), champ[1])
+					by += 8
+				var textes := []
+				if v["degats"] > 0.0:
+					textes.append(["%d" % roundi(v["degats"]), DEGATS])
+				if v["soins"] > 0.0:
+					textes.append(["+%d" % roundi(v["soins"]), SOINS])
+				if v["bouclier"] > 0.0:
+					textes.append(["%d" % roundi(v["bouclier"]), BOUCLIER])
+				if v["activations"] > 0.0:
+					textes.append(["x%d" % roundi(v["activations"]), Palette.TEXTE_DOUX])
+				var tx: float = x0 + 350
+				for t in textes:
+					draw_string(police, Vector2(tx, y + 21), t[0], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, t[1])
+					tx += police.get_string_size(t[0], HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x + 10
+		# legende
+		var lx := 24.0
+		for l in [["Dégâts", DEGATS], ["Soins", SOINS], ["Bouclier", BOUCLIER], ["xN : activations", Palette.TEXTE_DOUX]]:
+			draw_rect(Rect2(lx, size.y - 20, 10, 10), l[1])
+			draw_string(police, Vector2(lx + 16, size.y - 10), l[0], HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Palette.TEXTE_DOUX)
+			lx += police.get_string_size(l[0], HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x + 40

@@ -15,6 +15,13 @@ var journal: Array[String] = []
 # brule = nombre de charges de brulure, maledictions = texte ("Faiblesse x2, Langueur").
 var evenements: Array = []
 var images: Array = []
+# Recharge des sorts a chaque pas, de 0 a 1 ([cote 0, cote 1], un par sort ;
+# -1 pour un sort qui part sur coups recus).
+var recharges: Array = []
+# Recap : par cote, source -> {degats, soins, bouclier, activations}. La source
+# est l'id d'une relique, ou une mecanique prefixee de ~ (~attaque, ~poison...).
+var stats: Array = [{}, {}]
+var origine := "~attaque"
 # L'esquive du Vent est un tirage : graine fixe, donc toujours le meme combat.
 var rng := RandomNumberGenerator.new()
 
@@ -106,6 +113,7 @@ func simuler() -> int:
 			cotes[0]["givre"], cotes[1]["givre"], _gele(cotes[0]), _gele(cotes[1]), _braise(cotes[0]), _braise(cotes[1]),
 			_resume_maledictions(cotes[0]), _resume_maledictions(cotes[1]),
 			cotes[0]["eclat_jauge"], cotes[1]["eclat_jauge"], cotes[0]["elan_jauge"], cotes[1]["elan_jauge"]])
+		recharges.append([_recharges(cotes[0]), _recharges(cotes[1])])
 		if morts[0] or morts[1]:
 			var v := 1 if morts[0] else 0
 			# Chute simultanee : celui qui finit le moins en negatif tient debout.
@@ -118,6 +126,40 @@ func simuler() -> int:
 			return v
 	_noter("Temps écoulé.")
 	return -1
+
+func _recharges(moi: Dictionary) -> Array:
+	var l := []
+	for s in moi["sorts"]:
+		if s["prochain"] == INF or s["recharge"] <= 0.0:
+			l.append(-1.0)
+		else:
+			l.append(clampf(1.0 - (s["prochain"] - moi["horloge"]) / s["recharge"], 0.0, 1.0))
+	return l
+
+# --- recap ---------------------------------------------------------------------
+
+func _compter(cote: int, champ: String, v: float, source := "") -> void:
+	if v <= 0.0:
+		return
+	var cle := source if source != "" else origine
+	var l: Dictionary = stats[cote].get(cle, {"degats": 0.0, "soins": 0.0, "bouclier": 0.0, "activations": 0.0})
+	l[champ] += v
+	stats[cote][cle] = l
+
+# Change la source courante, rend l'ancienne pour la remettre apres.
+func _depuis(o: String) -> String:
+	var avant := origine
+	origine = o
+	return avant
+
+func _proteger(moi: Dictionary, b: float, source := "") -> void:
+	moi["bouclier"] += b
+	_compter(moi["cote"], "bouclier", b, source)
+
+# Degats directs, qui passent le bouclier (brulure, poison, combustion...).
+func _infliger(cible: Dictionary, d: float, source := "") -> void:
+	cible["pv"] -= d
+	_compter(1 - cible["cote"], "degats", d, source)
 
 # Le givre ralentit le temps propre (attaques et recharges), le gel l'arrete,
 # la Braise (hate) l'accelere.
@@ -142,6 +184,8 @@ func _agir(moi: Dictionary, cible: Dictionary) -> void:
 	var h: float = moi["horloge"]
 	if moi["horloge_attaque"] >= moi["prochaine_attaque"]:
 		moi["prochaine_attaque"] += moi["cr"]["intervalle"]
+		origine = "~attaque"
+		_compter(moi["cote"], "activations", 1.0)
 		_evenement(moi, {"type": "attaque"})
 		var degats: float = moi["cr"]["attaque"]
 		if _brulure(cible) > 0.0:
@@ -160,7 +204,7 @@ func _agir(moi: Dictionary, cible: Dictionary) -> void:
 				_maudire(moi, cible, "faiblesse")
 			# Pacte : sous trois maledictions, chaque attaque draine en plus (passe le bouclier)
 			if moi["cr"]["pacte"] > 0.0 and _nb_maledictions(cible) == Data.MALEDICTIONS.size():
-				cible["pv"] -= moi["cr"]["pacte"]
+				_infliger(cible, moi["cr"]["pacte"], "pacte")
 				_soigner(moi, cible, moi["cr"]["pacte"])
 			if moi["cr"]["brulure_attaque"] > 0.0:
 				_bruler(moi, cible, moi["cr"]["brulure_attaque"])
@@ -174,10 +218,12 @@ func _agir(moi: Dictionary, cible: Dictionary) -> void:
 		if h < s["prochain"]:
 			continue
 		s["prochain"] += s["recharge"]
+		origine = s["id"]
 		_lancer(moi, cible, s)
 
 # Un sort qui part. renfort multiplie ses degats (tir de renaissance).
 func _lancer(moi: Dictionary, cible: Dictionary, s: Dictionary, renfort := 1.0) -> void:
+	_compter(moi["cote"], "activations", 1.0, s["id"])
 	if s["esquive"]:
 		moi["esquive"] = true
 		_evenement(moi, {"type": "voile"})
@@ -188,13 +234,13 @@ func _lancer(moi: Dictionary, cible: Dictionary, s: Dictionary, renfort := 1.0) 
 	_evenement(moi, {"type": "sort", "nom": s["nom"], "cavalier": s["cavalier"],
 		"element": s["element"], "coups": s["coups"]})
 	if s["bouclier"] > 0.0:
-		moi["bouclier"] += s["bouclier"]
+		_proteger(moi, s["bouclier"])
 		_evenement(moi, {"type": "bouclier", "valeur": s["bouclier"]})
 	# Truelle : le bouclier de mortier remplace le precedent (la Clef en garde la moitie)
 	if s["mortier"] > 0.0:
 		var ancien := minf(moi["bouclier"], moi["mortier"])
 		var garde: float = ancien * Data.CLEF if moi["cr"]["clef"] else 0.0
-		moi["bouclier"] += s["mortier"] - (ancien - garde)
+		_proteger(moi, s["mortier"] - (ancien - garde))
 		moi["mortier"] = s["mortier"] + garde
 		_evenement(moi, {"type": "bouclier", "valeur": s["mortier"]})
 	if s["rempart"] and moi["bouclier"] > 0.0:
@@ -237,7 +283,7 @@ func _lancer(moi: Dictionary, cible: Dictionary, s: Dictionary, renfort := 1.0) 
 		touche = touche_coup or touche
 		if touche_coup and s["fondations"]:
 			var b: float = degats * Data.FONDATIONS * (1.5 if moi["pv"] < moi["cr"]["pv_max"] * 0.5 else 1.0)
-			moi["bouclier"] += b
+			_proteger(moi, b)
 			_evenement(moi, {"type": "bouclier", "valeur": b})
 	s.erase("bonus_fracas")
 	if s["coups"] == 0 or touche:
@@ -309,7 +355,7 @@ func _combustion(moi: Dictionary, cible: Dictionary, part: float, totale: bool, 
 		for b in cible["brulures"]:
 			b["q"] *= 1.0 - part
 	var degats := consomme * Data.COMBUSTION_PAR_CHARGE * (Data.COMBUSTION_TOTALE_BONUS if totale else 1.0)
-	cible["pv"] -= degats
+	_infliger(cible, degats, "~combustion")
 	moi["braise"] = minf(moi["braise"] + braise, Data.BRAISE_MAX)
 	_soigner(moi, cible, moi["cr"]["combustion_soin"] + moi["cr"]["soin_par_charge"] * consomme)
 	_evenement(cible, {"type": "combustion", "totale": totale, "valeur": degats})
@@ -359,6 +405,7 @@ func _charger_eclat(moi: Dictionary, adverse: Dictionary, n: float) -> void:
 # Un coup de lumiere. Prisme : plus fort ; Lanterne : ajoute l'excedent accumule ;
 # Encensoir : regeneration renforcee un moment ; Carillon : un gros soin tous les 3.
 func _eclat(moi: Dictionary, adverse: Dictionary) -> void:
+	var avant := _depuis("~eclat")
 	var degats: float = Data.ECLAT_DEGATS + moi["cr"]["prisme"] + moi["cr"]["lanterne"] * moi["exces_accumule"]
 	moi["exces_accumule"] = 0.0
 	_evenement(adverse, {"type": "eclat", "valeur": degats})
@@ -370,8 +417,10 @@ func _eclat(moi: Dictionary, adverse: Dictionary) -> void:
 	if moi["cr"]["carillon"] > 0.0 and moi["eclats"] % Data.CARILLON_TOUS == 0:
 		# sinon, avec des reliques fusionnees, le soin relancait l'Eclat sans fin
 		moi["dans_eclat"] = true
+		origine = "carillon"
 		_soigner(moi, adverse, moi["cr"]["carillon"])
 		moi["dans_eclat"] = false
+	origine = avant
 
 # --- Elan et Foudre (Cheval) -------------------------------------------------------
 
@@ -410,6 +459,7 @@ func _gagner_elan(moi: Dictionary, adverse: Dictionary, n: float) -> void:
 # La Foudre ne s'esquive pas. Eventail, Girouette : plus fort ; Voile de cavale :
 # esquive ; Bride : Galop libre (pas renouvele s'il est deja actif) ; Lance : coup suivant.
 func _foudre(moi: Dictionary, adverse: Dictionary) -> void:
+	var avant := _depuis("~foudre")
 	var degats: float = Data.FOUDRE_DEGATS + moi["cr"]["eventail"] + moi["girouette_bonus"]
 	moi["girouette_bonus"] = 0.0
 	_evenement(adverse, {"type": "foudre", "valeur": degats})
@@ -422,6 +472,7 @@ func _foudre(moi: Dictionary, adverse: Dictionary) -> void:
 		moi["braise_temp"] = Data.GALOP_HATE
 		moi["braise_temp_jusqu"] = moi["galop_jusqu"]
 		_evenement(moi, {"type": "galop"})
+	origine = avant
 
 # --- Transfert (Papillon) --------------------------------------------------------
 
@@ -452,7 +503,7 @@ func _transfert(moi: Dictionary, adverse: Dictionary, mode: String, p: float) ->
 		_blesser(adverse, p * Data.ARCANE_PAR_PUISSANCE, moi)
 	moi["transferts"] += 1
 	if moi["cr"]["cocon"] > 0.0:
-		moi["bouclier"] += moi["cr"]["cocon"]
+		_proteger(moi, moi["cr"]["cocon"], "cocon")
 	if moi["cr"]["phalene"]:
 		_frapper(moi, adverse, moi["cr"]["attaque"], moi["cr"]["vol_de_vie"])
 
@@ -502,7 +553,7 @@ func _voler(moi: Dictionary, adverse: Dictionary, type: String, p: float, tout: 
 			if v <= 0.0:
 				return false
 			adverse["bouclier"] -= v
-			moi["bouclier"] += v
+			_proteger(moi, v)
 		"braise":
 			var v: float = adverse["braise"] if tout else minf(adverse["braise"], 1.0)
 			adverse["braise"] -= v
@@ -569,8 +620,9 @@ func _soigner(moi: Dictionary, adverse: Dictionary, soin: float) -> void:
 	soin *= maxf(0.0, 1.0 - Data.FLETRISSURE * _charges(moi, "fletrissure"))
 	var applique := minf(soin, maxf(0.0, moi["cr"]["pv_max"] - moi["pv"]))
 	moi["pv"] += applique
+	_compter(moi["cote"], "soins", applique)
 	if moi["cr"]["vasque"] > 0.0 and soin > applique:
-		moi["bouclier"] += (soin - applique) * moi["cr"]["vasque"]
+		_proteger(moi, (soin - applique) * moi["cr"]["vasque"], "vasque")
 	if moi["cr"]["grimoire"] > 0.0:
 		moi["vole"] += soin
 		if moi["vole"] >= moi["cr"]["grimoire"]:
@@ -583,6 +635,7 @@ func _soigner(moi: Dictionary, adverse: Dictionary, soin: float) -> void:
 # Ces ripostes passent par _blesser : elles ne declenchent rien a leur tour.
 func _riposter(moi: Dictionary, attaquant: Dictionary) -> void:
 	moi["coups_recus"] += 1
+	var avant := _depuis("~epines")
 	var cr: Dictionary = moi["cr"]
 	if cr["epines"] > 0.0:
 		_blesser(attaquant, cr["epines"] * moi["epines_bonus"], moi)
@@ -598,8 +651,11 @@ func _riposter(moi: Dictionary, attaquant: Dictionary) -> void:
 		_evenement(moi, {"type": "salve"})
 	for s in moi["sorts"]:
 		if s["contre"] > 0 and moi["coups_recus"] % s["contre"] == 0:
+			origine = s["id"]
+			_compter(moi["cote"], "activations", 1.0)
 			_blesser(attaquant, s["degats"] + s["par_epine"] * cr["epines"] * moi["epines_bonus"], moi)
 			_evenement(moi, {"type": "sort", "nom": s["nom"], "cavalier": true, "element": s["element"], "coups": 1})
+	origine = avant
 
 # Le poison s'empile (plafond) ; une Fleche-graine plantee blesse a chaque dose recue.
 func _empoisonner(cible: Dictionary, doses: float) -> void:
@@ -625,12 +681,13 @@ func _blesser(cible: Dictionary, degats: float, source = null) -> void:
 	cible["bouclier"] -= absorbe
 	cible["mortier"] = minf(cible["mortier"], cible["bouclier"])
 	cible["pv"] -= degats - absorbe
+	_compter(1 - cible["cote"], "degats", degats)
 	if avant > 0.0 and cible["bouclier"] <= 0.0:
 		cible["fil_temps"] = 0.0
 		cible["rempart_bonus"] = 0.0
 	# Poupee cousue : renvoie une part des degats a un adversaire maudit
 	if source != null and cible["cr"]["renvoi"] > 0.0 and _nb_maledictions(source) > 0:
-		source["pv"] -= degats * cible["cr"]["renvoi"]
+		_infliger(source, degats * cible["cr"]["renvoi"], "poupee")
 	if avant > 0.0 and cible["bouclier"] <= 0.0 and source != null:
 		_briser(cible, source)
 
@@ -646,6 +703,7 @@ func _reduction(moi: Dictionary) -> float:
 # s'arrete d'elle-meme, un bouclier brise vaut zero.
 func _briser(moi: Dictionary, source: Dictionary) -> void:
 	var cr: Dictionary = moi["cr"]
+	var avant := _depuis("~bris")
 	_evenement(moi, {"type": "bris"})
 	if cr["bris_degats"] > 0.0:
 		_blesser(source, cr["bris_degats"], moi)
@@ -660,6 +718,7 @@ func _briser(moi: Dictionary, source: Dictionary) -> void:
 		_blesser(source, cr["nova"], moi)
 		if source["givre"] > 0.0 and not _gele(source):
 			_geler(moi, source)
+	origine = avant
 
 # Givre : des charges qui ralentissent ; au seuil (moins la Rose), la cible gele.
 func _givrer(moi: Dictionary, cible: Dictionary, charges: float) -> void:
@@ -676,7 +735,7 @@ func _geler(moi: Dictionary, cible: Dictionary) -> void:
 	_evenement(cible, {"type": "gel"})
 	_noter("%s gèle." % cible["cr"]["nom"])
 	if moi["cr"]["gel_bouclier"] > 0.0:
-		moi["bouclier"] += moi["cr"]["gel_bouclier"]
+		_proteger(moi, moi["cr"]["gel_bouclier"], "coeur_banquise")
 		_evenement(moi, {"type": "bouclier", "valeur": moi["cr"]["gel_bouclier"]})
 
 # Brulure, poison et fatigue passent a travers le bouclier.
@@ -687,14 +746,16 @@ func _subir(moi: Dictionary, adverse: Dictionary) -> void:
 		regen += moi["cr"]["bande"]
 	if t < moi["encensoir_jusqu"]:
 		regen += moi["cr"]["encensoir"]
+	origine = "~regen"
 	if regen > 0.0 and moi["pv"] > 0.0:
 		_soigner(moi, adverse, regen * Data.PAS)
 	if not moi["brulures"].is_empty():
-		moi["pv"] -= _brulure(moi) * Data.BRULURE_DPS_CHARGE * Data.PAS
+		_infliger(moi, _brulure(moi) * Data.BRULURE_DPS_CHARGE * Data.PAS, "~brulure")
 		moi["brulures"] = moi["brulures"].filter(func(b): return b["fin"] > t)
 	# Chrysalide : une fois, sous la moitie de sa vie, tout renvoyer et tout voler
 	if moi["cr"]["chrysalide"] and not moi["chrysalide_faite"] and moi["pv"] < moi["cr"]["pv_max"] * Data.CHRYSALIDE_SEUIL:
 		moi["chrysalide_faite"] = true
+		origine = "chrysalide"
 		_transfert(moi, adverse, "tout", 0.0)
 	# Inversion : une fois, au milieu du combat, on echange les pourcentages de vie
 	if moi["cr"]["inversion"] and not moi["inversion_faite"] and t >= Data.INVERSION_T:
@@ -707,15 +768,16 @@ func _subir(moi: Dictionary, adverse: Dictionary) -> void:
 	# Coeur de fournaise : une fois, en passant sous la moitie de sa vie
 	if moi["cr"]["fournaise"] and not moi["fournaise_faite"] and moi["pv"] < moi["cr"]["pv_max"] * Data.FOURNAISE_SEUIL:
 		moi["fournaise_faite"] = true
+		origine = "coeur_fournaise"
 		_combustion(moi, adverse, 1.0, true, 1.0)
 		moi["braise_temp"] = Data.FOURNAISE_BRAISE
 		moi["braise_temp_jusqu"] = t + Data.FOURNAISE_DUREE
 	if t >= moi["reforme_a"]:
 		moi["reforme_a"] = INF
-		moi["bouclier"] += moi["cr"]["reforme"]
+		_proteger(moi, moi["cr"]["reforme"], "ecorce")
 		_evenement(moi, {"type": "bouclier", "valeur": moi["cr"]["reforme"]})
 	if moi["poison"] > 0.0:
-		moi["pv"] -= moi["poison"] * Data.POISON_DPS_PAR_DOSE * Data.PAS
+		_infliger(moi, moi["poison"] * Data.POISON_DPS_PAR_DOSE * Data.PAS, "~poison")
 		# Graine : tant que l'adversaire est empoisonne, les epines poussent
 		if adverse["cr"]["graine"]:
 			adverse["epines_bonus"] = minf(adverse["epines_bonus"] + Data.GRAINE_POUSSE * Data.PAS, Data.EPINES_BONUS_MAX)
@@ -727,10 +789,11 @@ func _subir(moi: Dictionary, adverse: Dictionary) -> void:
 		moi["fil_temps"] += Data.PAS
 		if moi["fil_temps"] >= Data.FIL_PLOMB_DELAI:
 			moi["fil_temps"] = 0.0
-			moi["bouclier"] += moi["cr"]["fil_plomb"]
+			_proteger(moi, moi["cr"]["fil_plomb"], "fil_plomb")
 			moi["bouclier_avant"] = moi["bouclier"]
 	if moi["cr"]["urne"] and not moi["urne_faite"] and t >= moi["fatigue_debut"]:
 		moi["urne_faite"] = true
+		origine = "urne"
 		_soigner(moi, adverse, moi["urne_reserve"])
 		_evenement(moi, {"type": "urne", "valeur": moi["urne_reserve"]})
 	if t > moi["fatigue_debut"] and t >= moi["fatigue_suspendue_jusqu"]:

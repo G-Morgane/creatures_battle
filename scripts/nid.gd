@@ -284,6 +284,9 @@ func eclore() -> Dictionary:
 	# l'Oeuf du Premier Brasier donne une renaissance de plus
 	if cr["oeuf"]:
 		cr["renaissances"] += 1
+	# pour l'arene : le Nid tel qu'il etait, et ses niveaux
+	cr["cases"] = cases.duplicate()
+	cr["niveaux"] = niveaux.duplicate()
 	return cr
 
 # Un sort lit ses catalyseurs voisins au moment de l'eclosion.
@@ -301,6 +304,8 @@ func _sort(c: Vector2i, r: Dictionary, aff: Dictionary) -> Dictionary:
 	var m: float = Data.NIVEAU_MULT[niveau(c)]
 	var s := {
 		"nom": r.get("sort", r["nom"]),
+		"id": cases[c],
+		"case": c,
 		"cavalier": r["type"] == "arme",
 		"element": r["element"],
 		"perce": r.get("perce", false),
