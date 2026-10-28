@@ -66,39 +66,6 @@ const AILE_BRAISE := 2.0           # hate volee : Braise temporaire
 const AILE_DUREE := 3.0
 const CHRYSALIDE_SEUIL := 0.5
 const INVERSION_T := 12.0
-# Tortue : veut des combats longs, joue sur la fatigue (mort subite).
-const TORTUE_AVANCE_FATIGUE := 10.0
-const TORTUE_FATIGUE_MULT := 0.5
-# Reduction de degats : retiree a chaque coup recu (pas au poison, a la brulure,
-# a la fatigue), avant le bouclier, plafonnee.
-const REDUCTION_MAX := 0.5
-const FIL_PLOMB_DELAI := 3.0       # bouclier tenu sans bris : renforce
-const TUILE := 0.5                 # premier coup apres un nouveau bouclier
-const CLEF := 0.5                  # part du bouclier garde au renouvellement
-const BORNE_DUREE := 4.0           # fatigue suspendue
-const SCHISTE := 0.25              # Hachette de schiste : degats infliges en moins
-const SCHISTE_DUREE := 3.0
-const REMPART_PAS := 0.05
-const REMPART_MAX := 0.2
-const FONDATIONS := 0.6            # bouclier selon les degats infliges
-const AGES_PAR_SECONDE := 0.5      # soin du Baton des ages par seconde de fatigue
-const AGES_MAX := 15.0
-# Cheval : esquive au hasard (tirage deterministe par combat). Attaques et esquives
-# chargent l'Elan ; a pleine jauge, la Foudre frappe l'adversaire.
-const ESQUIVE_CHEVAL := 0.15
-const ESQUIVE_MAX := 0.5
-const ESQUIVE_MAX_TEMP := 0.75     # avec le Voile de cavale
-const ELAN_SEUIL := 100.0
-const ELAN_SEUIL_MIN := 40.0
-const ELAN_PAR_ATTAQUE := 10.0
-const ELAN_PAR_ESQUIVE := 20.0
-const ETRIER_MAX := 10.0           # bonus d'Elan de serie au plus
-const FOUDRE_DEGATS := 35.0
-const RUBAN_DUREE := 2.0
-const VOILE_CAVALE_DUREE := 3.0
-const GALOP_DUREE := 4.0           # Bride des vents libres
-const GALOP_HATE := 5.0
-const ALIZE_AVANCE := 0.3          # Javelot des alizes : attaque suivante avancee
 # Cerf : epines (riposte a chaque coup recu) et poison (doses qui s'empilent,
 # ne s'effacent pas, passent a travers le bouclier).
 const EPINES_CERF := 2.0
@@ -145,7 +112,7 @@ const FOURNAISE_DUREE := 6.0
 # --- reliques --------------------------------------------------------------
 
 # type : essence (stats), sort (actif avec recharge), catalyseur (modifie ses voisins)
-# Essences : attaque, vitesse, vol_de_vie, pv, bouclier (au depart), esquive (chance).
+# Essences : attaque, vitesse, vol_de_vie, pv, bouclier (au depart).
 # Un sort gagne `par_affinite` par point d'affinite dans son element, sur sa valeur
 # principale : `echelle` si elle est donnee, sinon degats, bouclier ou poison.
 const RELIQUES := {
@@ -471,5 +438,5 @@ static func rarete(id: String) -> String:
 const NIVEAU_MAX := 3
 const NIVEAU_MULT := [0.0, 1.0, 2.5, 6.0]
 
-# Estoc ignore l'esquive. Moisson double ses degats sous ce seuil de PV.
+# Moisson double ses degats sous ce seuil de PV.
 const SEUIL_EXECUTION := 0.4

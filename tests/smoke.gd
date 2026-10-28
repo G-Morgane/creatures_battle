@@ -111,7 +111,7 @@ func _armes() -> bool:
 	n.placer(Vector2i(1, 0), "fourrure")
 	var s: Dictionary = n.eclore()["sorts"][0]
 	ok = _verifier(s["cavalier"] and s["nom"] == "Estoc" and s["bouclier"] > 0.0, "sort du cavalier + catalyseur voisin") and ok
-	# Estoc perce le Voile : la chauve-souris ne doit jamais esquiver un Estoc.
+	# Estoc part en combat.
 	var lance := Nid.new()
 	lance.placer(Vector2i(0, 0), "lance_guet")
 	var c := Combat.new(lance.eclore(), Exemples.nid_nuit().eclore())

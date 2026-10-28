@@ -263,27 +263,7 @@ func eclore() -> Dictionary:
 		"attaque": Data.ATTAQUE_BASE,
 		"intervalle": Data.INTERVALLE_BASE,
 		"vol_de_vie": Data.VOL_DE_VIE_NUIT if f == "nuit" else 0.0,
-		"tortue": f == "terre",
-		"elan": f == "vent",
-		"ruban_criniere": 0.0,
-		"etrier": 0.0,
-		"manche": 0.0,
-		"eventail": 0.0,
-		"voile_cavale": 0.0,
-		"girouette": 0.0,
-		"bride": false,
-		"reduction": 0.0,
-		"cale": 0.0,
-		"fil_plomb": 0.0,
-		"tuile": false,
-		"sablier_ensable": 0.0,
-		"clef": false,
-		"urne": false,
-		"borne": false,
-		"rapiere": false,
-		"riposte_esquive": false,
 		"bouclier": 0.0,
-		"esquive": Data.ESQUIVE_CHEVAL if f == "vent" else 0.0,
 		"epines": Data.EPINES_CERF if f == "nature" else 0.0,
 		"epines_poison": 0.0,
 		"poison_attaque": 0.0,
@@ -352,7 +332,6 @@ func eclore() -> Dictionary:
 				cr["vol_de_vie"] += r.get("vol_de_vie", 0.0) * m
 				cr["pv_max"] += r.get("pv", 0.0) * m
 				cr["bouclier"] += r.get("bouclier", 0.0) * m
-				cr["esquive"] += r.get("esquive", 0.0) * m
 				vitesse += r.get("vitesse", 0.0) * m
 				# Ortie et Amanite renforcent aussi les essences voisines
 				cr["epines"] += r.get("epines", 0.0) * m * _renfort(c, "epines")
@@ -371,20 +350,11 @@ func eclore() -> Dictionary:
 				for drapeau in ["resine", "fournaise", "oeuf"]:
 					cr[drapeau] = cr[drapeau] or r.get(drapeau, false)
 				for champ in ["crit", "sablier", "renvoi", "vol_par_malediction", "grimoire", "pacte",
-						"miroir", "encensoir", "vasque", "prisme", "voile_aube", "carillon", "lanterne",
-						"ruban_criniere", "manche", "eventail", "voile_cavale", "girouette"]:
+						"miroir", "encensoir", "vasque", "prisme", "voile_aube", "carillon", "lanterne"]:
 					cr[champ] += r.get(champ, 0.0) * m
 				if r.has("faiblesse_tous"):
 					cr["faiblesse_tous"] = r["faiblesse_tous"] if cr["faiblesse_tous"] == 0 else mini(cr["faiblesse_tous"], r["faiblesse_tous"])
 				cr["poudre"] += r.get("poudre", 0.0) * m * _renfort(c, "transfert")
-				cr["etrier"] += r.get("etrier", 0.0) * m * _renfort(c, "elan")
-				cr["bride"] = cr["bride"] or r.get("bride", false)
-				# Fossile spirale renforce bouclier et reduction de ses voisines
-				for champ in ["reduction", "cale", "fil_plomb"]:
-					cr[champ] += r.get(champ, 0.0) * m * _renfort(c, "terre")
-				cr["sablier_ensable"] += r.get("sablier_ensable", 0.0) * m
-				for drapeau in ["tuile", "clef", "urne", "borne"]:
-					cr[drapeau] = cr[drapeau] or r.get(drapeau, false)
 				cr["cocon"] += r.get("cocon", 0.0) * m
 				for drapeau in ["mue", "brume", "phalene", "chrysalide", "aile_lune", "inversion"]:
 					cr[drapeau] = cr[drapeau] or r.get(drapeau, false)
@@ -398,10 +368,7 @@ func eclore() -> Dictionary:
 				if r.get("famille", "") == "lame":
 					cr["crit"] += r.get("crit", Data.CRIT_LAME)
 				cr["crit_malediction"] = cr["crit_malediction"] or r.get("crit_malediction", false)
-				cr["rapiere"] = cr["rapiere"] or r.get("rapiere", false)
-				cr["riposte_esquive"] = cr["riposte_esquive"] or r.get("riposte_esquive", false)
 	cr["intervalle"] = Data.INTERVALLE_BASE / (1.0 + vitesse)
-	cr["esquive"] = minf(cr["esquive"], Data.ESQUIVE_MAX)
 	# l'Oeuf du Premier Brasier donne une renaissance de plus
 	if cr["oeuf"]:
 		cr["renaissances"] += 1
@@ -429,7 +396,7 @@ func _renfort(c: Vector2i, effet: String) -> float:
 			k *= 1.0 + cat["valeur"] * Data.NIVEAU_MULT[niveau(v)]
 	return k
 
-# Le niveau multiplie les degats ; un sort sans degats (Voile) recharge plus vite.
+# Le niveau multiplie les degats.
 func _sort(c: Vector2i, r: Dictionary, aff: Dictionary) -> Dictionary:
 	var m: float = Data.NIVEAU_MULT[niveau(c)]
 	var s := {
@@ -440,7 +407,7 @@ func _sort(c: Vector2i, r: Dictionary, aff: Dictionary) -> Dictionary:
 		"element": r["element"],
 		"perce": r.get("perce", false),
 		"execution": r.get("execution", false),
-		"recharge": r["recharge"] / (1.0 + 0.5 * (niveau(c) - 1)) if r.get("esquive", false) else r.get("recharge", 0.0),
+		"recharge": r.get("recharge", 0.0),
 		"poison": _puissance(r, "poison", aff) * m * _renfort(c, "poison"),
 		"par_poison": r.get("par_poison", 0.0) * m,
 		"degats_epines": r.get("degats_epines", false),
@@ -469,20 +436,10 @@ func _sort(c: Vector2i, r: Dictionary, aff: Dictionary) -> Dictionary:
 		"puissance": _puissance(r, "puissance", aff) * m * _renfort(c, "transfert"),
 		"transfert_tous": r.get("transfert_tous", 0),
 		"par_transfert": r.get("par_transfert", 0.0) * m,
-		"elan": r.get("elan", 0.0) * m * _renfort(c, "elan"),
-		"alize": r.get("alize", false),
-		"riposte_esquive": r.get("riposte_esquive", false),
-		"apres_foudre": r.get("apres_foudre", false),
-		"mortier": _puissance(r, "mortier", aff) * m * _renfort(c, "terre"),
-		"schiste": r.get("schiste", false),
-		"rempart": r.get("rempart", false),
-		"fondations": r.get("fondations", false),
-		"ages": r.get("ages", false),
 		"par_epine": r.get("par_epine", 0.0) * m,
 		"degats": _puissance(r, "degats", aff) * m,
 		"bouclier": _puissance(r, "bouclier", aff) * m,
 		"coups": r.get("coups", 0),
-		"esquive": r.get("esquive", false),
 		"vol_de_vie": r.get("vol_de_vie", 0.0) * m,
 	}
 	for v in voisins(c):

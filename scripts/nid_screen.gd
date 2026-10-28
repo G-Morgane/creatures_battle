@@ -381,8 +381,6 @@ func _decrire(cr: Dictionary) -> String:
 		["Attaques/s", "%.2f" % (1.0 / cr["intervalle"])], ["Vol de vie", "%d %%" % roundi(cr["vol_de_vie"] * 100)]]
 	if cr["bouclier"] > 0.0:
 		stats.append(["Bouclier", "%d" % cr["bouclier"]])
-	if cr["esquive"] > 0.0:
-		stats.append(["Esquive", "%d %%" % roundi(cr["esquive"] * 100)])
 	if cr["crit"] > 0.0:
 		stats.append(["Critique", "%d %%" % roundi(cr["crit"] * 100)])
 	if cr["epines"] > 0.0:
@@ -424,24 +422,6 @@ func _decrire(cr: Dictionary) -> String:
 		effets.append("%d renaissances" % cr["renaissances"])
 	if cr["givre_attaque"] > 0.0:
 		effets.append("%.1f givre par attaque" % cr["givre_attaque"])
-	if cr["reduction"] + cr["cale"] > 0.0:
-		effets.append("réduit les coups de %d %% (%d %% avec du bouclier)" % [roundi(minf(cr["reduction"], Data.REDUCTION_MAX) * 100), roundi(minf(cr["reduction"] + cr["cale"], Data.REDUCTION_MAX) * 100)])
-	if cr["fil_plomb"] > 0.0:
-		effets.append("bouclier tenu %d s : +%d" % [Data.FIL_PLOMB_DELAI, cr["fil_plomb"]])
-	if cr["sablier_ensable"] > 0.0:
-		effets.append("sa fatigue commence %d s plus tard" % cr["sablier_ensable"])
-	for d in [["tuile", "premier coup après un nouveau bouclier réduit"], ["clef", "garde la moitié du mortier renouvelé"],
-			["urne", "les dégâts évités le soignent au début de sa fatigue"], ["borne", "survit une fois à la fatigue"]]:
-		if cr[d[0]]:
-			effets.append(d[1])
-	if cr["elan"]:
-		effets.append("Foudre de %d tous les %d d'Élan" % [Data.FOUDRE_DEGATS + cr["eventail"], maxf(Data.ELAN_SEUIL - cr["manche"], Data.ELAN_SEUIL_MIN)])
-	for d in [["ruban_criniere", "une esquive accélère"], ["etrier", "les séries d'attaques chargent plus"],
-			["girouette", "les esquives renforcent la Foudre"], ["voile_cavale", "après la Foudre, forte esquive"]]:
-		if cr[d[0]] > 0.0:
-			effets.append(d[1])
-	if cr["bride"]:
-		effets.append("la Foudre ouvre un Galop libre")
 	if cr["arcane"]:
 		effets.append("un Transfert à vide tire un projectile d'arcane")
 	if cr["poudre"] > 0.0:
@@ -507,8 +487,6 @@ func _decrire(cr: Dictionary) -> String:
 		var d := "[b]%s%s[/b] (toutes les %.1f s)" % ["Cavalier, " if s["cavalier"] else "", s["nom"], s["recharge"]]
 		if s["contre"] > 0:
 			d = "[b]Cavalier, %s[/b] (après %d coups reçus) : %.1f dégâts" % [s["nom"], s["contre"], s["degats"]]
-		elif s["esquive"]:
-			d += " : esquive la prochaine attaque"
 		elif s["coups"] > 0:
 			d += " : %d x %.1f dégâts" % [s["coups"], s["degats"]]
 		else:
@@ -569,27 +547,9 @@ func _decrire(cr: Dictionary) -> String:
 			d += (" %s (%.1f)" % [verbes[s["transfert"]], s["puissance"]])
 			if s["transfert_tous"] > 0:
 				d += " tous les %d tirs" % s["transfert_tous"]
-		if s["mortier"] > 0.0:
-			d += " bouclier de mortier %d (renouvelé)" % roundi(s["mortier"])
-		if s["schiste"]:
-			d += ", la cible frappe moins fort"
-		if s["rempart"]:
-			d += ", renforce la réduction tant que le bouclier tient"
-		if s["fondations"]:
-			d += ", bouclier selon les dégâts"
-		if s["ages"]:
-			d += ", soigne plus pendant la fatigue"
-		if s["elan"] > 0.0:
-			d += ", +%.1f Élan" % s["elan"]
-		if s["riposte_esquive"]:
-			d = "[b]Cavalier, %s[/b] (après une esquive) : %d x %.1f dégâts" % [s["nom"], s["coups"], s["degats"]]
-		if s["alize"]:
-			d += ", avance l'attaque suivante"
-		if s["apres_foudre"]:
-			d += ", perce et double après la Foudre"
 		if s["par_transfert"] > 0.0:
 			d += ", +%.1f par Transfert" % s["par_transfert"]
-		if s["vol_de_vie"] > 0.0 and not s["esquive"]:
+		if s["vol_de_vie"] > 0.0:
 			d += ", vole %d %%" % roundi(s["vol_de_vie"] * 100)
 		lignes.append("• " + d)
 	return "\n".join(lignes)

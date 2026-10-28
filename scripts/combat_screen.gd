@@ -160,8 +160,6 @@ func _jouer(e: Dictionary) -> void:
 					"taille": 12.0 if e["coups"] <= 1 else 6.0})
 			var qui := "Cavalier : " if e["cavalier"] else ""
 			_texte(moi, 0 if e["cavalier"] else 1, qui + e["nom"], couleurs["clair"])
-		"voile":
-			_texte(moi, 2, "Voile", Palette.ELEMENTS["nuit"]["clair"])
 		"bouclier":
 			_texte(moi, 2, "+%d bouclier" % roundi(e["valeur"]), Palette.ELEMENTS["terre"]["clair"])
 		"epines":
@@ -227,16 +225,6 @@ func _jouer(e: Dictionary) -> void:
 					"a": cible.position + cible.size / 2 + Vector2(0, 20 - 20 + k * 10), "t0": lecture + k * ECART_COUPS * 0.5,
 					"duree": VOL_PROJECTILE, "couleur": n["vif"], "coeur": n["clair"], "taille": 7.0})
 			_texte(moi, 2, "Salve d'épines", n["clair"])
-		"foudre":
-			# un eclair turquoise et blanc qui tombe du ciel sur moi
-			effets.append({"type": "foudre", "pos": moi.position + moi.size / 2 + Vector2(0, 30), "t0": lecture, "duree": 0.45})
-			_texte(moi, 2, "Foudre %d" % roundi(e["valeur"]), Palette.ELEMENTS["vent"]["clair"])
-		"urne":
-			_texte(moi, 1, "Urne : +%d" % roundi(e["valeur"]), Palette.ELEMENTS["terre"]["clair"])
-		"borne":
-			_texte(moi, 1, "Borne de l'Éternité !", Palette.ELEMENTS["terre"]["vif"])
-		"galop":
-			_texte(moi, 1, "Galop libre !", Palette.ELEMENTS["vent"]["vif"])
 		"charge":
 			_texte(moi, 1, "Charge ! %d" % roundi(e["valeur"]), Palette.ELEMENTS["nature"]["clair"])
 		"dissipe":
@@ -251,8 +239,6 @@ func _jouer(e: Dictionary) -> void:
 			_texte(moi, 1, "Le cavalier referme la porte", Palette.TEXTE)
 		"entraves":
 			_texte(moi, 1, "Entraves brisées !", Palette.ELEMENTS["feu"]["vif"])
-		"esquive":
-			_texte(moi, 2, "Esquive !", Palette.TEXTE)
 		"renaissance":
 			_texte(moi, 2, "%s renaît !" % nom, Palette.ELEMENTS["feu"]["clair"])
 			moi.modulate = Color(2.2, 1.8, 1.2)
@@ -264,7 +250,7 @@ func _elan(v: CreatureVue) -> void:
 	tw.tween_property(v, "elan", 0.0, 0.14 / vitesse)
 
 # Textes sur trois lignes fixes au-dessus de la monture, pour ne pas la cacher :
-# 0 cavalier, 1 monture, 2 reactions (voile, esquive, renaissance).
+# 0 cavalier, 1 monture, 2 reactions (bouclier, renaissance).
 func _texte(v: CreatureVue, ligne: int, texte: String, couleur: Color) -> void:
 	var pos := v.position + Vector2(v.size.x / 2, 30 + ligne * 26)
 	# deux textes au meme endroit en meme temps : le nouveau descend d'un cran
@@ -329,15 +315,12 @@ func _dessiner() -> void:
 		if cr["eclat"]:
 			var seuil := maxf(Data.ECLAT_SEUIL - cr["miroir"], Data.ECLAT_SEUIL_MIN)
 			etats.append(["Éclat %d/%d" % [roundi(img[16 + i]), roundi(seuil)], Palette.ELEMENTS["aube"]["vif"]])
-		if cr["elan"]:
-			var seuil_e := maxf(Data.ELAN_SEUIL - cr["manche"], Data.ELAN_SEUIL_MIN)
-			etats.append(["Élan %d/%d" % [roundi(img[18 + i]), roundi(seuil_e)], Palette.ELEMENTS["vent"]["vif"]])
 		# Bastion : la phase et l'eclat de l'oeil, aussi sur la bete
-		if img[22 + i] != "":
-			v.oeil = img[20 + i]
-			v.phase = img[22 + i]
+		if img[20 + i] != "":
+			v.oeil = img[18 + i]
+			v.phase = img[20 + i]
 			var noms_phase := {"rempart": "Rempart", "ouverture": "L'œil s'ouvre", "resistance": "Sans protection"}
-			etats.append(["%s, œil %d %%" % [noms_phase[img[22 + i]], roundi(img[20 + i] * 100)], Color("#c79bff")])
+			etats.append(["%s, œil %d %%" % [noms_phase[img[20 + i]], roundi(img[18 + i] * 100)], Color("#c79bff")])
 		# cadre sombre sous le nom, la barre et les etats : lisible sur le fond peint
 		var demi := maxf(162.0, 75.0 * etats.size() + 20.0)
 		var bas := 62.0 if img[14 + i] != "" else 44.0
@@ -379,29 +362,11 @@ func _dessiner() -> void:
 				calque.draw_circle(pos, e["taille"] * 1.6, Color(e["couleur"], 0.35))
 				calque.draw_circle(pos, e["taille"], e["couleur"])
 				calque.draw_circle(pos, e["taille"] * 0.45, e["coeur"])
-			"foudre":
-				_eclair(e["pos"], p, e["t0"])
 			"texte":
 				var c: Color = e["couleur"]
 				c.a = 1.0 - p * p
 				calque.draw_string(police, e["pos"] + Vector2(-150, -p * 30), e["texte"],
 					HORIZONTAL_ALIGNMENT_CENTER, 300, 18, c)
-
-# Eclair : une ligne brisee du haut de l'ecran jusqu'a la monture, qui s'efface.
-func _eclair(bas: Vector2, p: float, graine: float) -> void:
-	var vent: Dictionary = Palette.ELEMENTS["vent"]
-	var r := RandomNumberGenerator.new()
-	r.seed = int(graine * 1000.0)
-	var pts := PackedVector2Array()
-	var y := 0.0
-	while y < bas.y:
-		pts.append(Vector2(bas.x + r.randf_range(-28, 28), y))
-		y += r.randf_range(30, 60)
-	pts.append(bas)
-	var a := 1.0 - p
-	calque.draw_polyline(pts, Color(vent["vif"], a), 9.0)
-	calque.draw_polyline(pts, Color(vent["clair"], a), 3.0)
-	calque.draw_circle(bas, 30.0 * (1.0 - p * 0.5), Color(vent["clair"], 0.4 * a))
 
 # Monture gelee : halo de glace et eclats autour d'elle.
 func _gel(v: CreatureVue) -> void:
@@ -511,7 +476,7 @@ class MiniNid extends Control:
 # de bouclier, et combien de fois c'est parti. Survol d'une relique : son infobulle.
 class Recap extends Control:
 	const MECANIQUES := {"~attaque": "Attaques", "~poison": "Poison", "~brulure": "Brûlure",
-		"~combustion": "Combustion", "~epines": "Épines", "~eclat": "Éclat", "~foudre": "Foudre",
+		"~combustion": "Combustion", "~epines": "Épines", "~eclat": "Éclat",
 		"~regen": "Régénération", "~bris": "Bouclier brisé", "~racines": "Racines",
 		"~charge": "Charge", "~trait": "Trait de l'Ouest", "~rempart": "Rempart", "~regard": "Le Regard"}
 	const LIGNES := 10
