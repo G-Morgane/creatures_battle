@@ -123,7 +123,7 @@ func _rafraichir() -> void:
 		info.text = "[color=#8a8f99]Survole une dynastie pour voir comment elle joue.[/color]"
 		return
 	var forme: Dictionary = Data.FORMES[e]
-	var texte := "[b]%s[/b], monture : %s\n%s" % [Data.DYNASTIES[e], forme["nom"], Data.IDENTITES[e]]
+	var texte := "[b]%s[/b]\n%s" % [Data.DYNASTIES[e], Data.IDENTITES[e]]
 	if not e in Data.DYNASTIES_A_VENIR:
 		texte += "\n[color=#8a8f99]Passif : %s.[/color]" % forme["passif"]
 	info.text = texte
@@ -147,23 +147,18 @@ class Blason extends Control:
 		var a_venir := element in Data.DYNASTIES_A_VENIR
 		var r := Rect2(Vector2.ZERO, size)
 		draw_rect(r, c["fond"] if choisie else Palette.CASE)
-		# le blason en grand, la monture en petit devant lui
+		# le blason seul : la monture se decouvre en jouant
 		var teinte := Color(0.4, 0.4, 0.4) if a_venir else Color.WHITE
 		var blason := Palette.blason(element)
 		if blason != null:
 			var kb := (size.y - 64) / blason.get_height()
 			var tb := blason.get_size() * kb
 			draw_texture_rect(blason, Rect2(Vector2((size.x - tb.x) / 2, 8), tb), false, teinte)
-		var tex := Palette.image("res://images/montures/%s.png" % element)
-		if tex != null:
-			var k := minf(size.x * 0.42 / tex.get_width(), size.y * 0.32 / tex.get_height())
-			var t := tex.get_size() * k
-			draw_texture_rect(tex, Rect2(Vector2(size.x - t.x - 6, size.y - 52 - t.y), t), false, teinte)
 		var police := ThemeDB.fallback_font
 		draw_string(Palette.police_titre(), Vector2(0, size.y - 26), NidScreen._NOMS_ELEMENTS[element],
 			HORIZONTAL_ALIGNMENT_CENTER, size.x, 16, Palette.TEXTE)
-		draw_string(police, Vector2(0, size.y - 8), "à venir" if a_venir else Data.FORMES[element]["nom"],
-			HORIZONTAL_ALIGNMENT_CENTER, size.x, 13, Palette.TEXTE_DOUX)
+		if a_venir:
+			draw_string(police, Vector2(0, size.y - 8), "à venir", HORIZONTAL_ALIGNMENT_CENTER, size.x, 13, Palette.TEXTE_DOUX)
 		if choisie:
 			draw_rect(r, c["vif"], false, 4.0)
 		elif ecran.survolee == element and not a_venir:

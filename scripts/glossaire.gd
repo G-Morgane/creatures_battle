@@ -170,7 +170,8 @@ static func contenu() -> String:
 	t += _terme("Le cycle du Bastion", "Rempart : il gagne du bouclier et frappe lentement. Ouverture : il s'immobilise et l'œil du temple absorbe son bouclier. Le Regard : une attaque selon le bouclier absorbé (plafonnée). Résistance : son cavalier referme la porte, il reste sans protection et encaisse plus. Entamer son bouclier affaiblit le Regard.")
 	t += _section("Les dynasties")
 	for e in Data.DYNASTIES:
-		t += _terme("%s (%s)" % [Data.DYNASTIES[e], Data.FORMES[e]["nom"]], Data.IDENTITES[e])
+		# sans le nom de la monture : elle se decouvre en jouant
+		t += _terme(Data.DYNASTIES[e], Data.IDENTITES[e])
 	return t
 
 static func _nombre(x: float) -> String:
