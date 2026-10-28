@@ -277,6 +277,7 @@ func _initialize() -> void:
 		ic = ic.get_region(ic.get_used_rect())
 		_reduire(ic, 96)
 		ic.save_png("res://images/ui/%s.png" % UI[k])
+	_bouton()
 	_controle(icones, betes)
 	print("icones : ", icones.size())
 	quit()
@@ -303,6 +304,31 @@ func _hybrides() -> void:
 		m.save_png("res://images/montures/hybrides/%s_%s.png" % els)
 		vus["%s_%s" % els] = true
 	print("hybrides : ", vus.size())
+
+# Fond de bouton : le cadre du milieu de images/boutons.png, sans la lueur
+# autour (un masque en pilule : bords arrondis, rayon d'une demi-hauteur).
+const BOUTON_ZONE := Rect2i(150, 376, 1242, 266)
+
+func _bouton() -> void:
+	var img := Image.load_from_file("res://images/boutons.png")
+	img.convert(Image.FORMAT_RGBA8)
+	var b := img.get_region(BOUTON_ZONE)
+	var w := b.get_width()
+	var h := b.get_height()
+	var r := h * 0.45
+	for y in h:
+		for x in w:
+			# distance au bord de la pilule (negative a l'interieur)
+			var cx := clampf(x, r, w - r)
+			var cy := clampf(y, r, h - r)
+			var d := Vector2(x - cx, y - cy).length() - r
+			if d > 0.0:
+				var p := b.get_pixel(x, y)
+				p.a *= clampf(1.0 - d / 2.0, 0.0, 1.0)
+				b.set_pixel(x, y, p)
+	# a la hauteur d'un bouton : on n'etire qu'en largeur, les bouts restent ronds
+	b.resize(w * 44 / h, 44, Image.INTERPOLATE_LANCZOS)
+	b.save_png("res://images/ui/bouton.png")
 
 # Une tuile par combinaison : images/tapis/<bords>.png, bords parmi H, D, B, G
 # dans cet ordre ("" pour aucun bord : images/tapis/toile.png).

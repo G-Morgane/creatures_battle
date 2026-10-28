@@ -27,6 +27,36 @@ static func image(chemin: String) -> Texture2D:
 		_cache[chemin] = load(chemin) if ResourceLoader.exists(chemin) else null
 	return _cache[chemin]
 
+# Theme commun : chaque bouton prend le cadre feuillage et parchemin
+# (images/ui/bouton.png), etire en 9 tranches, texte brun sur le parchemin.
+static func theme_jeu() -> Theme:
+	var t := Theme.new()
+	var tex := ui("bouton")
+	if tex == null:
+		return t
+	var etats := {"normal": Color.WHITE, "hover": Color(1.1, 1.08, 0.98), "pressed": Color(0.86, 0.84, 0.8),
+		"disabled": Color(0.7, 0.7, 0.7, 0.6), "hover_pressed": Color(0.92, 0.9, 0.86)}
+	for etat in etats:
+		var sb := StyleBoxTexture.new()
+		sb.texture = tex
+		# seuls les bouts (feuilles) restent fixes ; la hauteur suit l'image
+		sb.texture_margin_left = 24
+		sb.texture_margin_right = 24
+		sb.content_margin_left = 28
+		sb.content_margin_right = 28
+		sb.content_margin_top = 10
+		sb.content_margin_bottom = 10
+		sb.modulate_color = etats[etat]
+		t.set_stylebox(etat, "Button", sb)
+	t.set_stylebox("focus", "Button", StyleBoxEmpty.new())
+	t.set_color("font_color", "Button", Color("#3b2a18"))
+	t.set_color("font_hover_color", "Button", Color("#1f150b"))
+	t.set_color("font_pressed_color", "Button", Color("#1f150b"))
+	t.set_color("font_hover_pressed_color", "Button", Color("#1f150b"))
+	t.set_color("font_focus_color", "Button", Color("#3b2a18"))
+	t.set_color("font_disabled_color", "Button", Color("#6f6252"))
+	return t
+
 # Icones d'interface (images/ui) : vie, victoires, or, glossaire.
 static func ui(nom: String) -> Texture2D:
 	return image("res://images/ui/%s.png" % nom)

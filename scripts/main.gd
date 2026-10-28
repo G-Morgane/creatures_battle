@@ -8,6 +8,7 @@ var partie: Partie
 var ecran: Node = null
 
 func _ready() -> void:
+	get_window().theme = Palette.theme_jeu()
 	add_child(Glossaire.new())
 	aller_choix()
 

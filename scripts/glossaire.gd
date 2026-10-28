@@ -11,6 +11,8 @@ var texte: RichTextLabel
 
 func _ready() -> void:
 	layer = 50
+	# un calque ne recoit pas le theme de la fenetre : on le donne a ses racines
+	var theme_jeu := Palette.theme_jeu()
 	bouton = Button.new()
 	bouton.text = "Glossaire"
 	bouton.icon = Palette.ui("glossaire")
@@ -23,6 +25,7 @@ func _ready() -> void:
 	bouton.offset_top = 22
 	bouton.offset_bottom = 58
 	bouton.pressed.connect(basculer)
+	bouton.theme = theme_jeu
 	add_child(bouton)
 
 	panneau = PanelContainer.new()
@@ -39,6 +42,7 @@ func _ready() -> void:
 	panneau.offset_top = 70
 	panneau.offset_bottom = -40
 	panneau.visible = false
+	panneau.theme = theme_jeu
 	add_child(panneau)
 	var pile := VBoxContainer.new()
 	pile.add_theme_constant_override("separation", 10)
