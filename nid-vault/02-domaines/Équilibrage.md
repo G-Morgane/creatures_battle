@@ -12,6 +12,14 @@
 - `tests/equilibrage.gd` : durée et vainqueur de chaque matchup entre builds types. Durée visée : 15 à 25 s.
 - `tests/simulation.gd` : 100 runs entières par joueur automatique (aléatoire, simple), `--runs=300` pour plus. Runs gagnées, acte atteint, victoires par type de nœud et par élément.
 - Joueur **simple** : un élément, catalyseurs bien placés. Joueur **aléatoire** : témoin.
+- Pour le joueur simple, la simulation affiche aussi, par élément, les dégâts faits et subis par combat avec les 3 premières sources, et le taux de victoire des combats où chaque relique est dans le sac (8 meilleures, 8 pires, reliques vues moins de 30 fois).
+
+## Rééquilibrage de la Nuit (2026-10-28)
+
+**Constat :** Nuit à 9 % de runs gagnées ; le moins de dégâts par combat (355 contre 393 à 732), 55 % par l'attaque de base ; ses 8 reliques en bas du classement.
+**Décision :** passif +20 % de dégâts par malédiction (au lieu de 12), Ruban et Aiguille +4 d'attaque (au lieu de 2), Sceau toutes les 4 s (au lieu de 6), signature Nuit 3 PV (au lieu de 2).
+**Résultat :** Nuit 48 %, 444 dégâts par combat. Comme les fantômes jouent aussi la Nuit, les autres baissent : Été 14 %, Hiver 27 %, Crépuscule 29 %, Aube 58 %, Printemps 64 %.
+**À suivre :** l'Été devient le plus faible ; la Traînée de cendres et les reliques de l'Été ferment le classement.
 
 ## Derniers chiffres (100 runs, ~26 nœuds par run)
 

@@ -576,10 +576,10 @@ Points ouverts :
 **Fait** (images de `images/`, le Chapelet et la Serpe de ronces dans `chapelet_serpe.png`). Chiffres : malédictions 6 s, Faiblesse -15 %
 de dégâts, Langueur -15 % de vitesse d'attaque, Flétrissure -30 % de soins par charge, Stigmate
 +10 % de dégâts reçus ; passif
-de la Chauve-souris **+12 % de dégâts par malédiction différente sur la cible** (sans lui, et
+de la Chauve-souris **+20 % de dégâts par malédiction différente sur la cible** (sans lui, et
 sans attaque sur ses essences, elle ne faisait presque aucun dégât : 0,8 victoire en moyenne) ;
-Ruban sanguin +2 attaque et 8 % de vol de vie ; Aiguille noire +2 attaque, Faiblesse toutes les
-3 attaques ; Sceau toutes les 6 s ; Sablier +3 s ; Poupée 30 % ; Masque +6 % de vol de vie par
+Ruban sanguin +4 attaque et 8 % de vol de vie ; Aiguille noire +4 attaque, Faiblesse toutes les
+3 attaques ; Sceau toutes les 4 s ; Sablier +3 s ; Poupée 30 % ; Masque +6 % de vol de vie par
 malédiction ; Grimoire tous les 40 PV volés ; Pacte 5 par attaque. Crit : x1,75, 10 % par Lame
 (25 % pour la Dague de minuit, 15 % pour la Lame de la veuve), 8 % pour le Peigne.
 
@@ -607,7 +607,7 @@ Règles des malédictions :
 |---|---|---|
 | Commun | Ruban sanguin | Accorde du vol de vie aux attaques |
 | Commun | Aiguille noire | Après plusieurs attaques, applique Faiblesse |
-| Commun | Sceau de cire | **Sort** *Sceau* : applique Langueur toutes les 8 s |
+| Commun | Sceau de cire | **Sort** *Sceau* : applique Langueur toutes les 4 s |
 | Commun | Sablier vermeil | Prolonge les malédictions que tu appliques |
 | Rare | Poupée cousue | Une partie des dégâts reçus est renvoyée à l'adversaire tant qu'il est maudit |
 | Rare | Peigne de la veuve | Les coups critiques appliquent Flétrissure |

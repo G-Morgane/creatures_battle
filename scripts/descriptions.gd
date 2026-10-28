@@ -95,7 +95,7 @@ const TEXTES := {
 	"ruban": "Accorde du vol de vie aux attaques.",
 	"sablier": "Prolonge les malédictions que tu appliques.",
 	"sarbacane": "Fléchette : petit dard rapide (toutes les 2 s), pose 1 dose de poison.",
-	"sceau": "Sort Sceau : applique Langueur toutes les 6 s.",
+	"sceau": "Sort Sceau : applique Langueur toutes les 4 s.",
 	"sceptre_aurore": "Un rayon dont les dégâts grandissent avec l'affinité Aube.",
 	"sceptre_premier": "Un Éclat gratuit tous les quelques tirs.",
 	"serpe_ronces": "Lacération : 4 coups rapides qui infligent des dégâts d'épines (profitent des bonus d'épines).",

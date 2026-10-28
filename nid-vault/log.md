@@ -13,3 +13,4 @@ _Ajout seulement. Une ligne par ingestion, question, discussion ou passe de nett
 | 2026-10-28 | discussion | Reliques de placement (grappe, solitaire, rangée, copie, Terreau, catalyseurs vol de vie et recharge), neutres retirés, arène agrandie → Reliques, Rencontres et objets neutres |
 | 2026-10-28 | maj | Signature de dynastie sur sorts et armes → Reliques, discussion Reliques de placement |
 | 2026-10-28 | maj | Signature des essences sur l attaque de base (un cinquième) → Reliques |
+| 2026-10-28 | maj | Rééquilibrage de la Nuit, stats par relique dans la simulation → Équilibrage, Nuit (Chauve-souris), CONCEPTION.md |

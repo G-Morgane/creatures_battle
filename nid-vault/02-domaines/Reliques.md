@@ -20,7 +20,7 @@
 - Descriptions des infobulles : `scripts/descriptions.gd`, à tenir à jour avec CONCEPTION.md.
 ## Signature de dynastie
 
-**Décision :** chaque sort et chaque arme ajoute, à chaque activation, un petit effet de **son** élément (× niveau) : Été 1 brûlure, Printemps 1 dose de poison, Hiver 1 givre, Nuit draine 2 PV, Aube soigne 3 PV, Crépuscule un projectile d'arcane de 3 (`Data.SIGNATURES`).
+**Décision :** chaque sort et chaque arme ajoute, à chaque activation, un petit effet de **son** élément (× niveau) : Été 1 brûlure, Printemps 1 dose de poison, Hiver 1 givre, Nuit draine 3 PV, Aube soigne 3 PV, Crépuscule un projectile d'arcane de 3 (`Data.SIGNATURES`).
 **Pourquoi :** que chaque objet nourrisse la mécanique de sa dynastie, même ceux qui font autre chose.
 **Essences :** sans activation, chacune donne un cinquième de sa signature à chaque attaque de la monture (`Data.SIGNATURE_ESSENCE`), demandé par l'utilisatrice.
 **Alternatives écartées :** dépendre de la monture dominante (moins lisible, punit les hybrides).

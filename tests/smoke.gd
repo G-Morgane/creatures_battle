@@ -75,7 +75,7 @@ func _placement() -> bool:
 	n.placer(Vector2i(0, 1), "cadran")
 	var sceau: Dictionary = n.eclore()["sorts"][0]
 	var ok := _verifier(is_equal_approx(sceau["vol_de_vie"], 0.10), "calice : vol de vie au sort voisin")
-	ok = _verifier(is_equal_approx(sceau["recharge"], 6.0 / 1.25), "cadran : recharge plus rapide") and ok
+	ok = _verifier(is_equal_approx(sceau["recharge"], Data.RELIQUES["sceau"]["recharge"] / 1.25), "cadran : recharge plus rapide") and ok
 	n = Nid.new()
 	n.placer(Vector2i(0, 0), "mousse")
 	n.placer(Vector2i(1, 0), "epine_ronce")
@@ -96,12 +96,12 @@ func _placement() -> bool:
 	n = Nid.new()
 	n.placer(Vector2i(0, 0), "ruban")
 	n.placer(Vector2i(1, 0), "reflet")
-	ok = _verifier(is_equal_approx(n.eclore()["attaque"], Data.ATTAQUE_BASE + 2.0 * 1.75), "reflet : copie 75 % du ruban") and ok
+	ok = _verifier(is_equal_approx(n.eclore()["attaque"], Data.ATTAQUE_BASE + Data.RELIQUES["ruban"]["attaque"] * 1.75), "reflet : copie 75 % du ruban") and ok
 	n = Nid.new()
 	n.placer(Vector2i(0, 0), "ruban")
 	n.placer(Vector2i(1, 0), "terreau")
 	n.saisons = 5
-	ok = _verifier(is_equal_approx(n.eclore()["attaque"], Data.ATTAQUE_BASE + 2.0 * 1.2), "terreau : +4 % par saison aux voisines") and ok
+	ok = _verifier(is_equal_approx(n.eclore()["attaque"], Data.ATTAQUE_BASE + Data.RELIQUES["ruban"]["attaque"] * 1.2), "terreau : +4 % par saison aux voisines") and ok
 	# signature : un sort de l'Ete pose 1 brulure de plus a chaque activation
 	n = Nid.new()
 	n.placer(Vector2i(0, 0), "graine_brasier")

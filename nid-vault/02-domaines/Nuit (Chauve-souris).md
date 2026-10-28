@@ -27,7 +27,7 @@ Code : `nuit`. Fait. Ce set remplace l'ancienne Nuit (Croc noir, Nuée, Voile, L
 
 ## Passif
 
-**+12 % de dégâts par malédiction différente sur la cible.**
+**+20 % de dégâts par malédiction différente sur la cible.**
 **Pourquoi :** sans lui (et sans attaque sur ses essences), la Chauve-souris ne faisait presque aucun dégât : 0,8 victoire en moyenne.
 
 ## Armes du cavalier (état du code)

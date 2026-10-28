@@ -16,7 +16,7 @@ const INTERVALLE_BASE := 1.0   # secondes entre deux attaques de base
 # Pas d'avantage elementaire : aucun element ne bat un autre (CONCEPTION.md §5).
 const FORMES := {
 	"feu":   {"nom": "Phénix",        "passif": "Renaît une fois à 25 % de PV, plus vite à chaque combustion (Braise)"},
-	"nuit":  {"nom": "Chauve-souris", "passif": "Vol de vie sur les attaques, +12 % de dégâts par malédiction sur la cible"},
+	"nuit":  {"nom": "Chauve-souris", "passif": "Vol de vie sur les attaques, +20 % de dégâts par malédiction sur la cible"},
 	"glace": {"nom": "Ours",          "passif": "Ses attaques posent du givre, +100 % de dégâts contre une cible gelée"},
 	"aube":  {"nom": "Lion",          "passif": "Régénère, et ses soins chargent l'Éclat (un coup de lumière)"},
 	"crepuscule": {"nom": "Papillon", "passif": "Un Transfert sans rien à voler ni à renvoyer lance un projectile d'arcane"},
@@ -29,7 +29,7 @@ const FORMES := {
 
 const RENAISSANCE_PV := 0.25
 const VOL_DE_VIE_NUIT := 0.15
-const NUIT_PAR_MALEDICTION := 0.12  # degats de la Chauve-souris par malediction differente
+const NUIT_PAR_MALEDICTION := 0.20  # degats de la Chauve-souris par malediction differente
 # Malediction : un etat de 6 s sur l'adversaire, renouvele si on le reapplique.
 # Une seule charge, trois avec le Chapelet des rancunes. Effet par charge :
 const MALEDICTIONS := ["faiblesse", "langueur", "fletrissure", "stigmate"]
@@ -146,11 +146,11 @@ const RELIQUES := {
 		"effet": "brulure", "valeur": 0.3, "portee": "rangee"},
 	# nuit : vol de vie et maledictions. Le Chapelet permet de les empiler.
 	"ruban":          {"nom": "Ruban sanguin",  "element": "nuit",  "affinite": 2, "type": "essence",
-		"vol_de_vie": 0.08, "attaque": 2.0},
+		"vol_de_vie": 0.08, "attaque": 4.0},
 	"aiguille":       {"nom": "Aiguille noire", "element": "nuit",  "affinite": 2, "type": "essence",
-		"faiblesse_tous": 3, "attaque": 2.0},
+		"faiblesse_tous": 3, "attaque": 4.0},
 	"sceau":          {"nom": "Sceau de cire",  "element": "nuit",  "affinite": 1, "type": "sort",
-		"sort": "Sceau", "recharge": 6.0, "malediction": "langueur"},
+		"sort": "Sceau", "recharge": 4.0, "malediction": "langueur"},
 	"sablier":        {"nom": "Sablier vermeil","element": "nuit",  "affinite": 1, "type": "essence",
 		"sablier": 3.0},
 	"poupee":         {"nom": "Poupée cousue",  "element": "nuit",  "affinite": 1, "type": "essence", "rarete": "rare",
@@ -476,7 +476,7 @@ const NIVEAU_MULT := [0.0, 1.0, 2.5, 6.0]
 # Signature de dynastie : a chaque activation, un sort ou une arme ajoute un
 # petit effet de son element (x niveau). Brulure, poison et givre en charges,
 # drain (passe le bouclier et soigne), soin, projectile d'arcane en degats.
-const SIGNATURES := {"feu": 1.0, "nature": 1.0, "glace": 1.0, "nuit": 2.0, "aube": 3.0, "crepuscule": 3.0}
+const SIGNATURES := {"feu": 1.0, "nature": 1.0, "glace": 1.0, "nuit": 3.0, "aube": 3.0, "crepuscule": 3.0}
 const NOMS_SIGNATURE := {"feu": "%s brûlure", "nature": "%s dose de poison", "glace": "%s givre",
 	"nuit": "draine %s PV", "aube": "soigne %s PV", "crepuscule": "projectile d'arcane de %s"}
 # Une essence n'a pas d'activation : elle donne cette part de sa signature a
