@@ -84,8 +84,8 @@ static func contenu() -> String:
 	var t := ""
 	t += _section("Le Nid et la monture")
 	t += _terme("Reliques", "on les achète en boutique et on les pose sur le tapis du sac. Chacune donne de l'affinité à sa dynastie.")
-	t += _terme("Monture", "la dynastie qui a le plus d'affinité fait éclore sa monture et donne son passif. Égalité entre deux dynasties : un hybride des deux. Sans affinité : une créature informe.")
-	t += _terme("Types", "Essence (stats et effets permanents), Sort (se déclenche sur sa recharge), Catalyseur (renforce les reliques qui touchent l'une de ses cases), Arme (tenue par le cavalier, lance son propre sort).")
+	t += _terme("Monture", "la dynastie qui a le plus d'affinité donne son passif. Une seule dynastie : sa monture pure. Deux ou plus : un hybride des deux premières. Sans affinité : une créature informe.")
+	t += _terme("Types", "Essence (stats et effets permanents), Sort (se déclenche sur sa recharge), Catalyseur (renforce les reliques qui touchent l'une de ses cases ; des flèches jaunes autour, et ses voisines s'allument au survol), Arme (tenue par le cavalier, lance son propre sort).")
 	t += _terme("Formes", "une relique prend de 1 à 4 cases selon sa rareté, ou sa famille pour une arme. R ou la molette la tournent pendant qu'on la tient.")
 	t += _terme("Sac", "il commence sur 4 colonnes et s'agrandit d'une colonne en boutique (prix croissant) ou après chaque boss battu, jusqu'à 8.")
 	t += _terme("Fusion", "3 copies identiques au même niveau fusionnent : ★ (effets x%s), puis ★★ (effets x%s). Tout fusionne, armes et légendaires compris." % [_nombre(Data.NIVEAU_MULT[2]), _nombre(Data.NIVEAU_MULT[3])])

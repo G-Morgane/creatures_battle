@@ -255,6 +255,15 @@ func _hybrides() -> bool:
 	var cr := h.eclore()
 	ok = _verifier(cr["forme"] == "" and cr["hybride"] == "feu_nature" and cr["nom"] == "Phénix-Cerf", "egalite Ete-Printemps : Phenix-Cerf") and ok
 	ok = _verifier(Nid.new().hybride() == "", "nid vide : pas d'hybride") and ok
+	var m := Nid.new()
+	m.placer(Vector2i(0, 0), "charbon")
+	m.placer(Vector2i(1, 0), "tison")
+	m.placer(Vector2i(2, 0), "sceau")
+	var cm := m.eclore()
+	ok = _verifier(cm["forme"] == "feu" and cm["hybride"] == "feu_nuit" and cm["nom"] == "Phénix-Chauve-souris", "Ete dominant + un peu de Nuit : hybride, passif du Phenix") and ok
+	var pur := Nid.new()
+	pur.placer(Vector2i(0, 0), "charbon")
+	ok = _verifier(pur.hybride() == "" and pur.eclore()["nom"] == "Phénix", "une seule dynastie : monture pure") and ok
 	return ok
 
 func _gel() -> bool:

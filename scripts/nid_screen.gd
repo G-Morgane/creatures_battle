@@ -554,6 +554,22 @@ static func dessiner_forme(ci: CanvasItem, cellules: Array, id: String, niv: int
 			ci.draw_line(plein.position, Vector2(plein.end.x, plein.position.y), bord, 2.0)
 		if b > 0.0:
 			ci.draw_line(Vector2(plein.position.x, plein.end.y), plein.end, bord, 2.0)
+		# catalyseur : une fleche vers l'exterieur sur chaque cote libre, pour
+		# montrer qu'il renforce ce qui le touche
+		if r["type"] == "catalyseur":
+			var f := cote * 0.09
+			var jaune := Color("#f2c94c")
+			var centre: Vector2 = c.get_center()
+			for cote_libre in [[g, Vector2(-1, 0)], [d, Vector2(1, 0)], [h, Vector2(0, -1)], [b, Vector2(0, 1)]]:
+				if cote_libre[0] <= 0.0:
+					continue
+				var dir: Vector2 = cote_libre[1]
+				var pointe: Vector2 = centre + dir * (c.size.x / 2 - 1)
+				var base: Vector2 = pointe - dir * f * 1.4
+				var perp := Vector2(-dir.y, dir.x) * f
+				var tri := PackedVector2Array([pointe, base + perp, base - perp])
+				ci.draw_colored_polygon(tri, jaune)
+				ci.draw_polyline(PackedVector2Array([pointe, base + perp, base - perp, pointe]), Color(0, 0, 0, 0.6), 1.0, true)
 	var tex := Palette.icone(id)
 	if tex != null:
 		_icone(ci, tex, boite.grow(-marge - 4))
@@ -837,11 +853,19 @@ class Tapis extends Control:
 		NidScreen.dessiner_tapis(self, colonnes, cote, Vector2.ZERO)
 		var nid := ecran.nid
 		var survolee = nid.ancre(ecran.case_survolee) if ecran.case_survolee != null else null
+		# survol d'un catalyseur : les reliques qu'il touche s'allument
+		var renforcees := []
+		if survolee != null and Data.RELIQUES[nid.cases[survolee]]["type"] == "catalyseur":
+			renforcees = nid.voisins(survolee)
 		for a in nid.cases:
 			var cellules := []
 			for k in nid.cases_de(a):
 				cellules.append(_rect(k))
 			NidScreen.dessiner_forme(self, cellules, nid.cases[a], nid.niveau(a), cote, a == survolee)
+			if a in renforcees:
+				for r in cellules:
+					draw_rect(r.grow(-cote * 0.1), Color("#f2c94c", 0.25))
+					draw_rect(r.grow(-cote * 0.1), Color("#f2c94c"), false, 2.0)
 		# apercu de la pose : vert si permise, rouge sinon
 		if not ecran.pose_vue.is_empty():
 			var couleur := Color(0.4, 0.9, 0.4, 0.35) if ecran.pose_vue["ok"] else Color(0.95, 0.3, 0.25, 0.35)

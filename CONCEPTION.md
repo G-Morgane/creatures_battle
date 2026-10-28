@@ -286,11 +286,9 @@ Paires à garder distinctes :
 Le Crépuscule n'a de sens que face à un build qui a des bonus ou des malus à voler :
 contre un build d'attaques brutes, il reste correct grâce au projectile d'arcane.
 
-- **Hybride** : une égalité entre exactement deux Dynasties en tête donne leur hybride (28 images,
-  `images/hybrides`), nommé d'après ses deux montures (« Phénix-Cerf »). Pas encore de passif propre.
-  Plus tard : deux éléments au-dessus d'un seuil donnent une forme mixte
-  (Feu + Nuit : Wyverne cendrée, Glace + Nature : Cerf de givre...).
-  Plus de variété de sorts, passif plus faible. Pur = spécialisé et fort.
+- **Hybride** : dès qu'une deuxième dynastie a de l'affinité, la monture est l'hybride des deux
+  premières (28 images, `images/hybrides`), nommé dynastie dominante d'abord (« Phénix-Chauve-souris »).
+  Le passif reste celui de la dynastie dominante.
 - **Aucune affinité** : créature informe, sans passif.
 
 ### Le cavalier

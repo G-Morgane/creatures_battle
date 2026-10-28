@@ -221,16 +221,16 @@ func forme() -> String:
 			egalite = true
 	return "" if egalite else meilleur
 
-# Egalite entre exactement deux elements en tete : la monture est un hybride
-# des deux (cle "a_b", elements tries), "" sinon. Sans passif pour l'instant.
+# Des qu'une deuxieme dynastie a de l'affinite, la monture est l'hybride des
+# deux premieres (cle "a_b", elements tries), "" sinon. Le passif reste celui
+# de la dynastie dominante (forme()).
 func hybride() -> String:
 	var aff := affinites()
-	var meilleur := 0
-	for e in aff:
-		meilleur = maxi(meilleur, aff[e])
-	var tete := aff.keys().filter(func(e): return aff[e] == meilleur and meilleur > 0)
-	if tete.size() != 2:
+	var tete := aff.keys().filter(func(e): return aff[e] > 0)
+	if tete.size() < 2:
 		return ""
+	tete.sort_custom(func(a, b): return aff[a] > aff[b] or (aff[a] == aff[b] and a < b))
+	tete = tete.slice(0, 2)
 	tete.sort()
 	var cle := "%s_%s" % tete
 	return cle if ResourceLoader.exists("res://images/montures/hybrides/%s.png" % cle) else ""
@@ -391,6 +391,9 @@ func eclore() -> Dictionary:
 	# pour l'arene : le Nid tel qu'il etait, et ses niveaux
 	if cr["hybride"] != "":
 		var deux: PackedStringArray = cr["hybride"].split("_")
+		# la dynastie dominante d'abord
+		if deux[1] == f:
+			deux = PackedStringArray([deux[1], deux[0]])
 		cr["nom"] = "%s-%s" % [Data.FORMES[deux[0]]["nom"], Data.FORMES[deux[1]]["nom"]]
 	cr["cases"] = cases.duplicate()
 	cr["niveaux"] = niveaux.duplicate()

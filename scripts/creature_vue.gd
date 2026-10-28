@@ -46,7 +46,7 @@ func _draw() -> void:
 	if fond:
 		draw_rect(Rect2(Vector2.ZERO, size), Palette.PANNEAU)
 	var c: Dictionary = Palette.ELEMENTS[forme]
-	# hybride : la cape prend la couleur du premier element
+	# hybride sans dynastie dominante : la cape prend la couleur du premier element
 	if forme == "" and hybride != "":
 		c = Palette.ELEMENTS[hybride.split("_")[0]]
 	var echelle := minf(0.75 + 0.04 * affinite, 1.25) * pulse * zoom
@@ -58,6 +58,12 @@ func _draw() -> void:
 	draw_set_transform(size / 2 + Vector2(0, 130 * zoom), 0.0, Vector2(echelle, echelle * 0.25))
 	draw_circle(Vector2.ZERO, 80, Color(0, 0, 0, 0.35))
 	draw_set_transform(centre, 0.0, Vector2(echelle * sens, echelle))
+	# deux dynasties ou plus : l'hybride des deux premieres
+	if hybride != "":
+		_sprite("hybrides/" + hybride)
+		_cavalier(c)
+		draw_set_transform(Vector2.ZERO)
+		return
 	match forme:
 		"feu":
 			_sprite("feu")
@@ -76,10 +82,7 @@ func _draw() -> void:
 		"jour":
 			_sprite("jour")
 		_:
-			if hybride != "":
-				_sprite("hybrides/" + hybride)
-			else:
-				_informe(c)
+			_informe(c)
 	_cavalier(c)
 	draw_set_transform(Vector2.ZERO)
 
@@ -135,9 +138,9 @@ func _informe(c: Dictionary) -> void:
 # Cavalier encapuchonne : visage sombre, deux yeux, cape a la couleur de l'element.
 func _cavalier(c: Dictionary) -> void:
 	var dos := Vector2(-10, -60)
-	if forme == "" and hybride != "":
+	if hybride != "":
 		dos = _dos_auto("hybrides/" + hybride)
-	match forme:
+	match "" if hybride != "" else forme:
 		"nuit":
 			dos = Vector2(15, -10)
 		"nature":
