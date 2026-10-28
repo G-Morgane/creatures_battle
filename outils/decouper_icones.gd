@@ -64,9 +64,7 @@ const ZONES := {
 	"grimoire":      ["chauvesouris_objets", 570, 745, 370, 292],
 	"pacte":         ["chauvesouris_objets", 140, 1110, 750, 345],
 	"dague_minuit":  ["chauvesouris_armes", 80, 60, 400, 335],
-	"faux_lunaire":  ["chauvesouris_armes", 520, 20, 470, 375],
 	"lame_veuve":    ["chauvesouris_armes", 60, 475, 440, 390],
-	"faux_festin":   ["chauvesouris_armes", 490, 480, 500, 410],
 	"faux_nuit":     ["chauvesouris_armes", 35, 940, 965, 530],
 	"serpe_ronces":  ["chapelet_serpe", 100, 30, 640, 860],
 	"chapelet":      ["chapelet_serpe", 820, 40, 600, 850],
@@ -122,7 +120,6 @@ const TOLERANCE_OBJET := {
 	"pacte": [0.025, 0.06, false],
 	"grimoire": [0.03, 0.07, false],
 	"masque": [0.04, 0.08, false],
-	"faux_lunaire": [0.045, 0.09, true],
 	"faux_nuit": [0.03, 0.07, true, 0.08],  # fond enferme entre ruban et manche, grain du papier
 	"serpe_ronces": [0.05, 0.10, true],     # lame vert pale
 	"chapelet": [0.04, 0.08, true, 0.06],   # croc creme, fond enferme dans l'anneau
@@ -166,7 +163,6 @@ const MASQUES := {
 	"rapiere": [Rect2i(320, 1400, 390, 85)],
 	"glaive_brume": [Rect2i(150, 438, 280, 32), Rect2i(586, 700, 32, 280), Rect2i(130, 950, 300, 30)],
 	"arc_lunes": [Rect2i(583, 470, 40, 80)],
-	"faux_festin": [Rect2i(640, 862, 240, 40)],
 	"faux_nuit": [Rect2i(340, 1400, 360, 80)],
 }
 

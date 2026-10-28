@@ -32,13 +32,16 @@ const VOL_DE_VIE_NUIT := 0.15
 const NUIT_PAR_MALEDICTION := 0.12  # degats de la Chauve-souris par malediction differente
 # Malediction : un etat de 6 s sur l'adversaire, renouvele si on le reapplique.
 # Une seule charge, trois avec le Chapelet des rancunes. Effet par charge :
-const MALEDICTIONS := ["faiblesse", "langueur", "fletrissure"]
-const NOMS_MALEDICTION := {"faiblesse": "Faiblesse", "langueur": "Langueur", "fletrissure": "Flétrissure"}
+const MALEDICTIONS := ["faiblesse", "langueur", "fletrissure", "stigmate"]
+const NOMS_MALEDICTION := {"faiblesse": "Faiblesse", "langueur": "Langueur", "fletrissure": "Flétrissure", "stigmate": "Stigmate"}
 const MALEDICTION_DUREE := 6.0
 const CHAPELET_CHARGES := 3
 const FAIBLESSE := 0.15            # degats infliges en moins
 const LANGUEUR := 0.15             # vitesse d'attaque en moins (pas les sorts)
 const FLETRISSURE := 0.30          # soins recus en moins
+const STIGMATE := 0.10             # degats recus en plus
+# Pacte : s'ouvre a partir de ce nombre de maledictions differentes.
+const PACTE_SEUIL := 3
 # Coups critiques : identite de la famille Lame. Une Lame donne CRIT_LAME de chance
 # (plus si l'arme le precise) a toute la monture.
 const CRIT_MULT := 1.75
@@ -259,15 +262,15 @@ const RELIQUES := {
 		"sort": "Premier brasier", "recharge": 3.0, "degats": 6.0, "coups": 1, "brulure": 1.0, "combustion_tous": 4, "tir_renaissance": true},
 	"lance_guet":     {"nom": "Lance du guet",  "element": "",      "affinite": 0, "type": "arme", "famille": "hast",
 		"sort": "Estoc", "recharge": 2.5, "degats": 8.0, "coups": 1, "perce": true},
-	# armes de la Nuit : Faux et Lame
+	# armes de la Nuit : Lames, un Arc, une Hache, et la Faux pour le legendaire
 	"dague_minuit":   {"nom": "Dague de minuit","element": "nuit",  "affinite": 1, "type": "arme", "famille": "lame",
 		"sort": "Entaille", "recharge": 2.0, "degats": 5.0, "coups": 1, "crit": 0.25},
-	"faux_lunaire":   {"nom": "Faux lunaire",   "element": "nuit",  "affinite": 1, "type": "arme", "famille": "faux",
-		"sort": "Moisson", "recharge": 5.0, "degats": 8.0, "par_affinite": 1.0, "coups": 1, "execution": true, "vol_de_vie": 0.3},
+	"arc_echo":       {"nom": "Arc de l'écho",  "element": "nuit",  "affinite": 1, "type": "arme", "famille": "tir",
+		"sort": "Écho", "recharge": 4.0, "degats": 4.0, "coups": 2, "malediction": "stigmate"},
 	"lame_veuve":     {"nom": "Lame de la veuve","element": "nuit", "affinite": 1, "type": "arme", "famille": "lame", "rarete": "rare",
-		"sort": "Coup de la veuve", "recharge": 3.0, "degats": 7.0, "coups": 1, "crit": 0.15, "crit_malediction": true},
-	"faux_festin":    {"nom": "Faux du festin", "element": "nuit",  "affinite": 1, "type": "arme", "famille": "faux", "rarete": "epique",
-		"sort": "Festin", "recharge": 5.0, "degats": 10.0, "coups": 1, "par_malediction": 0.35, "achever_seuil": 0.4, "achever_mult": 1.5},
+		"sort": "Coup de la veuve", "recharge": 3.0, "degats": 7.0, "coups": 1, "crit": 0.15, "crit_stigmate": true},
+	"hache_bourreau": {"nom": "Hache du bourreau","element": "nuit", "affinite": 1, "type": "arme", "famille": "hache", "rarete": "epique",
+		"sort": "Sentence", "recharge": 6.0, "degats": 14.0, "coups": 1, "par_malediction": 0.35, "execution": true},
 	"faux_nuit":      {"nom": "Faux de la Nuit profonde","element": "nuit", "affinite": 2, "type": "arme", "famille": "faux", "rarete": "legendaire",
 		"sort": "Nuit profonde", "recharge": 7.0, "degats": 10.0, "coups": 1, "consume_maledictions": true, "achever_seuil": 0.4, "achever_mult": 1.5},
 	# armes du Cerf

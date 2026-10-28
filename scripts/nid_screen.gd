@@ -453,6 +453,8 @@ func _decrire(cr: Dictionary) -> String:
 		effets.append("renvoie %d %% des dégâts à un adversaire maudit" % roundi(cr["renvoi"] * 100))
 	if cr["crit_fletrissure"]:
 		effets.append("les crits posent Flétrissure")
+	if cr["crit_stigmate"]:
+		effets.append("les crits posent Stigmate")
 	if cr["crit_malediction"]:
 		effets.append("les crits posent une malédiction")
 	if cr["vol_par_malediction"] > 0.0:
@@ -814,6 +816,11 @@ class Offre extends Control:
 				draw_rect(Rect2(o + Vector2(d) * 8, Vector2(7, 7)), Color(0, 0, 0, 0.6), false, 1.0)
 		if manque > 0:
 			_cadenas(icone.get_center())
+		# gelee : le flocon peint, pose sur l'objet, en haut a gauche
+		if ecran.partie.gelee:
+			var flocon := Palette.image("res://images/freeze.png")
+			if flocon != null:
+				draw_texture_rect(flocon, Rect2(icone.position + Vector2(-6, -6), Vector2(40, 38)), false)
 		# etiquette : nom et prix
 		var texte := "Offert" if index == ecran.partie.gratuite else "%d or" % prix
 		if manque > 0:

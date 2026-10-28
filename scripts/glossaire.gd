@@ -156,7 +156,7 @@ static func contenu() -> String:
 	t += _terme("Gel", "la cible n'attaque plus et ses recharges s'arrêtent un moment.")
 	t += _terme("Bouclier", "absorbe les coups avant les PV. Certaines reliques se déclenchent quand il se brise.")
 	t += _terme("Vol de vie", "une part des dégâts infligés revient en soin.")
-	t += _terme("Malédictions", "durent %d s. Faiblesse : %d %% de dégâts en moins. Langueur : %d %% de vitesse d'attaque en moins. Flétrissure : %d %% de soins reçus en moins. Une charge chacune, trois avec le Chapelet des rancunes." % [Data.MALEDICTION_DUREE, roundi(Data.FAIBLESSE * 100), roundi(Data.LANGUEUR * 100), roundi(Data.FLETRISSURE * 100)])
+	t += _terme("Malédictions", "durent %d s. Faiblesse : %d %% de dégâts en moins. Langueur : %d %% de vitesse d'attaque en moins. Flétrissure : %d %% de soins reçus en moins. Stigmate : %d %% de dégâts reçus en plus. Une charge chacune, trois avec le Chapelet des rancunes." % [Data.MALEDICTION_DUREE, roundi(Data.FAIBLESSE * 100), roundi(Data.LANGUEUR * 100), roundi(Data.FLETRISSURE * 100), roundi(Data.STIGMATE * 100)])
 	t += _terme("Éclat", "les soins remplissent une jauge ; pleine (%d), elle frappe l'adversaire." % Data.ECLAT_SEUIL)
 	t += _terme("Transfert", "vole un bonus adverse (bouclier, Braise...) ou lui renvoie un malus (poison, brûlure, givre, malédiction). Rien à déplacer : un projectile d'arcane.")
 	t += _terme("Régénération", "des PV rendus chaque seconde.")

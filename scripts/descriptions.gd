@@ -5,6 +5,8 @@ extends RefCounted
 # Tire des tableaux de CONCEPTION.md ; les recharges viennent de Data.
 
 const TEXTES := {
+	"arc_echo": "Écho : deux flèches guidées par l'écho, qui posent Stigmate (la cible reçoit plus de dégâts).",
+	"hache_bourreau": "Sentence : un coup lent, plus fort pour chaque malédiction sur la cible, et double sous 40 % de vie.",
 	"aiguille": "Après plusieurs attaques, applique Faiblesse.",
 	"aile_lune": "Chaque bonus volé t'accélère un moment (tu lui prends sa hâte).",
 	"amanite": "Catalyseur : renforce le poison appliqué par les objets voisins.",
@@ -39,8 +41,6 @@ const TEXTES := {
 	"encensoir": "Chaque Éclat renforce temporairement la régénération.",
 	"epine_ronce": "Ajoute des dégâts d'épines lorsqu'on est attaqué.",
 	"faux_cendres": "Contre une cible affaiblie : une combustion qui consume ses brûlures et soigne le Phénix.",
-	"faux_festin": "Plus forte pour chaque malédiction sur la cible.",
-	"faux_lunaire": "Achève sous 40 % de vie et vole de la vie.",
 	"faux_nuit": "Consume toutes les malédictions de la cible pour un coup énorme et un gros drain.",
 	"faux_tison": "Plus de dégâts contre une cible sous la moitié de sa vie.",
 	"flechettes": "Rapides, renvoient un malus tous les 3 coups.",
@@ -60,7 +60,7 @@ const TEXTES := {
 	"huile": "Catalyseur : soins des objets voisins +50 %.",
 	"inversion": "Une fois par combat, au milieu : échange vos pourcentages de vie.",
 	"javelot": "Lancer toutes les 3 s qui pose 2 charges de givre.",
-	"lame_veuve": "Chaque crit pose une malédiction au hasard.",
+	"lame_veuve": "Chaque crit pose Stigmate : la cible reçoit plus de dégâts.",
 	"lance_entre": "Chaque coup échange un bonus de la cible contre un de tes malus.",
 	"lance_guet": "Estoc rapide qui ignore l'esquive.",
 	"lance_hiver": "Brise le gel de la cible pour un coup énorme.",
@@ -74,7 +74,7 @@ const TEXTES := {
 	"obsidienne": "Les attaques contre une cible en feu infligent des dégâts supplémentaires.",
 	"oeuf_brasier": "Seconde renaissance ; chaque renaissance déclenche une combustion totale.",
 	"ortie": "Catalyseur : renforce les épines des objets voisins.",
-	"pacte": "Quand la cible porte les trois malédictions, tes attaques drainent aussi un peu de vie, indépendamment de leurs dégâts (le drain passe le bouclier).",
+	"pacte": "Quand la cible porte au moins trois malédictions différentes, tes attaques drainent aussi un peu de vie, indépendamment de leurs dégâts (le drain passe le bouclier).",
 	"peigne": "Les coups critiques appliquent Flétrissure.",
 	"phalene": "Chaque Transfert déclenche une seconde attaque.",
 	"pique": "Perce l'esquive, double les charges de givre posées.",

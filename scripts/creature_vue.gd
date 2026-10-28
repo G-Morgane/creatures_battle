@@ -227,9 +227,3 @@ func _arme(dos: Vector2, arme: String, main_dos: Vector2) -> void:
 		"lance_guet":
 			draw_line(main + Vector2(-60, 40), main + Vector2(70, -50), bois, 4)
 			draw_colored_polygon(PackedVector2Array([main + Vector2(64, -58), main + Vector2(92, -66), main + Vector2(76, -42)]), c["clair"])
-		"faux_lunaire":
-			draw_line(main + Vector2(0, 40), main + Vector2(0, -85), bois, 4)
-			var lame := PackedVector2Array()
-			for p in [Vector2(0, -85), Vector2(-22, -100), Vector2(-56, -96), Vector2(-80, -72), Vector2(-52, -86), Vector2(-22, -90)]:
-				lame.append(main + p)
-			draw_colored_polygon(lame, c["clair"])

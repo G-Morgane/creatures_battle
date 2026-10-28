@@ -12,7 +12,7 @@ func _builds() -> Dictionary:
 	b["Feu + bâton"] = _avec(Exemples.nid_feu(), "baton_braise", Vector2i(2, 0))
 	b["Feu + lance"] = _avec(Exemples.nid_feu(), "lance_guet", Vector2i(2, 0))
 	b["Nuit"] = Exemples.nid_nuit()
-	b["Nuit + faux"] = _avec(Exemples.nid_nuit(), "faux_lunaire", Vector2i(2, 0))
+	b["Nuit + faux"] = _avec(Exemples.nid_nuit(), "faux_nuit", Vector2i(2, 0))
 	b["Nuit + lance"] = _avec(Exemples.nid_nuit(), "lance_guet", Vector2i(2, 0))
 	b["Nature"] = Exemples.nid_nature()
 	b["Nature + sarbacane"] = _avec(Exemples.nid_nature(), "sarbacane", Vector2i(3, 0))

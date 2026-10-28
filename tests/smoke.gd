@@ -105,7 +105,7 @@ func _ecran() -> bool:
 func _armes() -> bool:
 	var n := Nid.new()
 	var ok := _verifier(n.placer(Vector2i(0, 0), "lance_guet"), "poser une arme")
-	ok = _verifier(n.placer(Vector2i(1, 0), "faux_lunaire") and n.armes() == ["lance_guet", "faux_lunaire"], "deux armes : toutes deux tenues") and ok
+	ok = _verifier(n.placer(Vector2i(1, 0), "faux_nuit") and n.armes() == ["lance_guet", "faux_nuit"], "deux armes : toutes deux tenues") and ok
 	n.retirer(Vector2i(1, 0))
 	ok = _verifier(n.affinites().is_empty(), "la lance n'a pas d'element") and ok
 	n.placer(Vector2i(1, 0), "fourrure")
@@ -117,16 +117,16 @@ func _armes() -> bool:
 	var c := Combat.new(lance.eclore(), Exemples.nid_nuit().eclore())
 	c.simuler()
 	ok = _verifier(c.journal.any(func(l): return "Estoc" in l), "le cavalier lance Estoc") and ok
-	# Moisson double sous le seuil
+	# Sentence de la Hache du bourreau : double sous le seuil
 	var faux := Nid.new()
-	faux.placer(Vector2i(0, 0), "faux_lunaire")
+	faux.placer(Vector2i(0, 0), "hache_bourreau")
 	var cible := Nid.new().eclore()
 	var m := Combat.new(faux.eclore(), cible)
 	m.cotes[1]["pv"] = 30.0
 	m.cotes[0]["sorts"][0]["prochain"] = 0.0
 	m._agir(m.cotes[0], m.cotes[1])
 	var attendu: float = 30.0 - 2.0 * faux.eclore()["sorts"][0]["degats"]
-	return _verifier(is_equal_approx(m.cotes[1]["pv"], attendu), "moisson double sous 40 %% (pv %s, attendu %s)" % [m.cotes[1]["pv"], attendu]) and ok
+	return _verifier(is_equal_approx(m.cotes[1]["pv"], attendu), "sentence double sous 40 %% (pv %s, attendu %s)" % [m.cotes[1]["pv"], attendu]) and ok
 
 # L'ecran rejoue le combat jusqu'au bout sans rien recalculer.
 func _combat_anime() -> bool:
@@ -712,12 +712,12 @@ func _nuit() -> bool:
 		if ev["type"] == "attaque" and ev["t"] < 10.0:
 			att[ev["cote"]] += 1
 	ok = _verifier(att[0] < att[1], "langueur : moins d'attaques") and ok
-	# crit : la Lame donne du crit, le Peigne pose Fletrissure, la Lame de la veuve une malediction
+	# crit : la Lame donne du crit, le Peigne pose Fletrissure, la Lame de la veuve Stigmate
 	var lame := Nid.new()
 	lame.placer(Vector2i(0, 0), "lame_veuve")
 	lame.placer(Vector2i(1, 0), "peigne")
 	var lcr := lame.eclore()
-	ok = _verifier(is_equal_approx(lcr["crit"], 0.15 + 0.08) and lcr["crit_malediction"] and lcr["crit_fletrissure"], "crit des lames et du peigne") and ok
+	ok = _verifier(is_equal_approx(lcr["crit"], 0.15 + 0.08) and lcr["crit_stigmate"] and lcr["crit_fletrissure"], "crit des lames et du peigne") and ok
 	var dague := Nid.new()
 	dague.placer(Vector2i(0, 0), "dague_epine")
 	ok = _verifier(is_equal_approx(dague.eclore()["crit"], Data.CRIT_LAME), "les lames du cerf donnent aussi du crit") and ok
@@ -754,16 +754,27 @@ func _nuit() -> bool:
 	pv = h.cotes[1]["pv"]
 	h._agir(h.cotes[0], h.cotes[1])
 	ok = _verifier(pv - h.cotes[1]["pv"] >= Data.ATTAQUE_BASE + 5.0 - 0.01, "pacte : drain sous trois maledictions") and ok
-	# faux du festin : +35 % par malediction ; faux de la nuit profonde : consume
+	# hache du bourreau : +35 % par malediction ; faux de la nuit profonde : consume
 	var ff := Nid.new()
-	ff.placer(Vector2i(0, 0), "faux_festin")
+	ff.placer(Vector2i(0, 0), "hache_bourreau")
 	var k := Combat.new(ff.eclore(), vide)
 	k.cotes[1]["maledictions"]["faiblesse"] = {"n": 1, "fin": 99.0}
 	k.cotes[1]["maledictions"]["langueur"] = {"n": 1, "fin": 99.0}
 	pv = k.cotes[1]["pv"]
 	k._lancer(k.cotes[0], k.cotes[1], k.cotes[0]["sorts"][0])
 	# +35 % par malediction (faux) et +12 % par malediction (passif de la Chauve-souris)
-	ok = _verifier(is_equal_approx(pv - k.cotes[1]["pv"], 10.0 * 1.7 * (1.0 + 2 * Data.NUIT_PAR_MALEDICTION)), "faux du festin") and ok
+	ok = _verifier(is_equal_approx(pv - k.cotes[1]["pv"], 14.0 * 1.7 * (1.0 + 2 * Data.NUIT_PAR_MALEDICTION)), "hache du bourreau") and ok
+	# stigmate : +10 % de degats recus ; l'arc de l'echo le pose, la lame de la veuve aussi sur crit
+	var st := Combat.new(Nid.new().eclore(), Nid.new().eclore())
+	st.cotes[1]["maledictions"]["stigmate"] = {"n": 1, "fin": 99.0}
+	var pv_s: float = st.cotes[1]["pv"]
+	st._blesser(st.cotes[1], 20.0)
+	ok = _verifier(is_equal_approx(pv_s - st.cotes[1]["pv"], 22.0), "stigmate : +10 % de degats recus") and ok
+	var arc := Nid.new()
+	arc.placer(Vector2i(0, 0), "arc_echo")
+	var ae := Combat.new(arc.eclore(), vide)
+	ae._lancer(ae.cotes[0], ae.cotes[1], ae.cotes[0]["sorts"][0])
+	ok = _verifier(ae._charges(ae.cotes[1], "stigmate") == 1, "arc de l'echo : pose Stigmate") and ok
 	var fn := Nid.new()
 	fn.placer(Vector2i(0, 0), "faux_nuit")
 	var n := Combat.new(fn.eclore(), vide)

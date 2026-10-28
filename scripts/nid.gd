@@ -294,6 +294,7 @@ func eclore() -> Dictionary:
 		"renvoi": 0.0,
 		"crit_fletrissure": false,
 		"crit_malediction": false,
+		"crit_stigmate": false,
 		"chapelet": false,
 		"vol_par_malediction": 0.0,
 		"grimoire": 0.0,
@@ -368,6 +369,7 @@ func eclore() -> Dictionary:
 				if r.get("famille", "") == "lame":
 					cr["crit"] += r.get("crit", Data.CRIT_LAME)
 				cr["crit_malediction"] = cr["crit_malediction"] or r.get("crit_malediction", false)
+				cr["crit_stigmate"] = cr["crit_stigmate"] or r.get("crit_stigmate", false)
 	cr["intervalle"] = Data.INTERVALLE_BASE / (1.0 + vitesse)
 	# l'Oeuf du Premier Brasier donne une renaissance de plus
 	if cr["oeuf"]:

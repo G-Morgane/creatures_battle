@@ -144,6 +144,7 @@ func _proteger(moi: Dictionary, b: float, source := "") -> void:
 
 # Degats directs, qui passent le bouclier (brulure, poison, combustion...).
 func _infliger(cible: Dictionary, d: float, source := "") -> void:
+	d *= _stigmate(cible)
 	cible["pv"] -= d
 	_compter(1 - cible["cote"], "degats", d, source)
 
@@ -182,7 +183,7 @@ func _agir(moi: Dictionary, cible: Dictionary) -> void:
 			if tous > 0 and moi["attaques"] % tous == 0:
 				_maudire(moi, cible, "faiblesse")
 			# Pacte : sous trois maledictions, chaque attaque draine en plus (passe le bouclier)
-			if moi["cr"]["pacte"] > 0.0 and _nb_maledictions(cible) == Data.MALEDICTIONS.size():
+			if moi["cr"]["pacte"] > 0.0 and _nb_maledictions(cible) >= Data.PACTE_SEUIL:
 				_infliger(cible, moi["cr"]["pacte"], "pacte")
 				_soigner(moi, cible, moi["cr"]["pacte"])
 			if moi["cr"]["brulure_attaque"] > 0.0:
@@ -322,6 +323,8 @@ func _frapper(moi: Dictionary, cible: Dictionary, degats: float, vol: float) -> 
 		_evenement(cible, {"type": "crit"})
 		if moi["cr"]["crit_fletrissure"]:
 			_maudire(moi, cible, "fletrissure")
+		if moi["cr"]["crit_stigmate"]:
+			_maudire(moi, cible, "stigmate")
 		if moi["cr"]["crit_malediction"]:
 			_maudire(moi, cible, Data.MALEDICTIONS[rng.randi() % Data.MALEDICTIONS.size()])
 	_blesser(cible, degats, moi)
@@ -551,7 +554,12 @@ func _empoisonner(cible: Dictionary, doses: float) -> void:
 
 # Le bouclier encaisse avant les PV. Brulure et fatigue passent a travers.
 # source : qui frappe ; un bouclier brise par un coup declenche les effets de bris.
+# Stigmate : la cible recoit plus de degats, de toutes les sources.
+func _stigmate(cible: Dictionary) -> float:
+	return 1.0 + Data.STIGMATE * _charges(cible, "stigmate")
+
 func _blesser(cible: Dictionary, degats: float, source = null) -> void:
+	degats *= _stigmate(cible)
 	if cible["phase"] == "resistance":
 		degats *= Data.BASTION_RESISTANCE_FRAGILE
 	var avant: float = cible["bouclier"]
