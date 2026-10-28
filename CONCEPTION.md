@@ -2,7 +2,8 @@
 
 *(titre de travail)*
 
-**Autobattler PvP asynchrone. On remplit un Nid de reliques, il en éclot une créature qui se bat seule. Godot 4, 2D.**
+**Autobattler roguelike, PvP asynchrone et PvE. On remplit un Nid de reliques, il en éclot une monture
+qui se bat seule, avec son cavalier. Godot 4, 2D.**
 
 > Ce que tu mets dans le Nid décide de ce qui en sort.
 > Un Nid de braises donne un phénix, un Nid de nuit une chauve-souris,
@@ -20,19 +21,114 @@ sur la créature ou dans le combat. Une relique qui ne fait que +2 en silence es
 
 ---
 
-## 2. Boucle
+## 2. Univers
 
-1. **Boutique** : acheter des reliques avec l'or de la manche.
-2. **Nid** : les placer dans une grille. L'adjacence compte.
-3. **Éclosion** : le Nid fixe la forme, les stats et les sorts de la créature.
-4. **Combat automatique** contre la créature fantôme d'un autre joueur au même stade.
-5. Victoire ou défaite, la créature évolue (stade 1, 2, 3) et on recommence.
+**Le royaume fae de Sylvaën** (nom de travail), partagé entre **sept Cours** : quatre saisons
+et trois moments du jour. Chaque Cour est un archétype, avec sa monture.
 
-Fin de partie : **7 victoires ou 3 défaites**. Une égalité ne compte pas.
+**Hommages, jamais de références directes.** Le jeu s'inspire d'univers de fantasy aimés
+(cours fae, cavaliers liés à leur monture, assassins et sorcières, anneau et spectres,
+école de magie) mais n'en reprend aucun nom propre, aucun personnage, aucun lieu. Les noms
+de Cours restent génériques (Printemps, Été, Automne, Hiver, Jour, Nuit, Aube) ; tout le reste
+est inventé : élites, rencontres, objets neutres.
+
+Le cœur du jeu est déjà un hommage : un cavalier **lié** à sa monture, et l'arme qu'il tient
+comme la marque de ce lien.
+
+---
+
+## 3. La run
+
+Une run se joue sur une **carte**, comme dans Slay the Spire ou FTL, avec la boucle d'achat de TFT
+entre chaque nœud.
+
+### Carte
+
+- **3 actes.** Chaque acte est une carte à embranchements de **10 étages** (4 colonnes, 4 chemins
+  tracés au hasard qui ne se croisent pas) ; on choisit son chemin et l'on voit le type des nœuds à venir.
+- Chaque acte finit par un **boss** (PvE).
+- Gagner le boss du troisième acte gagne la run.
+
+| Nœud | Contenu | Récompense |
+|---|---|---|
+| **Duel** | PvP asynchrone : le Nid d'un autre joueur, enregistré au même stade | Or |
+| **Élite** | PvE : une créature plus forte, avec un gimmick lisible | Or et choix d'une relique rare ou mieux |
+| **Rencontre** | Événement à choix (voir plus bas) | Variable, parfois un prix à payer |
+| **Marché** | Boutique spéciale : plus de rares, retirer une relique, objets neutres | |
+| **Feu de camp** | Repos : rendre des PV de run, ou une fusion gratuite | |
+| **Boss** | Fin d'acte, PvE | Relique légendaire au choix |
+
+Génération (`scripts/carte.gd`) : le premier étage est fait de Duels, l'étage avant le boss de
+Feux de camp. Ailleurs, tirage pondéré : Duel 50, Rencontre 22, Élite 12, Marché 8, Feu 8. Pas
+d'Élite avant le 5e étage du premier acte, pas de Feu avant le 5e étage.
+
+### Boutique entre chaque nœud
+
+Comme dans TFT : **après chaque nœud, la boutique est ouverte mais facultative**. On achète,
+relance, réorganise le Nid, ou l'on passe directement au nœud suivant. L'or non dépensé se garde.
+
+### PV de run
+
+Les **PV de run** remplacent « 7 victoires ou 3 défaites ». À 0, la run est perdue.
+- Une défaite coûte des PV selon le nœud (Duel peu, Élite plus, Boss beaucoup) et la force
+  de ce qui reste à l'adversaire, comme dans TFT.
+- Une égalité ne coûte rien.
+- Prototype : **60 PV de run**. Défaite : Duel 3, Élite 6, Boss 10, plus jusqu'à 8 selon les PV
+  qui restaient à l'adversaire. Feu de camp : +20. Perdre un boss coûte des PV mais on passe
+  quand même à l'acte suivant ; le boss du dernier acte termine la run.
+- Élite battue : une relique **épique offerte** dans la boutique (de l'élément du Nid si possible).
+  Boss battu : une **légendaire offerte**. L'offre offerte survit aux relances.
+- Élites et boss du prototype : le fantôme, avec 2 (élite) ou 4 (boss) manches d'avance.
+  Les vraies élites à gimmick viendront ensuite.
+- Marché du prototype : raretés de 3 manches en avance et relances gratuites jusqu'au nœud suivant.
+- Rencontres du prototype : le Heaume qui Juge, le Grand Chaudron, le Pont des Lames.
+
+Mesure sur 100 runs par joueur automatique (`tests/simulation.gd`), environ 26 nœuds par run :
+
+| Joueur | Runs gagnées | Arrivées à l'acte 3 | Duels gagnés | Élites | Boss |
+|---|---|---|---|---|---|
+| Aléatoire | 3 % | 48 % | 35 % | 21 % | 15 % |
+| Simple | 31 % | 80 % | 59 % | 48 % | 44 % |
+
+L'écart entre les deux joueurs est net. Par élément, il faudra plus de runs pour conclure. Les
+fantômes ne rejouent plus toute leur partie à chaque combat : quatre fantômes avancent d'une
+manche à la fois (sans cela, une run coûtait des secondes).
+
+### Duels : PvP asynchrone
+
+- À chaque Duel, on enregistre son Nid (reliques, niveaux, arme) avec l'acte, le nœud et ses PV de run.
+- L'adversaire est tiré parmi les Nids enregistrés **au même stade**, de préférence à PV proches.
+- Le combat est déterministe : le Nid enregistré rejoue exactement. Seul le joueur qui joue
+  perd ou gagne quelque chose ; le Nid enregistré ne subit rien.
+- Serveur : une table de Nids (Supabase suffit). En attendant, l'adversaire est le
+  **fantôme** (joueur automatique, ci-dessous).
+
+### Élites et boss (hommages)
+
+Créatures conçues à la main, chacune avec une règle qu'on voit et qu'on peut contrer en adaptant son Nid.
+Pistes :
+- **Les Neuf Cavaliers Voilés** : neuf petites montures spectrales ; chaque mort rend les autres plus fortes.
+- **Les Avaleurs de Joie** : aspirent les soins et les boucliers.
+- **Le Seigneur à Collier** : prend le contrôle d'une relique adverse au début du combat.
+- **La Reine du Fléau** : boss, empile des malédictions qu'on ne peut pas soigner.
+
+### Rencontres (hommages)
+
+- **Le Heaume qui Juge** : il te range dans une Cour et te donne une relique de départ.
+- **Le Pont des Lames** : une épreuve ; réussir paye bien, échouer coûte des PV de run.
+- **Le Grand Chaudron** : un pacte, une relique puissante contre des PV de run.
+- **Le Marché Gobelin** : des échanges étranges (une relique contre deux, une rareté au hasard).
+
+### Objets neutres (hommages)
+
+Ils visent une famille d'armes (voir Familles d'armes). Pistes :
+- **Lueur-d'Alarme** (Lame) : la dague brille face aux élites et y frappe plus fort.
+- **L'Épée des Braves** : n'apparaît qu'aux joueurs à faibles PV de run.
+- **La Lame de Rubis** (Lame ou Hache).
 
 ### Boutique et or
 
-- **10 or par manche**, l'or non dépensé se garde.
+- **10 or par nœud** (valeur du prototype, à régler sur la carte), l'or non dépensé se garde.
 - **5 offres** tirées au hasard, **relance pour 1 or**.
 - Prix : essence 3, sort 4, catalyseur 4, arme 5.
 - **On achète en posant** : glisser une offre dans une case vide du Nid.
@@ -44,7 +140,8 @@ Fin de partie : **7 victoires ou 3 défaites**. Une égalité ne compte pas.
 
 ### Rareté
 
-Commun, rare, épique, légendaire. Les chances de tirage en boutique dépendent de la manche :
+Commun, rare, épique, légendaire. Les chances de tirage en boutique dépendent de la manche
+(sur la carte : du nombre de nœuds franchis) :
 
 | À partir de la manche | Commun | Rare | Épique | Légendaire |
 |---|---|---|---|---|
@@ -103,35 +200,34 @@ régulière.
 
 ---
 
-## 3. Forme de la créature
+## 4. Forme de la créature
 
 Chaque relique donne des points d'**affinité** dans un élément.
 
 - **Élément dominant** : fixe la forme de base, son identité de jeu et un passif.
 
-### Les neuf éléments
+### Les sept Cours
 
-Deux familles : **cinq éléments de la nature** et **quatre moments du jour**.
+| Cour | Monture | Identité | Ce qui la rend unique |
+|---|---|---|---|
+| Printemps | Cerf | Épines, poison | Punit qui le frappe (épines), poison qui s'accumule |
+| Été | Raie | Illusion, mer | Crée des **leurres** qui absorbent des coups. À concevoir |
+| Automne | Phénix | Brûlure, combustion, hâte | Dégâts sur la durée, attaque de plus en plus vite |
+| Hiver | Loup | Givre, gel, bouclier qui se brise | Le gel **bloque les recharges** adverses |
+| Jour | Papillon | Transfert | **Vole les bonus** adverses et **renvoie ses malus** ; projectile d'arcane sinon |
+| Nuit | Chauve-souris | Vol de vie, malédictions | Se soigne en frappant, affaiblit l'adversaire |
+| Aube | Lion | Soin, Éclat | Le soin se stocke en Éclat, qui frappe |
 
-| Famille | Élément | Monture | Identité | Ce qui la rend unique |
-|---|---|---|---|---|
-| Nature | Vent | Cheval | Esquive, orage | Esquive **au hasard**, et chaque esquive charge l'orage qui frappe en retour |
-| Nature | Terre | Tortue | Bouclier, fatigue | **Veut des combats longs** : bouclier qui se recharge, fait venir la fatigue plus tôt chez l'adversaire et y résiste mieux |
-| Nature | Glace | Loup | Gel | Le gel **bloque les recharges** de sorts adverses (pas les attaques) |
-| Nature | Feu | Phénix | Brûlure, hâte | Dégâts sur la durée, attaque de plus en plus vite. Renaît une fois à 25 % de PV |
-| Nature | Nature | Cerf | Épines, poison | Punit qui le frappe (épines), poison qui s'accumule |
-| Jour | Aube | Lion | Soin | Soins et régénération, se relève des combats serrés |
-| Jour | Lumière | Raie | Illusion | Crée des **leurres** qui absorbent des coups (différent de l'esquive du Vent) |
-| Jour | Crépuscule | Papillon | Transfert | **Vole les bonus** adverses et **renvoie ses malus** à l'envoyeur : le moment où tout s'inverse |
-| Jour | Nuit | Chauve-souris | Vol de vie, malédictions | Se soigne en frappant, affaiblit l'adversaire |
+Dans le code, les éléments gardent leurs anciens noms pour l'instant
+(nature, lumiere, feu, glace, crepuscule, nuit, aube). **Vent (Cheval) et Terre (Tortue) sont
+retirés** de la conception ; leurs objets restent dans le code jusqu'à la refonte.
 
 Paires à garder distinctes :
-- **Vent / Lumière** : le Vent évite au hasard puis contre-attaque, la Lumière place des leurres visibles.
-- **Glace / Crépuscule** : la Glace ralentit la machine adverse, le Crépuscule retourne ses effets contre elle.
-- **Aube / Nature** : l'Aube soigne, la Nature punit. Le Cerf ne régénère plus.
+- **Hiver / Jour** : l'Hiver ralentit la machine adverse, le Jour retourne ses effets contre elle.
+- **Aube / Printemps** : l'Aube soigne, le Printemps punit.
 
-Le Crépuscule n'a de sens que face à un build qui a des bonus ou des malus à voler :
-contre un build d'attaques brutes, il doit rester correct mais sans éclat.
+Le Jour n'a de sens que face à un build qui a des bonus ou des malus à voler :
+contre un build d'attaques brutes, il reste correct grâce au projectile d'arcane.
 
 - **Hybride** (plus tard) : deux éléments au-dessus d'un seuil donnent une forme mixte
   (Feu + Nuit : Wyverne cendrée, Glace + Nature : Ours de toundra...).
@@ -156,7 +252,7 @@ tactique pur. L'arme garde la couleur de son élément, pas celle de la monture.
 
 ---
 
-## 4. Reliques
+## 5. Reliques
 
 | Type | Rôle |
 |---|---|
@@ -165,42 +261,15 @@ tactique pur. L'arme garde la couleur de son élément, pas celle de la monture.
 | **Catalyseur** | Modifie ses voisins orthogonaux |
 | **Arme** | Une seule par Nid, tenue par le cavalier, lance son propre sort |
 
-### Lots par élément (4 reliques chacun : essence, essence ou sort, sort, catalyseur)
-
-- **Feu** : Braise, Plume de cendre, Souffle ardent, Foyer (ancien lot, remplacé par le set du Phénix ci-dessous)
-- **Nuit** : Croc noir, Nuée, Voile, Lune creuse (ancien lot, remplacé par le set de la Chauve-souris ci-dessous)
-- **Terre** : Pierre, Écaille, Rempart, Socle (ancien lot, remplacé par le set de la Tortue ci-dessous)
-- **Vent** : Sabot, Crin, Rafale, Girouette (ancien lot, remplacé par le set du Cheval ci-dessous)
-- **Glace** : Éclat, Carapace gelée, Prison de glace, Cœur d'hiver
-- **Nature** : Racine, Ronces, Sève, Graine mère
-- **Aube, Lumière, Crépuscule** : à concevoir
-
-Règles de Terre et Vent :
-- **Bouclier** : encaisse les coups avant les PV. La brûlure et la fatigue passent à travers.
-- **Tortue** : la fatigue de l'adversaire commence 10 s plus tôt (à 20 s), la sienne est réduite de moitié.
-  Ses combats durent 27 à 35 s, plus que la cible de 15 à 25 s : c'est son identité.
-- **Cheval** : 15 % d'esquive (plafond 50 % avec les Crins), chaque esquive lance un éclair de 10 dégâts
-  qui ne s'esquive pas. Le tirage est fait avec une graine fixe : le combat reste déterministe.
-  L'Estoc de la lance ignore aussi cette esquive.
-- Fatigue : les dégâts montent de 2 par seconde chaque seconde après son début.
-
-Résultats en partie simulée (joueur simple, 400 parties) : Terre 3,3 victoires en moyenne,
-Vent 3,2, Feu 2,1, Nuit 1,5. **La Nuit est à remonter.**
-
----
-
 ### Format cible : 15 objets par archétype
 
 Chaque élément aura **15 objets** :
 - **10 pour la monture** : 4 communs, 3 rares, 2 épiques, 1 légendaire.
 - **5 armes pour le cavalier** : 2 communes, 1 rare, 1 épique, 1 légendaire.
 
-Le prototype n'a encore que 4 objets de monture par élément (Feu, Nuit, Terre, Vent) et
-3 armes partagées. Les lots ci-dessus seront refaits à ce format.
-
 La rareté est décrite dans la section Boutique.
 
-### Nature (Cerf) : épines et poison
+### Printemps (Cerf) : épines et poison
 
 **Fait** (images de `images/`, découpées par `outils/decouper_icones.gd`). Chiffres de départ :
 épines du Cerf 2 par coup reçu, Épine de ronce +2, Baie 0,5 dose par attaque, Nuage de spores
@@ -259,15 +328,16 @@ croisés, objets neutres utiles sans être universels, style lisible quel que so
 | Tir | Rapide, plusieurs petits coups | armes du Cerf, armes du Papillon |
 | Lame | Rapide, riposte, **coups critiques** | Dague d'épine, Serpe de ronces, armes de la Nuit |
 | Hast | Allonge, perce l'esquive | Lance du guet (neutre), armes du Loup, armes du Papillon |
-| Hache | Lent, gros coup | armes du Loup, du Lion, de la Tortue |
-| Bâton | Magie, grandit avec l'affinité | armes du Phénix, du Lion, de la Tortue |
+| Hache | Lent, gros coup | armes du Loup, du Lion |
+| Bâton | Magie, grandit avec l'affinité | armes du Phénix, du Lion |
 | Faux | Achève les cibles affaiblies | Faux de tison, Faux des cendres, armes de la Nuit |
 
-Familles par élément : **Cerf : Tir et Lame. Loup : Hast et Hache. Phénix : Bâton et Faux. Nuit : Faux et Lame.
-Lion : Bâton et Hache. Papillon : Tir et Hast. Cheval : Lame et Hast. Tortue : Hache et Bâton.**
+Familles par Cour : **Printemps (Cerf) : Tir et Lame. Hiver (Loup) : Hast et Hache. Automne (Phénix) : Bâton et Faux.
+Nuit : Faux et Lame. Aube (Lion) : Bâton et Hache. Jour (Papillon) : Tir et Hast.**
 
-Avec 9 éléments à 2 familles, il y a 18 places pour 6 familles : **l'idéal est 3 éléments par
-famille**. Après la Tortue, il reste **Tir et Faux pour la Lumière**, ce qui complète la grille.
+Sans Vent ni Terre, 7 Cours à 2 familles donnent 14 places pour 6 familles. Il reste deux
+familles pour l'Été (la Raie). Avec Tir et Faux, ces deux familles passent à 3 Cours et les
+autres restent à 2.
 
 **Coups critiques** : identité de la famille Lame. Un crit fait **x1,75** de dégâts ; les chances
 viennent des armes Lame et de certains objets (aucune chance de base). Les Lames du Cerf
@@ -277,7 +347,7 @@ viennent des armes Lame et de certains objets (aucune chance de base). Les Lames
 lequel jouera un futur objet neutre. Chaque élément y ajoute sa saveur : le feu pour le Phénix,
 le drain et les malédictions pour la Nuit.
 
-### Glace (Loup) : givre et bouclier qui se brise
+### Hiver (Loup) : givre et bouclier qui se brise
 
 **Fait** (images de `images/`). Chiffres de départ : passif du Loup, 1 charge de givre par attaque
 et **+50 % de dégâts contre une cible gelée** (le gel est une fenêtre d'attaque, sinon le Loup
@@ -323,7 +393,7 @@ Règles du givre :
 
 ---
 
-### Feu (Phénix) : brûlure, combustion, Braise
+### Automne (Phénix) : brûlure, combustion, Braise
 
 **Fait** (images de `images/`). Chiffres de départ : brûlure 1,5 dégât par charge et par seconde,
 4 s par charge, 50 charges au plus ; combustion 4 par charge consumée (x1,5 si totale) ; Braise
@@ -485,7 +555,7 @@ Règles :
 Points à surveiller : la **Vasque** crée un pont avec la Terre et la Glace (bouclier, effets de bris) ;
 le Lion est contré par la Nature (Belladone) et la Nuit (Flétrissure), adouci par la règle ci-dessus.
 
-### Crépuscule (Papillon) : Transfert
+### Jour (Papillon) : Transfert
 
 **Fait** (images de `images/`). Chaque source de Transfert a une **puissance** : quantité volée,
 et dégâts du projectile d'arcane quand il n'y a rien à déplacer. Battement d'ailes 10 + 0,5 par
@@ -542,101 +612,7 @@ Pistes d'apparence : poussière d'écailles irisées, violets et orangés du sol
 antennes, ailes de phalène, lune basse. **Pas de miroirs ni de reflets**, gardés pour la Lumière
 (la Raie, l'illusion).
 
-### Vent (Cheval) : Élan et Foudre
-
-**Fait** (images de `images/`). Chiffres : Foudre à 100 d'Élan (Manche à air -20, 40 au moins),
-35 dégâts (Éventail +15, Girouette +5 par esquive jusqu'à la Foudre suivante) ; +10 d'Élan par
-attaque, +20 par esquive ; Étrier +2 par attaque de la série (10 au plus) ; Grelot : Galop toutes
-les 4 s, 15 d'Élan ; Ruban : +3 de hâte pendant 2 s par esquive ; Voile de cavale : +30 % d'esquive
-pendant 3 s (plafond relevé à 75 %) ; Galop libre 4 s, +5 de hâte, Élan doublé. La Foudre ne
-s'esquive pas.
-
-**On court, on esquive, ça charge, ça tombe.** Enchaîner les attaques et esquiver remplissent
-l'**Élan** ; à pleine jauge, il est consommé pour déclencher **la Foudre**, un éclair qui frappe
-l'adversaire. Deux façons de jouer : la vitesse (Fer, Grelot, Étrier) ou l'esquive (Duvet, Ruban,
-Girouette). Familles d'armes : **Lame et Hast**. Ce set remplace l'ancien Vent (Sabot, Crin,
-Rafale, Girouette).
-
-Règles :
-- **Passif du Cheval** : 15 % d'esquive (plafond 50 %) ; chaque attaque et chaque esquive donnent
-  de l'Élan ; à pleine jauge, la Foudre. (Elle remplace l'éclair qui suivait chaque esquive.)
-- **Nom** : « Foudre » et pas « Éclair », trop proche de l'Éclat du Lion à la lecture.
-  Visuel : un éclair turquoise et blanc qui tombe sur l'adversaire, contre le rayon doré de l'Éclat.
-- Les armes qui percent l'esquive restent le contre naturel du Cheval.
-
-#### Monture (10)
-
-| Rareté | Objet | Apparence | Effet |
-|---|---|---|---|
-| Commun | Fer allégé | Un fer à cheval fin, ivoire et turquoise, ouvert aux extrémités | **Catalyseur** : les objets voisins génèrent 50 % d'Élan en plus |
-| Commun | Ruban de crinière | Un nœud menthe avec deux longues bandes flottantes | Chaque esquive accélère brièvement tes attaques |
-| Commun | Grelot de course | Un petit grelot de cuivre pâle, suspendu à une attache en cuir turquoise | **Sort** *Galop* : toutes les 4 s, un petit coup qui donne de l'Élan |
-| Commun | Duvet de pissenlit | Une seule graine crème portée par une aigrette légère | Une petite chance d'esquive |
-| Rare | Étrier du grand galop | Un étrier élancé dont la branche dessine une volute | Les attaques consécutives donnent de plus en plus d'Élan ; subir un coup remet ce bonus à zéro |
-| Rare | Manche à air | Un petit tube de toile rayé menthe et ivoire, gonflé par le vent | Moins d'Élan nécessaire pour la Foudre |
-| Rare | Éventail de bourrasque | Un éventail à trois larges pans de toile turquoise | Renforce les dégâts de la Foudre |
-| Épique | Voile de cavale | Une petite couverture de selle légère, prolongée en voile flottante | Après une Foudre, forte esquive pendant un court instant |
-| Épique | Girouette indocile | Une girouette en forme de cheval cabré, sur une flèche courbe | Chaque esquive fait progresser la prochaine Foudre et en renforce les dégâts |
-| Légendaire | Bride des vents libres | Une bride ouverte en cuir bleu-vert, dont les rênes se dissolvent en deux courants d'air | La Foudre ouvre un court **Galop libre** : attaques accélérées, gains d'Élan doublés. Ne se renouvelle pas pendant qu'il est actif |
-
-#### Armes du cavalier (5, Lame et Hast)
-
-| Rareté | Arme | Famille | Effet |
-|---|---|---|---|
-| Commun | Dague de brise | Lame | Coups rapides qui génèrent un peu d'Élan à chaque impact |
-| Commun | Javelot des alizés | Hast | Perce l'esquive ; chaque lancer accélère légèrement l'attaque suivante |
-| Rare | Sabre de rafale | Lame | Après une esquive, une riposte de trois coups rapides qui génèrent de l'Élan |
-| Épique | Lance de bourrasque | Hast | Après chaque Foudre, le prochain coup perce l'esquive et fait double dégâts |
-| Légendaire | Rapière des vents libres | Lame | Pendant le Galop libre, chaque attaque frappe deux fois ; la seconde touche fait moins de dégâts et génère aussi de l'Élan |
-
-### Terre (Tortue) : tenir, réduire, survivre à la fatigue
-
-**Fait** (images de `images/`). Chiffres : Brique 6 % de réduction, Cale +8 % avec du bouclier,
-Fossile +50 % aux voisins ; Truelle (Mortier) 15 + 1,5 par point de Terre toutes les 5 s ; Fil à
-plomb +8 toutes les 3 s de bouclier tenu ; Tuile -50 % sur le premier coup après un nouveau
-bouclier ; Sablier ensablé +5 s ; Borne : 4 s de répit. Les combats de la Tortue durent 32 à 38 s.
-
-**La Terre veut que son bouclier tienne**, à l'opposé exact du Loup qui veut qu'il se brise. Le Fil
-à plomb et la Clef de voûte récompensent un bouclier qui dure, la réduction de dégâts amortit, et
-la fatigue devient un moment fort (Urne, Borne). Familles d'armes : **Hache et Bâton**. Ce set
-remplace l'ancienne Terre (Pierre, Écaille, Rempart, Socle).
-
-Règles :
-- **Passif de la Tortue** (inchangé) : la fatigue de l'adversaire commence 10 s plus tôt, la sienne
-  est réduite de moitié.
-- **Réduction de dégâts** : un pourcentage retiré à chaque coup reçu (attaques et sorts), avant le
-  bouclier, **plafonné à 50 %**. Le poison, la brûlure et la fatigue passent à travers : la Nature
-  et le Feu restent ses contres.
-- **Renouvellement** : le bouclier de la Truelle **remplace** celui de la Truelle précédente au lieu
-  de s'y ajouter (pas de bouclier qui gonfle à l'infini). La Clef de voûte en garde la moitié.
-- À surveiller : la monture n'a presque aucun dégât, la Tortue gagne par la fatigue adverse.
-
-#### Monture (10)
-
-| Rareté | Objet | Apparence | Effet |
-|---|---|---|---|
-| Commun | Brique d'argile | Une brique ocre aux angles arrondis | Réduit légèrement les dégâts des coups reçus |
-| Commun | Truelle de mortier | Une truelle sombre portant une couche de mortier crème | **Sort** : un petit bouclier à intervalles réguliers (renouvelé, pas ajouté) |
-| Commun | Cale de chêne | Un coin de bois épais, maintenu par une bande de fer | Tant que tu as du bouclier, renforce ta réduction de dégâts |
-| Commun | Fossile spiralé | Une empreinte de coquille dans une plaque d'argile | **Catalyseur** : les objets voisins donnent 50 % de bouclier et de réduction en plus |
-| Rare | Fil à plomb | Un poids d'ardoise suspendu à une corde épaisse | Si ton bouclier tient plusieurs secondes sans être brisé, il se renforce |
-| Rare | Tuile vernissée | Une tuile courbe en terre cuite, émaillée de brun sombre | Réduit les dégâts du premier coup reçu après chaque création de bouclier |
-| Rare | Sablier ensablé | Un sablier trapu en pierre, presque rempli de sable ocre | Retarde le début de ta propre fatigue |
-| Épique | Clef de voûte | Une pierre trapézoïdale gravée d'une arche simple | À chaque renouvellement, garde la moitié du bouclier restant |
-| Épique | Urne des siècles | Une urne de céramique ancienne, réparée par de larges joints crème | Accumule les dégâts évités par ta réduction ; au début de ta fatigue, te soigne de cette réserve |
-| Légendaire | Borne de l'Éternité | Une borne de pierre arrondie, traversée de strates ocre et d'un anneau gravé | Au premier coup de fatigue qui devrait te tuer, reste à 1 PV et suspends ta fatigue quelques secondes. Une fois par combat |
-
-#### Armes du cavalier (5, Hache et Bâton)
-
-| Rareté | Arme | Famille | Effet | Apparence |
-|---|---|---|---|---|
-| Commun | Hachette de schiste | Hache | Coup lent qui réduit brièvement les dégâts infligés par la cible | Une lame d'ardoise large, fixée sur un manche de bois épais |
-| Commun | Bâton de glaise | Bâton | Chaque tir accorde un petit bouclier, renforcé par l'affinité Terre | Un bâton noueux coiffé d'une coupelle d'argile |
-| Rare | Bâton du rempart | Bâton | Tant que ton bouclier tient, ses tirs renforcent ta réduction de dégâts, jusqu'à une limite ; le bonus disparaît si le bouclier est brisé | Deux plaques de pierre dressées au sommet d'un bâton |
-| Épique | Hache des fondations | Hache | Coup très lent qui accorde un bouclier selon les dégâts infligés, renforcé sous la moitié de ta vie | Une lourde lame de pierre taillée en arche, avec un manche cerclé de fer |
-| Légendaire | Bâton des âges enfouis | Bâton | Chaque tir te soigne légèrement ; une fois la fatigue commencée, il soigne davantage selon son intensité, avec un plafond | Une borne miniature au sommet d'un long bâton, gravée d'anneaux et de strates ocre |
-
-## 5. Pas d'avantage élémentaire
+## 6. Pas d'avantage élémentaire
 
 **Aucun élément ne bat un autre.** Pas de triangle, pas de multiplicateur caché.
 
@@ -644,14 +620,13 @@ Le contre-jeu passe par les mécaniques des sorts, lisibles à l'écran :
 - Prison de glace (gel des recharges) coupe une Nuée avant qu'elle parte.
 - Ronces (renvoie les dégâts) punit les builds à beaucoup de petits coups.
 - Le vol de vie de la Nuit tient face au soin de l'Aube.
-- La Tortue punit les builds lents, le Cheval punit les builds à gros coups uniques.
 - Le Papillon punit les builds qui empilent bonus et malus.
 
 On adapte son Nid à ce qu'on affronte, pas à une couleur.
 
 ---
 
-## 6. Combat
+## 7. Combat
 
 - Simulation déterministe par pas de 0,1 s : même Nids, même résultat.
   Indispensable pour rejouer un combat asynchrone à l'identique.
@@ -662,10 +637,12 @@ On adapte son Nid à ce qu'on affronte, pas à une couleur.
 
 ---
 
-## 7. Prototype (périmètre actuel)
+## 8. Prototype (périmètre actuel)
 
-- 8 éléments au format 15 objets : Feu, Nature, Glace, Nuit, Aube, Crépuscule, Vent, Terre ;
-  1 arme neutre (Lance du guet). Reste la Lumière (Raie), avec les familles Tir et Faux.
+- 6 Cours au format 15 objets : Printemps, Hiver, Automne, Nuit, Aube, Jour ; 1 arme neutre
+  (Lance du guet). Reste l'Été (Raie). Vent et Terre sont encore dans le code, à retirer.
+- Run sur carte : 3 actes de 10 étages, PV de run, boutique facultative entre les nœuds,
+  trois rencontres. Élites et boss sont encore des fantômes en avance.
 - Arène : vitesse x1, x2 ou x3.
 - Nid 4 x 4, reliques d'une case. **Les formes de reliques (2 x 1, L...) viendront après.**
 - Pas d'hybride, pas de réseau. Rareté en place.
@@ -676,14 +653,12 @@ donne envie de refaire un Nid ? Si non, rien d'autre ne compte.
 
 ---
 
-## 8. Plus tard
+## 9. Plus tard
 
 - Formes de reliques et rotation.
 - Une image pour la Serpe de ronces (le Fouet a été remplacé).
-- Refaire Feu, Nuit, Terre, Vent au format 15 objets, avec une ou deux familles d'armes chacun.
 - Objets neutres qui visent une famille d'armes.
 - Glace, les quatre moments du jour, et les hybrides.
-- Une arme propre à la Terre et au Vent (ils n'ont que la lance).
-- 9 éléments donnent 36 paires d'hybrides : il faudra sûrement n'en garder qu'une partie.
+- 7 Cours donnent 21 paires d'hybrides : il faudra sûrement n'en garder qu'une partie.
 - Stades d'évolution (visuel qui grandit).
 - PvP asynchrone : stocker le Nid de chaque joueur par manche (Supabase), tirer un fantôme du même stade.

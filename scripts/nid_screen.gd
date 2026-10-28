@@ -5,7 +5,7 @@ extends Control
 # Glisser une offre dans une case vide l'achete, glisser une case vers une
 # autre echange, la ramener a la boutique ou clic droit la revend.
 
-signal combattre
+signal continuer
 signal nouvelle_partie
 
 const TUILE := Vector2(124, 64)
@@ -71,7 +71,6 @@ func _boutique() -> Control:
 		g.add_child(o)
 	col.add_child(g)
 	relance = Button.new()
-	relance.text = "Relancer (%d or)" % Partie.PRIX_RELANCE
 	relance.pressed.connect(func():
 		partie.relancer()
 		rafraichir())
@@ -151,14 +150,14 @@ func rafraichir() -> void:
 	infos.text = _decrire(cr)
 	for o in offres_ui:
 		o.queue_redraw()
-	relance.disabled = partie.bourse < Partie.PRIX_RELANCE or partie.terminee()
-	barre.text = "Manche %d      Or %d      Victoires %d / %d      Défaites %d / %d" % [
-		partie.manche, partie.bourse, partie.victoires, Partie.VICTOIRES_MAX, partie.defaites, Partie.DEFAITES_MAX]
+	relance.text = "Relancer (%s)" % ("gratuit" if partie.prix_relance() == 0 else "%d or" % partie.prix_relance())
+	relance.disabled = partie.bourse < partie.prix_relance() or partie.terminee()
+	barre.text = "Acte %d      Or %d      PV de run %d / %d      %s" % [
+		partie.acte + 1, partie.bourse, maxi(partie.pv_run, 0), Partie.PV_RUN, partie.message]
 	if partie.terminee():
-		var gagne := partie.victoires >= Partie.VICTOIRES_MAX
-		bouton_combat.text = ("Partie gagnée !" if gagne else "Partie perdue.") + " Nouvelle partie"
+		bouton_combat.text = ("Run gagnée !" if partie.gagnee else "Run perdue.") + " Nouvelle partie"
 	else:
-		bouton_combat.text = "Combattre (manche %d)" % partie.manche
+		bouton_combat.text = "Vers la carte"
 
 func _affinite_totale() -> int:
 	var total := 0
@@ -386,7 +385,7 @@ func _combattre() -> void:
 	if partie.terminee():
 		nouvelle_partie.emit()
 	else:
-		combattre.emit()
+		continuer.emit()
 
 # --- elements d'interface --------------------------------------------------
 
@@ -469,13 +468,14 @@ class Offre extends Control:
 			draw_string(ThemeDB.fallback_font, Vector2(0, rect.size.y / 2 + 5), "Acheté",
 				HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 13, Palette.TEXTE_DOUX)
 			return
-		var abordable := ecran.partie.bourse >= Partie.prix(_id())
+		var prix := ecran.partie.prix_offre(index)
+		var abordable := ecran.partie.bourse >= prix
 		modulate.a = 1.0 if abordable else 0.4
 		NidScreen.dessiner_relique(self, rect, _id())
-		draw_string(ThemeDB.fallback_font, Vector2(0, rect.size.y + 15), "%d or" % Partie.prix(_id()),
+		draw_string(ThemeDB.fallback_font, Vector2(0, rect.size.y + 15), "Offert" if index == ecran.partie.gratuite else "%d or" % prix,
 			HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 14, Color("#f2c94c") if abordable else Palette.TEXTE_DOUX)
 	func _get_drag_data(_p: Vector2) -> Variant:
-		if _id() == "" or ecran.partie.bourse < Partie.prix(_id()):
+		if _id() == "" or ecran.partie.bourse < ecran.partie.prix_offre(index):
 			return null
 		set_drag_preview(NidScreen.apercu(_id()))
 		return {"id": _id(), "offre": index}

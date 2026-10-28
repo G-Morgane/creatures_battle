@@ -206,6 +206,10 @@ const MASQUES := {
 # image de la bete (fond transparent) -> element
 const MONTURES := {"cerf": "nature", "loup": "glace", "phenix": "feu", "chauvesouris": "nuit", "lion": "aube", "papillon": "crepuscule", "cheval": "vent", "tortue": "terre"}
 
+# Icones de la carte : planche a fond transparent, coupee en trois tiers egaux.
+const CARTE := ["duel", "rencontre", "elite"]
+const TAILLE_CARTE := 160
+
 # Poussieres : ilots opaques isoles plus petits que cette aire (en pixels, avant reduction).
 const POUSSIERE_ICONE := 40
 const POUSSIERE_MONTURE := 150
@@ -242,6 +246,17 @@ func _initialize() -> void:
 		_reduire(m, TAILLE_MONTURE)
 		m.save_png("res://images/montures/%s.png" % MONTURES[bete])
 		betes.append(m)
+	DirAccess.make_dir_recursive_absolute("res://images/carte")
+	var planche := Image.load_from_file("res://images/map_icons.png")
+	planche.convert(Image.FORMAT_RGBA8)
+	var tiers := planche.get_width() / CARTE.size()
+	for k in CARTE.size():
+		var ic := planche.get_region(Rect2i(k * tiers, 0, tiers, planche.get_height()))
+		_poussiere(ic, POUSSIERE_ICONE)
+		ic = ic.get_region(ic.get_used_rect())
+		_reduire(ic, TAILLE_CARTE)
+		ic.save_png("res://images/carte/%s.png" % CARTE[k])
+		betes.append(ic)
 	_controle(icones, betes)
 	print("icones : ", icones.size())
 	quit()

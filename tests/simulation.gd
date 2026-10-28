@@ -1,74 +1,61 @@
 extends SceneTree
 
-# Simule des parties entieres avec des joueurs automatiques.
+# Simule des runs entieres avec des joueurs automatiques : carte, boutique,
+# rencontres, combats contre le fantome.
 # Lancer : godot --headless --path . -s res://tests/simulation.gd
-# Mesure fiable par element (plus long, plusieurs minutes) :
-#   godot --headless --path . -s res://tests/simulation.gd -- --parties=1000
+# Plus de runs (plus long) :
+#   godot --headless --path . -s res://tests/simulation.gd -- --runs=300
 
-var PARTIES := 300
+var RUNS := 100
 
 func _initialize() -> void:
 	for arg in OS.get_cmdline_user_args():
-		if arg.begins_with("--parties="):
-			PARTIES = int(arg.get_slice("=", 1))
+		if arg.begins_with("--runs="):
+			RUNS = int(arg.get_slice("=", 1))
 	for style in ["aleatoire", "simple"]:
-		var repartition := []
-		repartition.resize(Partie.VICTOIRES_MAX + 1)
-		repartition.fill(0)
-		var par_manche := {}   # manche -> [victoires, combats]
-		var total := 0
-		var par_element := {}   # element choisi -> [parties, victoires]
-		for g in PARTIES:
+		var gagnees := 0
+		var noeuds := 0
+		var actes := [0, 0, 0]          # runs arrivees a chaque acte
+		var par_type := {}              # type -> [victoires, combats]
+		var par_element := {}           # element choisi -> [runs, gagnees]
+		for g in RUNS:
 			var p := Partie.new(g + 1)
 			var j := JoueurAuto.new(style, g + 1)
 			while not p.terminee():
 				j.jouer_manche(p)
-				var v := Combat.new(p.nid.eclore(), p.adversaire().eclore()).simuler()
-				var m: Array = par_manche.get(p.manche, [0, 0])
-				m[0] += 1 if v == 0 else 0
-				m[1] += 1
-				par_manche[p.manche] = m
-				p.enregistrer(v)
-			repartition[p.victoires] += 1
-			total += p.victoires
+				p.entrer(j.choisir_noeud(p))
+				var type: String = p.noeud()["type"]
+				noeuds += 1
+				if p.combat():
+					var c := Combat.new(p.nid.eclore(), p.adversaire_noeud().eclore())
+					var v := c.simuler()
+					var m: Array = par_type.get(type, [0, 0])
+					m[0] += 1 if v == 0 else 0
+					m[1] += 1
+					par_type[type] = m
+					p.conclure_combat(v, c.cotes[1]["pv"] / c.cotes[1]["cr"]["pv_max"])
+				elif type == "rencontre":
+					p.choisir(j.choisir_rencontre(p))
+				else:
+					p.conclure()
+			for a in p.acte + 1:
+				actes[a] += 1
+			gagnees += 1 if p.gagnee else 0
 			var pe: Array = par_element.get(j.element, [0, 0])
 			pe[0] += 1
-			pe[1] += p.victoires
+			pe[1] += 1 if p.gagnee else 0
 			par_element[j.element] = pe
-		print("\n## Joueur %s (%d parties)" % [style, PARTIES])
-		print("Victoires moyennes : %.2f   Parties gagnées (7) : %d %%" % [
-			float(total) / PARTIES, roundi(100.0 * repartition[Partie.VICTOIRES_MAX] / PARTIES)])
-		var ligne := "Répartition des victoires : "
-		for k in repartition.size():
-			ligne += "%d:%d%%  " % [k, roundi(100.0 * repartition[k] / PARTIES)]
+		print("\n## Joueur %s (%d runs)" % [style, RUNS])
+		print("Runs gagnées : %d %%   Noeuds par run : %.1f" % [roundi(100.0 * gagnees / RUNS), float(noeuds) / RUNS])
+		print("Runs arrivées à l'acte 2 : %d %%, à l'acte 3 : %d %%" % [
+			roundi(100.0 * actes[1] / RUNS), roundi(100.0 * actes[2] / RUNS)])
+		var ligne := "Taux de victoire par type : "
+		for t in par_type:
+			ligne += "%s %d %% (%d)  " % [t, roundi(100.0 * par_type[t][0] / par_type[t][1]), par_type[t][1]]
 		print(ligne)
-		ligne = "Taux de victoire par manche : "
-		var manches := par_manche.keys()
-		manches.sort()
-		for m in manches:
-			if par_manche[m][1] >= 20:
-				ligne += "m%d:%d%%  " % [m, roundi(100.0 * par_manche[m][0] / par_manche[m][1])]
-		print(ligne)
-		print("Sans élimination (difficulté réelle) : " + _courbe(style))
 		if style == "simple":
-			ligne = "Victoires moyennes par élément : "
+			ligne = "Runs gagnées par élément : "
 			for e in par_element:
-				ligne += "%s %.1f (%d)  " % [e, float(par_element[e][1]) / par_element[e][0], par_element[e][0]]
+				ligne += "%s %d %% (%d)  " % [e, roundi(100.0 * par_element[e][1] / par_element[e][0]), par_element[e][0]]
 			print(ligne)
 	quit()
-
-# Chaque partie joue 9 manches quoi qu'il arrive : pas de biais de survie.
-func _courbe(style: String) -> String:
-	var gagnes := {}
-	for g in PARTIES:
-		var p := Partie.new(g + 1)
-		var j := JoueurAuto.new(style, g + 1)
-		for m in range(1, 10):
-			j.jouer_manche(p)
-			var v := Combat.new(p.nid.eclore(), p.adversaire().eclore()).simuler()
-			gagnes[m] = gagnes.get(m, 0) + (1 if v == 0 else 0)
-			p.enregistrer(v)
-	var ligne := ""
-	for m in range(1, 10):
-		ligne += "m%d:%d%%  " % [m, roundi(100.0 * gagnes[m] / PARTIES)]
-	return ligne

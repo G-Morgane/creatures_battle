@@ -13,6 +13,8 @@ func _ready() -> void:
 	ok = _armes() and ok
 	ok = _combat_anime() and ok
 	ok = _partie() and ok
+	ok = _carte() and ok
+	ok = _run() and ok
 	ok = _fusion() and ok
 	ok = _terre_vent() and ok
 	ok = _nature() and ok
@@ -149,19 +151,83 @@ func _partie() -> bool:
 	p.vendre(Vector2i(0, 0))
 	ok = _verifier(p.bourse == 5 and p.nid.cases.is_empty(), "revendre : moitie du prix") and ok
 	ok = _verifier(p.relancer() and p.bourse == 4, "relancer coute 1 or") and ok
-	p.enregistrer(0)
-	ok = _verifier(p.manche == 2 and p.victoires == 1 and p.bourse == 14, "victoire : manche 2, +10 or") and ok
-	p.enregistrer(-1)
-	ok = _verifier(p.victoires == 1 and p.defaites == 0 and p.manche == 3, "egalite : ne compte pas") and ok
 	var a := p.adversaire()
 	var cout := 0
 	for id in a.cases.values():
 		cout += Partie.prix(id)
-	ok = _verifier(cout <= Partie.OR_PAR_MANCHE * p.manche + Partie.OR_PAR_VICTOIRE * p.victoires and cout > 0, "adversaire dans le budget de la manche") and ok
+	ok = _verifier(cout <= Partie.OR_PAR_MANCHE * p.manche and cout > 0, "adversaire dans le budget de la manche") and ok
 	ok = _verifier(a.cases == p.adversaire().cases, "adversaire deterministe") and ok
-	for i in 3:
-		p.enregistrer(1)
-	return _verifier(p.terminee(), "3 defaites : partie terminee") and ok
+	return ok
+
+func _carte() -> bool:
+	var c := Carte.new(7)
+	var ok := _verifier(Carte.new(7).actes == c.actes, "meme graine, meme carte")
+	for a in Carte.ACTES:
+		var n: Array = c.actes[a]
+		var boss := n.filter(func(x): return x["type"] == "boss")
+		ok = _verifier(boss.size() == 1 and boss[0]["etage"] == Carte.ETAGES - 1, "un boss au dernier etage") and ok
+		ok = _verifier(c.departs(a).size() >= 2, "au moins deux departs") and ok
+		# tout noeud est atteignable depuis un depart et mene au boss
+		var vus := {}
+		var pile: Array = c.departs(a).duplicate()
+		while not pile.is_empty():
+			var i: int = pile.pop_back()
+			if vus.has(i):
+				continue
+			vus[i] = true
+			pile.append_array(n[i]["suivants"])
+		ok = _verifier(vus.size() == n.size(), "acte %d : tout noeud atteignable" % a) and ok
+		for x in n:
+			ok = _verifier(x["type"] == "boss" or not x["suivants"].is_empty(), "pas de cul-de-sac") and ok
+			ok = _verifier(x["etage"] != 0 or x["type"] == "duel", "premier etage : duels") and ok
+			ok = _verifier(x["etage"] != Carte.ETAGES - 2 or x["type"] == "feu", "feu de camp avant le boss") and ok
+			ok = _verifier(a > 0 or x["etage"] >= Carte.ELITE_DES or x["type"] != "elite", "pas d'elite trop tot") and ok
+	return ok
+
+func _run() -> bool:
+	var p := Partie.new(11)
+	var ok := _verifier(not p.entrer(999) and p.entrer(p.accessibles()[0]) and p.combat(), "entrer dans un duel de depart")
+	p.conclure_combat(1, 0.5)
+	ok = _verifier(p.pv_run == Partie.PV_RUN - Partie.PERTE["duel"] - 4 and p.manche == 2 and p.bourse == 20, "defaite : PV de run perdus selon ce qui reste a l'adversaire, +10 or") and ok
+	# feu de camp
+	p.noeud()["type"] = "feu"
+	p.conclure()
+	ok = _verifier(p.pv_run == Partie.PV_RUN, "feu de camp : soin plafonne") and ok
+	# victoire contre une elite : relique epique offerte, qui survit a la relance
+	p.noeud()["type"] = "elite"
+	p.conclure_combat(0)
+	ok = _verifier(p.gratuite == 0 and Data.rarete(p.offres[0]) == "epique" and p.prix_offre(0) == 0, "elite battue : epique offerte") and ok
+	var offerte: String = p.offres[0]
+	p.relancer()
+	ok = _verifier(p.offres[0] == offerte and p.prix_offre(0) == 0, "l'offre offerte survit a la relance") and ok
+	ok = _verifier(p.acheter(0, Vector2i(0, 0)) and p.gratuite == -1, "acheter l'offre offerte ne coute rien") and ok
+	# marche : relance gratuite jusqu'au noeud suivant
+	p.noeud()["type"] = "marche"
+	p.conclure()
+	var bourse := p.bourse
+	ok = _verifier(p.prix_relance() == 0 and p.relancer() and p.bourse == bourse, "marche : relance gratuite") and ok
+	# rencontre
+	p.position = -1
+	p.entrer(p.accessibles()[0])
+	p.noeud()["type"] = "rencontre"
+	p.rencontre = {"id": "chaudron"}
+	var pv := p.pv_run
+	p.choisir(0)
+	ok = _verifier(p.pv_run == pv - Partie.CHAUDRON_PV and Data.rarete(p.offres[0]) == "legendaire", "chaudron : legendaire contre des PV") and ok
+	# boss : acte suivant, dernier boss : fin de run
+	p.noeud()["type"] = "boss"
+	p.conclure_combat(0)
+	ok = _verifier(p.acte == 1 and p.position == -1 and p.chemin.is_empty() and not p.terminee(), "boss battu : acte suivant") and ok
+	p.acte = Carte.ACTES - 1
+	p.entrer(p.accessibles()[0])
+	p.noeud()["type"] = "boss"
+	p.conclure_combat(0)
+	ok = _verifier(p.terminee() and p.gagnee, "dernier boss battu : run gagnee") and ok
+	var q := Partie.new(12)
+	q.entrer(q.accessibles()[0])
+	q.pv_run = 2
+	q.conclure_combat(1, 1.0)
+	return _verifier(q.terminee() and not q.gagnee and q.accessibles().is_empty(), "0 PV de run : run perdue") and ok
 
 func _fusion() -> bool:
 	var n := Nid.new()
@@ -566,6 +632,19 @@ func _aube() -> bool:
 	e._eclat(e.cotes[0], e.cotes[1])
 	e._eclat(e.cotes[0], e.cotes[1])
 	ok = _verifier(e.cotes[0]["pv"] >= 140.0, "carillon : gros soin au 3e eclat") and ok
+	# reliques fusionnees : le soin du Carillon ne relance pas l'Eclat sans fin
+	var lion := Nid.new()
+	var poses := {Vector2i(0, 0): "sceptre_aurore", Vector2i(1, 0): "huile", Vector2i(2, 0): "miroir",
+		Vector2i(3, 0): "vasque", Vector2i(1, 1): "meche", Vector2i(2, 1): "bande", Vector2i(0, 2): "voile_aube",
+		Vector2i(0, 1): "carillon", Vector2i(3, 1): "voile_aube", Vector2i(2, 2): "encensoir",
+		Vector2i(3, 2): "encensoir", Vector2i(1, 3): "vasque", Vector2i(1, 2): "meche"}
+	for k in poses:
+		lion.placer(k, poses[k])
+	for k in [Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0), Vector2i(1, 1), Vector2i(2, 1)]:
+		lion.niveaux[k] = 2
+	var boucle := Combat.new(lion.eclore(), Exemples.nid_crepuscule().eclore())
+	boucle.simuler()
+	ok = _verifier(boucle.evenements.size() < 1000, "carillon fusionne : pas de boucle d'Eclat") and ok
 	var v := Combat.new(n.eclore(), vide)
 	v._soigner(v.cotes[0], v.cotes[1], 20.0)
 	ok = _verifier(is_equal_approx(v.cotes[0]["bouclier"], 10.0), "vasque : l'excedent devient bouclier") and ok

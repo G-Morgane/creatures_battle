@@ -420,6 +420,11 @@ const FAMILLES := {"tir": "Tir", "lame": "Lame", "hast": "Hast", "hache": "Hache
 # --- rarete ----------------------------------------------------------------
 
 # Une relique sans champ "rarete" est commune.
+# Les sept Cours (archetypes) et l'element qui les porte dans le code.
+# L'Ete (lumiere) n'a pas encore d'objets.
+const COURS := {"nature": "Cour du Printemps", "glace": "Cour de l'Hiver", "feu": "Cour de l'Automne",
+	"nuit": "Cour de la Nuit", "aube": "Cour de l'Aube", "crepuscule": "Cour du Jour"}
+
 const RARETES := ["commun", "rare", "epique", "legendaire"]
 const NOMS_RARETE := {"commun": "Commun", "rare": "Rare", "epique": "Épique", "legendaire": "Légendaire"}
 

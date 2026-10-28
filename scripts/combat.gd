@@ -53,6 +53,7 @@ func _etat(cr: Dictionary, i: int) -> Dictionary:
 		"eclat_jauge": 0.0,
 		"exces_accumule": 0.0,     # Lanterne : soins excedentaires depuis le dernier Eclat
 		"eclats": 0,               # Carillon
+		"dans_eclat": false,       # un soin venu d'un Eclat ne recharge pas l'Eclat
 		"encensoir_jusqu": 0.0,
 		"eclat_pret": false,       # Hache solaire
 		"transferts": 0,           # Arc des deux lunes
@@ -367,7 +368,10 @@ func _eclat(moi: Dictionary, adverse: Dictionary) -> void:
 	if moi["cr"]["encensoir"] > 0.0:
 		moi["encensoir_jusqu"] = t + Data.ENCENSOIR_DUREE
 	if moi["cr"]["carillon"] > 0.0 and moi["eclats"] % Data.CARILLON_TOUS == 0:
+		# sinon, avec des reliques fusionnees, le soin relancait l'Eclat sans fin
+		moi["dans_eclat"] = true
 		_soigner(moi, adverse, moi["cr"]["carillon"])
+		moi["dans_eclat"] = false
 
 # --- Elan et Foudre (Cheval) -------------------------------------------------------
 
@@ -555,7 +559,7 @@ func _resume_maledictions(moi: Dictionary) -> String:
 func _soigner(moi: Dictionary, adverse: Dictionary, soin: float) -> void:
 	if soin <= 0.0:
 		return
-	if moi["cr"]["eclat"]:
+	if moi["cr"]["eclat"] and not moi["dans_eclat"]:
 		var exces := maxf(0.0, soin - maxf(0.0, moi["cr"]["pv_max"] - moi["pv"]))
 		moi["exces_accumule"] += exces
 		_charger_eclat(moi, adverse, (soin - exces) * Data.ECLAT_PAR_SOIN

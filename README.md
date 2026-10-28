@@ -32,13 +32,12 @@ Affiche la durée et le vainqueur de chaque matchup entre builds types. Cible : 
 godot --headless --path . -s res://tests/simulation.gd
 ```
 
-Simule 300 parties entières par joueur automatique (aléatoire, simple) : victoires moyennes,
-répartition, taux de victoire par manche avec et sans élimination, victoires par élément.
-Avec 8 éléments, 300 parties en donnent une trentaine à chacun : les chiffres par élément bougent
-d'une mesure à l'autre. Pour une mesure fiable (environ 8 minutes) :
+Simule 100 runs entières par joueur automatique (aléatoire, simple) : carte, boutique,
+rencontres, combats. Affiche les runs gagnées, l'acte atteint, le taux de victoire par type de
+nœud (duel, élite, boss) et les runs gagnées par élément. Pour plus de runs (plus long) :
 
 ```bash
-godot --headless --path . -s res://tests/simulation.gd -- --parties=1000
+godot --headless --path . -s res://tests/simulation.gd -- --runs=300
 ```
 
 ## Images
@@ -57,7 +56,9 @@ godot --headless --path . -s res://outils/decouper_icones.gd
 - `scripts/data.gd` : constantes, formes, reliques
 - `scripts/nid.gd` : grille, affinités, éclosion de la créature
 - `scripts/combat.gd` : simulation déterministe par pas fixe
-- `scripts/partie.gd` : manches, bourse, boutique, rareté, adversaire fantôme
+- `scripts/carte.gd` : carte d'une run (3 actes, étages, types de nœuds)
+- `scripts/carte_screen.gd` : écran de la carte et des rencontres
+- `scripts/partie.gd` : run (PV de run, nœuds, récompenses, rencontres), bourse, boutique, rareté, adversaire fantôme
 - `scripts/joueur_auto.gd` : joueur automatique (simulation, adversaire fantôme)
 - `scripts/nid_screen.gd` : écran du Nid (boutique, glisser-déposer)
 - `scripts/combat_screen.gd` : rejoue le combat simulé (barres de PV, sorts, brûlure)
