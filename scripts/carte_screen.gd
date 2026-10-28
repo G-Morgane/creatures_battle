@@ -22,30 +22,40 @@ var partie: Partie
 var survol := -1
 var t := 0.0
 var barre: Label
+var compteurs := {}
 var panneau: PanelContainer
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var bandeau := HBoxContainer.new()
+	bandeau.add_theme_constant_override("separation", 34)
+	bandeau.position = Vector2(32, 22)
+	add_child(bandeau)
 	barre = Label.new()
 	barre.add_theme_font_size_override("font_size", 22)
 	barre.add_theme_color_override("font_color", Palette.TEXTE)
-	barre.position = Vector2(32, 28)
-	add_child(barre)
+	bandeau.add_child(barre)
+	for nom in ["vie", "victoires", "or"]:
+		var c: Array = Palette.compteur(nom)
+		compteurs[nom] = c[1]
+		bandeau.add_child(c[0])
 	var nid := Button.new()
 	nid.text = "Retour au Nid"
 	nid.custom_minimum_size = Vector2(160, 40)
 	nid.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
 	# a gauche du bouton du glossaire
-	nid.offset_left = -310
+	nid.offset_left = -350
 	nid.offset_top = 22
-	nid.offset_right = -150
+	nid.offset_right = -190
 	nid.pressed.connect(func(): retour.emit())
 	add_child(nid)
 	_rafraichir()
 
 func _rafraichir() -> void:
-	barre.text = "Acte %d sur %d      PV de run %d / %d      Or %d" % [
-		partie.acte + 1, Carte.ACTES, partie.pv_run, Partie.PV_RUN, partie.bourse]
+	barre.text = "Acte %d sur %d" % [partie.acte + 1, Carte.ACTES]
+	compteurs["vie"].text = "%d / %d" % [partie.pv_run, Partie.PV_RUN]
+	compteurs["victoires"].text = "%d" % partie.victoires
+	compteurs["or"].text = "%d" % partie.bourse
 	queue_redraw()
 
 func _process(delta: float) -> void:
@@ -121,6 +131,8 @@ func _draw() -> void:
 			var nom: String = NOMS[n["type"]]
 			if n["type"] == "elite":
 				nom = Data.ELITES[partie.elite_de(i)]["nom"]
+			elif n["type"] == "boss" and partie.acte < Data.GARDIEN_ACTE.size():
+				nom = Data.GARDIENS[Data.GARDIEN_ACTE[partie.acte]]["nom"]
 			var l := police.get_string_size(nom, HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x + 12
 			draw_rect(Rect2(p + Vector2(-l / 2, r + 6), Vector2(l, 20)), Color(Palette.FOND, 0.8))
 			draw_string(police, p + Vector2(-60, r + 21), nom,

@@ -18,6 +18,8 @@ var cases_ui := {}   # Vector2i -> CaseNid
 var vue: CreatureVue
 var infos: RichTextLabel
 var barre: Label
+var compteurs := {}     # vie, victoires, or -> Label
+var message_ui: Label
 var offres_ui: Array = []
 var relance: Button
 var agrandir: Button
@@ -64,8 +66,19 @@ func _ready() -> void:
 			cases_ui[c.position_nid] = c
 			sac.add_child(c)
 
+	# bandeau : acte, vie, victoires, or, puis le message du dernier noeud
+	var bandeau := HBoxContainer.new()
+	bandeau.add_theme_constant_override("separation", 34)
 	barre = _titre("")
-	haut = _cadre(barre)
+	bandeau.add_child(barre)
+	for nom in ["vie", "victoires", "or"]:
+		var c: Array = Palette.compteur(nom, 20)
+		compteurs[nom] = c[1]
+		bandeau.add_child(c[0])
+	message_ui = _titre("")
+	message_ui.add_theme_color_override("font_color", Palette.TEXTE_DOUX)
+	bandeau.add_child(message_ui)
+	haut = _cadre(bandeau)
 	add_child(haut)
 	# tout le comptoir est une zone de vente, sous les offres
 	vente = ZoneVente.new(self)
@@ -338,8 +351,11 @@ func rafraichir() -> void:
 	agrandir.disabled = prix_sac < 0 or partie.bourse < prix_sac or partie.terminee()
 	geler.text = "Dégeler" if partie.gelee else "Geler"
 	geler.disabled = partie.terminee()
-	barre.text = "Acte %d      Or %d      PV de run %d / %d      %s" % [
-		partie.acte + 1, partie.bourse, maxi(partie.pv_run, 0), Partie.PV_RUN, partie.message]
+	barre.text = "Acte %d" % (partie.acte + 1)
+	compteurs["vie"].text = "%d / %d" % [maxi(partie.pv_run, 0), Partie.PV_RUN]
+	compteurs["victoires"].text = "%d" % partie.victoires
+	compteurs["or"].text = "%d" % partie.bourse
+	message_ui.text = partie.message
 	if partie.terminee():
 		bouton_combat.text = ("Run gagnée !" if partie.gagnee else "Run perdue.") + " Nouvelle partie"
 	else:

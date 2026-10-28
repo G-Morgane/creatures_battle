@@ -9,6 +9,9 @@ var affinite := 0
 var armes: Array = []   # ids des armes du cavalier (0, 1 ou 2)
 var hybride := ""      # cle "a_b" quand la forme est un hybride
 var elite := ""        # id d'elite : sa propre image, sans cavalier
+# Bastion : eclat de l'oeil du temple (0 a 1) et phase du cycle.
+var oeil := 0.0
+var phase := ""
 # En arene : pas de panneau, la monture de droite regarde a gauche,
 # et elan la pousse vers l'adversaire quand elle frappe.
 var fond := true
@@ -63,7 +66,16 @@ func _draw() -> void:
 	# une elite : la bete seule, plus grande
 	if elite != "":
 		draw_set_transform(centre, 0.0, Vector2(echelle * sens * 1.2, echelle * 1.2))
-		_sprite("ennemis/" + elite)
+		# ouverture : la possession teinte la bete de violet
+		if phase == "ouverture":
+			var tex := Palette.image("res://images/montures/ennemis/%s.png" % elite)
+			if tex != null:
+				var taille := Vector2(SPRITE_LARGEUR, SPRITE_LARGEUR * tex.get_height() / tex.get_width())
+				draw_texture_rect(tex, Rect2(Vector2(-taille.x / 2, 95 - taille.y), taille), false, Color(0.88, 0.75, 1.0))
+		else:
+			_sprite("ennemis/" + elite)
+		if elite == "bastion":
+			_oeil()
 		draw_set_transform(Vector2.ZERO)
 		return
 	# deux dynasties ou plus : l'hybride des deux premieres
@@ -106,6 +118,19 @@ func _sprite(nom: String) -> void:
 	var largeur: float = LARGEUR_FORME.get(nom, SPRITE_LARGEUR)
 	var taille := Vector2(largeur, largeur * tex.get_height() / tex.get_width())
 	draw_texture_rect(tex, Rect2(Vector2(-taille.x / 2, 95 - taille.y), taille), false)
+
+# L'oeil du temple (peint sur l'image) : un halo qui grandit avec le rempart,
+# violet et bien plus fort quand la porte s'ouvre.
+const OEIL_BASTION := Vector2(6, -50)
+
+func _oeil() -> void:
+	var ouvert := phase == "ouverture"
+	var force := oeil * (1.6 if ouvert else 1.0)
+	var c := Color(0.75, 0.25, 1.0) if ouvert else Color(1.0, 0.25, 0.25)
+	for k in 4:
+		draw_circle(OEIL_BASTION, 6.0 + (k + 1) * 7.0 * (0.4 + force), Color(c, 0.12 * force + 0.04))
+	if ouvert:
+		draw_circle(OEIL_BASTION, 7.0, Color(1, 0.9, 1, 0.6))
 
 # Place du cavalier sur un sprite sans reglage a la main : le haut du dos,
 # releve dans l'image (premier pixel opaque d'une colonne un peu a gauche

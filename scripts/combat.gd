@@ -89,6 +89,9 @@ func _etat(cr: Dictionary, i: int) -> Dictionary:
 		"elite_t": 0.0,            # elites : minuterie de leur regle
 		"elite_t2": 0.0,
 		"furie": false,            # Vouivre : entraves brisees
+		"phase": "",               # Bastion : rempart, ouverture, resistance
+		"oeil": 0.0,               # Bastion : bouclier absorbe par l'oeil
+		"oeil_debit": 0.0,
 		"graine_plantee": false,   # Fleche-graine
 		"horloge": 0.0,            # temps propre : ralenti par le givre, arrete par le gel
 		"givre": 0.0,              # charges de givre subies
@@ -115,7 +118,8 @@ func simuler() -> int:
 			cotes[0]["bouclier"], cotes[1]["bouclier"], cotes[0]["poison"], cotes[1]["poison"],
 			cotes[0]["givre"], cotes[1]["givre"], _gele(cotes[0]), _gele(cotes[1]), _braise(cotes[0]), _braise(cotes[1]),
 			_resume_maledictions(cotes[0]), _resume_maledictions(cotes[1]),
-			cotes[0]["eclat_jauge"], cotes[1]["eclat_jauge"], cotes[0]["elan_jauge"], cotes[1]["elan_jauge"]])
+			cotes[0]["eclat_jauge"], cotes[1]["eclat_jauge"], cotes[0]["elan_jauge"], cotes[1]["elan_jauge"],
+			_oeil(cotes[0]), _oeil(cotes[1]), cotes[0]["phase"], cotes[1]["phase"]])
 		recharges.append([_recharges(cotes[0]), _recharges(cotes[1])])
 		if morts[0] or morts[1]:
 			var v := 1 if morts[0] else 0
@@ -156,6 +160,8 @@ func _depuis(o: String) -> String:
 	return avant
 
 func _proteger(moi: Dictionary, b: float, source := "") -> void:
+	if moi["phase"] == "resistance":
+		return
 	moi["bouclier"] += b
 	_compter(moi["cote"], "bouclier", b, source)
 
@@ -167,7 +173,7 @@ func _infliger(cible: Dictionary, d: float, source := "") -> void:
 # Le givre ralentit le temps propre (attaques et recharges), le gel l'arrete,
 # la Braise (hate) l'accelere.
 func _vitesse(moi: Dictionary) -> float:
-	if _gele(moi):
+	if _gele(moi) or moi["phase"] == "ouverture":
 		return 0.0
 	return (1.0 - minf(moi["givre"] * Data.GIVRE_RALENTI, Data.RALENTI_MAX)) * (1.0 + _braise(moi) * Data.HATE_PAR_BRAISE)
 
@@ -186,7 +192,7 @@ func _gele(moi: Dictionary) -> bool:
 func _agir(moi: Dictionary, cible: Dictionary) -> void:
 	var h: float = moi["horloge"]
 	if moi["horloge_attaque"] >= moi["prochaine_attaque"]:
-		moi["prochaine_attaque"] += moi["cr"]["intervalle"] / (Data.VOUIVRE_FURIE if moi["furie"] else 1.0)
+		moi["prochaine_attaque"] += moi["cr"]["intervalle"] / (Data.VOUIVRE_FURIE if moi["furie"] else 1.0) * (Data.BASTION_LENTEUR if moi["phase"] == "rempart" else 1.0)
 		origine = "~attaque"
 		_compter(moi["cote"], "activations", 1.0)
 		_evenement(moi, {"type": "attaque"})
@@ -683,6 +689,8 @@ func _blesser(cible: Dictionary, degats: float, source = null) -> void:
 	if cible["tuile_prete"] and cible["cr"]["tuile"]:
 		degats *= 1.0 - Data.TUILE
 	cible["tuile_prete"] = false
+	if cible["phase"] == "resistance":
+		degats *= Data.BASTION_RESISTANCE_FRAGILE
 	var avant: float = cible["bouclier"]
 	var absorbe := minf(avant, degats)
 	cible["bouclier"] -= absorbe
@@ -790,11 +798,55 @@ func _elite(moi: Dictionary, adverse: Dictionary) -> void:
 				var degats: float = Data.PHALENE_TRAIT * force
 				_evenement(adverse, {"type": "trait", "valeur": degats})
 				_infliger(adverse, degats, "~trait")
+		"bastion":
+			_bastion(moi, adverse, force)
 		"vouivre":
 			if not moi["furie"] and moi["pv"] < moi["cr"]["pv_max"] * 0.5:
 				moi["furie"] = true
 				_dissiper(moi)
 				_evenement(moi, {"type": "entraves"})
+
+# Eclat de l'oeil, de 0 a 1 : l'absorbe rapporte au plafond du regard.
+func _oeil(moi: Dictionary) -> float:
+	if moi["phase"] == "":
+		return 0.0
+	var plafond: float = Data.BASTION_REGARD_MAX * moi["cr"].get("elite_force", 1.0) / Data.BASTION_REGARD_MULT
+	var reserve: float = moi["oeil"] if moi["phase"] == "ouverture" else moi["bouclier"]
+	return clampf(reserve / plafond, 0.0, 1.0)
+
+func _bastion(moi: Dictionary, adverse: Dictionary, force: float) -> void:
+	if moi["phase"] == "":
+		moi["phase"] = "rempart"
+		moi["elite_t"] = 0.0
+	match moi["phase"]:
+		"rempart":
+			_proteger(moi, Data.BASTION_REMPART * force * Data.PAS, "~rempart")
+			if moi["elite_t"] >= Data.BASTION_REMPART_DUREE:
+				moi["phase"] = "ouverture"
+				moi["elite_t"] = 0.0
+				moi["oeil"] = 0.0
+				moi["oeil_debit"] = moi["bouclier"] / Data.BASTION_OUVERTURE_DUREE * Data.PAS
+				_evenement(moi, {"type": "ouverture"})
+		"ouverture":
+			# l'oeil boit le bouclier qui reste : l'entamer affaiblit le regard
+			var bu := minf(moi["bouclier"], moi["oeil_debit"])
+			moi["bouclier"] -= bu
+			moi["oeil"] += bu
+			if moi["elite_t"] >= Data.BASTION_OUVERTURE_DUREE:
+				var degats := minf(moi["oeil"] * Data.BASTION_REGARD_MULT, Data.BASTION_REGARD_MAX * force)
+				moi["oeil"] = 0.0
+				_evenement(adverse, {"type": "regard", "valeur": degats})
+				var avant := _depuis("~regard")
+				_blesser(adverse, degats, moi)
+				origine = avant
+				moi["phase"] = "resistance"
+				moi["elite_t"] = 0.0
+				moi["bouclier"] = 0.0
+				_evenement(moi, {"type": "resistance"})
+		"resistance":
+			if moi["elite_t"] >= Data.BASTION_RESISTANCE_DUREE:
+				moi["phase"] = "rempart"
+				moi["elite_t"] = 0.0
 
 func _subir(moi: Dictionary, adverse: Dictionary) -> void:
 	_elite(moi, adverse)

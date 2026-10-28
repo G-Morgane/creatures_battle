@@ -242,6 +242,12 @@ func _jouer(e: Dictionary) -> void:
 			_texte(moi, 1, "Malus dissipés", Palette.ELEMENTS["crepuscule"]["clair"])
 		"trait":
 			_texte(moi, 2, "Trait de l'Ouest %d" % roundi(e["valeur"]), Color("#e8e4da"))
+		"ouverture":
+			_texte(moi, 1, "La porte du sanctuaire s'ouvre", Color("#c79bff"))
+		"regard":
+			_texte(moi, 2, "Le Regard %d" % roundi(e["valeur"]), Color("#e0c8ff"))
+		"resistance":
+			_texte(moi, 1, "Le cavalier referme la porte", Palette.TEXTE)
 		"entraves":
 			_texte(moi, 1, "Entraves brisées !", Palette.ELEMENTS["feu"]["vif"])
 		"esquive":
@@ -281,6 +287,10 @@ func _fin() -> void:
 		return
 	var cr: Dictionary = combat.cotes[vainqueur]["cr"]
 	bandeau.text = ("Victoire !" if vainqueur == 0 else "Défaite") + "  (%s)" % cr["nom"]
+	# un gardien vaincu n'est pas tue : il est libere de l'emprise
+	var gardien: String = combat.cotes[1]["cr"].get("elite", "")
+	if vainqueur == 0 and gardien in Data.GARDIENS:
+		bandeau.text = "Purifié ! %s est libéré." % Data.GARDIENS[gardien]["nom"]
 	bandeau.add_theme_color_override("font_color", Palette.ELEMENTS[cr["forme"]]["clair"])
 	var perdant: CreatureVue = vues[1 - vainqueur]
 	create_tween().tween_property(perdant, "modulate", Color(1, 1, 1, 0.25), 0.6)
@@ -321,6 +331,12 @@ func _dessiner() -> void:
 		if cr["elan"]:
 			var seuil_e := maxf(Data.ELAN_SEUIL - cr["manche"], Data.ELAN_SEUIL_MIN)
 			etats.append(["Élan %d/%d" % [roundi(img[18 + i]), roundi(seuil_e)], Palette.ELEMENTS["vent"]["vif"]])
+		# Bastion : la phase et l'eclat de l'oeil, aussi sur la bete
+		if img[22 + i] != "":
+			v.oeil = img[20 + i]
+			v.phase = img[22 + i]
+			var noms_phase := {"rempart": "Rempart", "ouverture": "L'œil s'ouvre", "resistance": "Sans protection"}
+			etats.append(["%s, œil %d %%" % [noms_phase[img[22 + i]], roundi(img[20 + i] * 100)], Color("#c79bff")])
 		# cadre sombre sous le nom, la barre et les etats : lisible sur le fond peint
 		var demi := maxf(162.0, 75.0 * etats.size() + 20.0)
 		var bas := 62.0 if img[14 + i] != "" else 44.0
@@ -498,7 +514,7 @@ class Recap extends Control:
 	const MECANIQUES := {"~attaque": "Attaques", "~poison": "Poison", "~brulure": "Brûlure",
 		"~combustion": "Combustion", "~epines": "Épines", "~eclat": "Éclat", "~foudre": "Foudre",
 		"~regen": "Régénération", "~bris": "Bouclier brisé", "~racines": "Racines",
-		"~charge": "Charge", "~trait": "Trait de l'Ouest"}
+		"~charge": "Charge", "~trait": "Trait de l'Ouest", "~rempart": "Rempart", "~regard": "Le Regard"}
 	const LIGNES := 10
 	const LARGEUR := 470.0
 	const HAUTEUR_LIGNE := 34.0

@@ -402,6 +402,26 @@ const PHALENE_TRAIT := 25.0
 const VOUIVRE_PAR_MALUS := 0.03
 const VOUIVRE_MAX := 0.9
 const VOUIVRE_FURIE := 1.4
+# --- gardiens (boss de fin d'acte) ---------------------------------------------
+# Meme mecanisme que les elites (cle "elite" de la creature), une regle par
+# gardien. Acte I : le Bastion endormi.
+const GARDIENS := {
+	"bastion": {"nom": "Le Bastion endormi", "element": "glace",
+		"texte": "Une tortue-sanctuaire possédée. Son rempart nourrit l'œil du temple, qui frappe d'autant plus fort que le bouclier est intact."},
+}
+const GARDIEN_ACTE := ["bastion"]
+# Le cycle du Bastion : rempart (bouclier, attaques lentes), ouverture (immobile,
+# l'oeil absorbe le bouclier), regard (frappe selon l'absorbe, plafonne), puis
+# resistance (le cavalier referme la porte : sans protection un moment).
+const BASTION_REMPART := 7.0          # bouclier par seconde
+const BASTION_REMPART_DUREE := 8.0
+const BASTION_LENTEUR := 1.8          # attaques plus lentes pendant le rempart
+const BASTION_OUVERTURE_DUREE := 3.0
+const BASTION_REGARD_MULT := 1.5
+const BASTION_REGARD_MAX := 90.0
+const BASTION_RESISTANCE_DUREE := 3.0
+const BASTION_RESISTANCE_FRAGILE := 1.25  # degats recus sans protection
+
 # Les chiffres d'une elite grandissent avec la manche.
 const ELITE_PAR_MANCHE := 0.05
 

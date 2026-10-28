@@ -352,7 +352,13 @@ func elite_de(i: int) -> String:
 # regle, son nom et son image.
 func creature_adverse() -> Dictionary:
 	var cr := adversaire_noeud().eclore()
-	if noeud()["type"] == "elite":
+	if noeud()["type"] == "boss" and acte < Data.GARDIEN_ACTE.size():
+		var g: String = Data.GARDIEN_ACTE[acte]
+		cr["elite"] = g
+		cr["elite_force"] = 1.0 + Data.ELITE_PAR_MANCHE * manche
+		cr["nom"] = Data.GARDIENS[g]["nom"]
+		cr["hybride"] = ""
+	elif noeud()["type"] == "elite":
 		var e := elite_de(position)
 		cr["elite"] = e
 		cr["elite_force"] = 1.0 + Data.ELITE_PAR_MANCHE * manche

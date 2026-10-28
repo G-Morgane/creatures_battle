@@ -188,6 +188,10 @@ const ANIMAUX := {"cerf": "nature", "phenix": "feu", "renard": "automne", "ours"
 # Ennemis (elites) : images/ennemis -> images/montures/ennemis/<id>.png,
 # retournes pour regarder a droite comme les montures.
 const ENNEMIS := {"sanglier.png": "sanglier", "phalène.png": "phalene", "wyverne.png": "vouivre"}
+# Gardiens : (fichier, id, retourner).
+const GARDIENS := [["../boss_tortue.png", "bastion", true]]
+# Icones d'interface : planche coupee en quatre (images/ui).
+const UI := ["vie", "victoires", "or", "glossaire"]
 
 # Tapis du sac : 16 tuiles (4 x 4), une par combinaison de bords en cuir.
 # Chaque tuile est reperee (boite opaque), ses bords lus (cuir sombre ou toile
@@ -254,6 +258,25 @@ func _initialize() -> void:
 		m.flip_x()
 		_reduire(m, TAILLE_MONTURE)
 		m.save_png("res://images/montures/ennemis/%s.png" % ENNEMIS[f])
+	for g in GARDIENS:
+		var m := Image.load_from_file("res://images/ennemis/" + g[0])
+		m.convert(Image.FORMAT_RGBA8)
+		_poussiere(m, POUSSIERE_MONTURE)
+		m = m.get_region(m.get_used_rect())
+		if g[2]:
+			m.flip_x()
+		_reduire(m, TAILLE_MONTURE)
+		m.save_png("res://images/montures/ennemis/%s.png" % g[1])
+	DirAccess.make_dir_recursive_absolute("res://images/ui")
+	var planche_ui := Image.load_from_file("res://images/icons.png")
+	planche_ui.convert(Image.FORMAT_RGBA8)
+	var quart := planche_ui.get_width() / UI.size()
+	for k in UI.size():
+		var ic := planche_ui.get_region(Rect2i(k * quart, 0, quart, planche_ui.get_height()))
+		_poussiere(ic, POUSSIERE_ICONE)
+		ic = ic.get_region(ic.get_used_rect())
+		_reduire(ic, 96)
+		ic.save_png("res://images/ui/%s.png" % UI[k])
 	_controle(icones, betes)
 	print("icones : ", icones.size())
 	quit()

@@ -27,6 +27,26 @@ static func image(chemin: String) -> Texture2D:
 		_cache[chemin] = load(chemin) if ResourceLoader.exists(chemin) else null
 	return _cache[chemin]
 
+# Icones d'interface (images/ui) : vie, victoires, or, glossaire.
+static func ui(nom: String) -> Texture2D:
+	return image("res://images/ui/%s.png" % nom)
+
+# Un compteur : l'icone, puis un texte. Le Label rendu se met a jour par .text.
+static func compteur(nom: String, taille := 22) -> Array:
+	var ligne := HBoxContainer.new()
+	ligne.add_theme_constant_override("separation", 6)
+	var ic := TextureRect.new()
+	ic.texture = ui(nom)
+	ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	ic.custom_minimum_size = Vector2(taille + 8, taille + 8)
+	ligne.add_child(ic)
+	var l := Label.new()
+	l.add_theme_font_size_override("font_size", taille)
+	l.add_theme_color_override("font_color", TEXTE)
+	ligne.add_child(l)
+	return [ligne, l]
+
 static func icone(id: String) -> Texture2D:
 	return image("res://images/icones/%s.png" % id)
 

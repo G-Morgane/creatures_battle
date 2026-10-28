@@ -13,9 +13,12 @@ func _ready() -> void:
 	layer = 50
 	bouton = Button.new()
 	bouton.text = "Glossaire"
+	bouton.icon = Palette.ui("glossaire")
+	bouton.expand_icon = true
+	bouton.add_theme_constant_override("icon_max_width", 28)
 	bouton.tooltip_text = "Règles, états et dynasties (F1)"
 	bouton.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
-	bouton.offset_left = -130
+	bouton.offset_left = -170
 	bouton.offset_right = -20
 	bouton.offset_top = 22
 	bouton.offset_bottom = 58
@@ -155,6 +158,11 @@ static func contenu() -> String:
 	t += _section("Les élites")
 	for e in Data.ELITES:
 		t += _terme(Data.ELITES[e]["nom"], Data.ELITES[e]["texte"])
+	t += _section("Les gardiens")
+	t += "Les boss de fin d'acte sont des gardiens possédés par le Rêveur. Les vaincre les purifie : ils sont libérés, pas tués.\n\n"
+	for g in Data.GARDIENS:
+		t += _terme(Data.GARDIENS[g]["nom"], Data.GARDIENS[g]["texte"])
+	t += _terme("Le cycle du Bastion", "Rempart : il gagne du bouclier et frappe lentement. Ouverture : il s'immobilise et l'œil du temple absorbe son bouclier. Le Regard : une attaque selon le bouclier absorbé (plafonnée). Résistance : son cavalier referme la porte, il reste sans protection et encaisse plus. Entamer son bouclier affaiblit le Regard.")
 	t += _section("Les dynasties")
 	for e in Data.DYNASTIES:
 		t += _terme("%s (%s)" % [Data.DYNASTIES[e], Data.FORMES[e]["nom"]], Data.IDENTITES[e])

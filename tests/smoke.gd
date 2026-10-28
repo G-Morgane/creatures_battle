@@ -355,6 +355,14 @@ func _elites() -> bool:
 	p.noeud()["type"] = "elite"
 	var adv := p.creature_adverse()
 	ok = _verifier(adv["elite"] in Data.ELITES and adv["nom"] == Data.ELITES[adv["elite"]]["nom"], "noeud elite : creature d'elite") and ok
+	p.noeud()["type"] = "boss"
+	ok = _verifier(p.creature_adverse()["elite"] == "bastion", "boss de l'acte I : le Bastion endormi") and ok
+	var b := Exemples.nid_aube().eclore()
+	b["elite"] = "bastion"
+	var cb := Combat.new(b, Exemples.nid_feu().eclore())
+	cb.simuler()
+	var tb := cb.evenements.map(func(x): return x["type"])
+	ok = _verifier("ouverture" in tb and "regard" in tb and "resistance" in tb, "Bastion : rempart, ouverture, regard, resistance") and ok
 	return ok
 
 func _carte() -> bool:

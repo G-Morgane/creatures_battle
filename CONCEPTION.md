@@ -37,6 +37,44 @@ comme la marque de ce lien.
 
 ---
 
+## 2 bis. L'histoire : le Rêveur
+
+Un roguelike de dark fantasy : on remonte jusqu'à un **dieu ancien qui possède les créatures à
+travers son rêve**. Les boss de fin d'acte sont des **gardiens** possédés ; on les **purifie**
+sans les tuer.
+
+| Étape | Progression |
+|---|---|
+| Acte I, la vallée contaminée | Découvrir la possession et purifier le premier gardien |
+| Acte II, les profondeurs | Comprendre que les créatures obéissent à une même volonté, briser son relais |
+| Acte III, le sanctuaire englouti | Atteindre le dernier gardien et ouvrir l'accès à l'entité |
+| Confrontation finale | Affronter une incarnation du dieu, obtenir une victoire permanente sur lui |
+
+**Plusieurs runs victorieuses** sont nécessaires pour le tuer : d'abord son incarnation, puis ses
+ancrages, avant de l'atteindre dans son rêve. Chaque étape change visiblement le monde et la
+confrontation suivante. Tant que le dieu existe, il peut reprendre les gardiens entre deux
+expéditions ; un ancrage détruit reste perdu pour lui. Nombre de victoires : à définir.
+
+### Premier gardien : le Bastion endormi (fait)
+
+Une tortue géante qui dort au fond du lac de la vallée ; on a bâti un sanctuaire sur son dos,
+où trône son cavalier en armure. La possession s'y voit : filaments sombres, et un œil immense
+dans la porte du temple (image `images/boss_tortue.png`).
+
+**L'entité détourne la protection du gardien pour en faire une arme.** Un cycle :
+
+| Moment | Ce qui se passe |
+|---|---|
+| Le rempart (8 s) | +7 de bouclier par seconde, attaques lentes (x1,8). L'œil rougeoie à mesure que le rempart grandit. |
+| L'ouverture (3 s) | Immobile. La porte s'ouvre, la bête se teinte de violet, l'œil boit le bouclier restant. |
+| Le regard | Une attaque égale à 1,5 x le bouclier absorbé, plafonnée à 90 (x la force de la manche). |
+| La résistance (3 s) | Le cavalier referme la porte : aucun bouclier, +25 % de dégâts reçus. |
+
+Un build offensif entame le bouclier et affaiblit le regard ; un build défensif l'encaisse et
+profite de la résistance. Le vaincre affiche « Purifié ! Le Bastion endormi est libéré ».
+Les autres actes gardent un boss fantôme en attendant leurs gardiens. Simulation : boss gagnés
+41 % (34 % avant), 29 % de runs gagnées.
+
 ## 3. La run
 
 Une run se joue sur une **carte**, comme dans Slay the Spire ou FTL, avec la boucle d'achat de TFT
