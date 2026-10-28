@@ -476,7 +476,7 @@ func _affinites(aff: Dictionary) -> String:
 			l.append("%s %d" % [_NOMS_ELEMENTS.get(e, e), aff[e]])
 	return "   ".join(l) if not l.is_empty() else "Aucune affinité"
 
-# Les affinites portent le nom de la Cour de leur element.
+# Les affinites portent le nom de la dynastie de leur element.
 const _NOMS_ELEMENTS := {"nature": "Printemps", "feu": "Été", "automne": "Automne", "glace": "Hiver",
 	"aube": "Aube", "jour": "Jour", "crepuscule": "Crépuscule", "nuit": "Nuit"}
 
@@ -600,7 +600,7 @@ static func bulle(id: String, niv := 1, manque := 0) -> Control:
 	var genre: String = r["type"].capitalize()
 	if r.has("famille"):
 		genre = "Arme (%s), %s" % [Data.FAMILLES[r["famille"]], "une main" if Data.mains(id) == 1 else "deux mains"]
-	var cour: String = Data.COURS.get(r["element"], _NOMS_ELEMENTS.get(r["element"], "Neutre"))
+	var cour: String = Data.DYNASTIES.get(r["element"], "Neutre")
 	var taille := Data.empreinte(id).size()
 	var ligne := "%s, %s, %d case%s" % [Data.NOMS_RARETE[rarete], genre.to_lower(), taille, "s" if taille > 1 else ""]
 	var sous := Label.new()

@@ -39,7 +39,7 @@ const ELEMENTS := {
 	"nature":{"fond": Color("#1d3027"), "vif": Color("#3f9e7a"), "clair": Color("#e8d5b0")},
 	"automne": {"fond": Color("#3d2216"), "vif": Color("#d9622b"), "clair": Color("#f2c27a")},
 	"jour":  {"fond": Color("#1c3236"), "vif": Color("#4fb3b0"), "clair": Color("#f3e3a6")},
-	# plus de Cour Terre ni Vent : leurs couleurs servent encore aux effets en combat
+	# plus de dynastie Terre ni Vent : leurs couleurs servent encore aux effets en combat
 	"terre": {"fond": Color("#3a3220"), "vif": Color("#b08a4a"), "clair": Color("#e3cf9a")},
 	"vent":  {"fond": Color("#1c3338"), "vif": Color("#6fd3d6"), "clair": Color("#d4f6f4")},
 	"":      {"fond": Color("#2a2d33"), "vif": Color("#8a8f99"), "clair": Color("#c9ccd2")},

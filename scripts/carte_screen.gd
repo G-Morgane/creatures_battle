@@ -35,9 +35,10 @@ func _ready() -> void:
 	nid.text = "Retour au Nid"
 	nid.custom_minimum_size = Vector2(160, 40)
 	nid.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
-	nid.offset_left = -192
-	nid.offset_top = 24
-	nid.offset_right = -32
+	# a gauche du bouton du glossaire
+	nid.offset_left = -310
+	nid.offset_top = 22
+	nid.offset_right = -150
 	nid.pressed.connect(func(): retour.emit())
 	add_child(nid)
 	_rafraichir()

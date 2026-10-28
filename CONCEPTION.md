@@ -23,13 +23,13 @@ sur la créature ou dans le combat. Une relique qui ne fait que +2 en silence es
 
 ## 2. Univers
 
-**Le royaume fae de Sylvaën** (nom de travail), partagé entre **sept Cours** : quatre saisons
-et trois moments du jour. Chaque Cour est un archétype, avec sa monture.
+**Le royaume fae de Sylvaën** (nom de travail), partagé entre **sept Dynasties** : quatre saisons
+et trois moments du jour. Chaque Dynastie est un archétype, avec sa monture.
 
 **Hommages, jamais de références directes.** Le jeu s'inspire d'univers de fantasy aimés
 (cours fae, cavaliers liés à leur monture, assassins et sorcières, anneau et spectres,
 école de magie) mais n'en reprend aucun nom propre, aucun personnage, aucun lieu. Les noms
-de Cours restent génériques (Printemps, Été, Automne, Hiver, Jour, Nuit, Aube) ; tout le reste
+de Dynasties restent génériques (Printemps, Été, Automne, Hiver, Jour, Nuit, Aube) ; tout le reste
 est inventé : élites, rencontres, objets neutres.
 
 Le cœur du jeu est déjà un hommage : un cavalier **lié** à sa monture, et l'arme qu'il tient
@@ -61,6 +61,19 @@ entre chaque nœud.
 Génération (`scripts/carte.gd`) : le premier étage est fait de Duels, l'étage avant le boss de
 Feux de camp. Ailleurs, tirage pondéré : Duel 50, Rencontre 22, Élite 12, Marché 8, Feu 8. Pas
 d'Élite avant le 5e étage du premier acte, pas de Feu avant le 5e étage.
+
+### Choix des dynasties
+
+En début de partie, on choisit **de 3 à 8 dynasties** (ou « Aléatoire » : 4 au hasard). La
+boutique, les reliques offertes, le Heaume et les fantômes ne tirent que dans ces dynasties (et
+les objets neutres). Au survol, chaque dynastie montre son identité et son passif. Automne et
+Jour sont visibles mais pas encore jouables. Le nom « Cour » est abandonné : trop proche d'un
+univers existant.
+
+### Glossaire
+
+Un bouton **Glossaire** (ou F1) en haut à droite, sur tous les écrans, ouvre un panneau qui
+explique les règles, les états et les dynasties. Ses chiffres viennent de `Data`.
 
 ### Le sac
 
@@ -154,7 +167,7 @@ Pistes :
 
 ### Rencontres (hommages)
 
-- **Le Heaume qui Juge** : il te range dans une Cour et te donne une relique de départ.
+- **Le Heaume qui Juge** : il te range dans une Dynastie et te donne une relique de départ.
 - **Le Pont des Lames** : une épreuve ; réussir paye bien, échouer coûte des PV de run.
 - **Le Grand Chaudron** : un pacte, une relique puissante contre des PV de run.
 - **Le Marché Gobelin** : des échanges étranges (une relique contre deux, une rareté au hasard).
@@ -246,11 +259,11 @@ Chaque relique donne des points d'**affinité** dans un élément.
 
 - **Élément dominant** : fixe la forme de base, son identité de jeu et un passif.
 
-### Les huit Cours
+### Les huit Dynasties
 
 Quatre saisons et quatre moments du jour.
 
-| Cour | Monture | Élément (code) | Identité | Ce qui la rend unique |
+| Dynastie | Monture | Élément (code) | Identité | Ce qui la rend unique |
 |---|---|---|---|---|
 | Printemps | Cerf | nature | Épines, poison | Punit qui le frappe (épines), poison qui s'accumule |
 | Été | Phénix | feu | Brûlure, combustion, hâte | Dégâts sur la durée, attaque de plus en plus vite, renaît une fois |
@@ -262,7 +275,7 @@ Quatre saisons et quatre moments du jour.
 | Nuit | Chauve-souris | nuit | Vol de vie, malédictions | Se soigne en frappant, affaiblit l'adversaire |
 
 L'Ours a remplacé le Loup (même set). La Raie et la Lumière sont abandonnées. **Vent (Cheval) et Terre (Tortue) sont retirés**, objets compris
-(les mécaniques de combat qui leur servaient restent dans le code, sans objet pour les déclencher). À l'écran, les affinités portent le nom de la Cour (« Été 7 »).
+(les mécaniques de combat qui leur servaient restent dans le code, sans objet pour les déclencher). À l'écran, les affinités portent le nom de la Dynastie (« Été 7 »).
 
 Paires à garder distinctes :
 - **Hiver / Crépuscule** : l'Hiver ralentit la machine adverse, le Crépuscule retourne ses effets contre elle.
@@ -271,7 +284,7 @@ Paires à garder distinctes :
 Le Crépuscule n'a de sens que face à un build qui a des bonus ou des malus à voler :
 contre un build d'attaques brutes, il reste correct grâce au projectile d'arcane.
 
-- **Hybride** : une égalité entre exactement deux Cours en tête donne leur hybride (28 images,
+- **Hybride** : une égalité entre exactement deux Dynasties en tête donne leur hybride (28 images,
   `images/hybrides`), nommé d'après ses deux montures (« Phénix-Cerf »). Pas encore de passif propre.
   Plus tard : deux éléments au-dessus d'un seuil donnent une forme mixte
   (Feu + Nuit : Wyverne cendrée, Glace + Nature : Cerf de givre...).
@@ -376,12 +389,12 @@ croisés, objets neutres utiles sans être universels, style lisible quel que so
 | Bâton | Magie, grandit avec l'affinité | armes du Phénix, du Lion |
 | Faux | Achève les cibles affaiblies | Faux de tison, Faux des cendres, armes de la Nuit |
 
-Familles par Cour : **Printemps (Cerf) : Tir et Lame. Hiver (Ours) : Hast et Hache. Été (Phénix) : Bâton et Faux.
+Familles par Dynastie : **Printemps (Cerf) : Tir et Lame. Hiver (Ours) : Hast et Hache. Été (Phénix) : Bâton et Faux.
 Nuit : Faux et Lame. Aube (Lion) : Bâton et Hache. Crépuscule (Papillon) : Tir et Hast.**
 
-Huit Cours à 2 familles donnent 16 places pour 6 familles. Les six Cours actuelles en prennent
-12, chaque famille à 2 Cours. Restent 4 places pour l'Automne (Renard) et le Jour (Paon) :
-quatre familles passeront à 3 Cours.
+Huit Dynasties à 2 familles donnent 16 places pour 6 familles. Les six Dynasties actuelles en prennent
+12, chaque famille à 2 Dynasties. Restent 4 places pour l'Automne (Renard) et le Jour (Paon) :
+quatre familles passeront à 3 Dynasties.
 
 **Coups critiques** : identité de la famille Lame. Un crit fait **x1,75** de dégâts ; les chances
 viennent des armes Lame et de certains objets (aucune chance de base). Les Lames du Cerf
@@ -682,7 +695,7 @@ On adapte son Nid à ce qu'on affronte, pas à une couleur.
 
 ## 8. Prototype (périmètre actuel)
 
-- 6 Cours au format 15 objets : Printemps, Été, Hiver, Aube, Crépuscule, Nuit ; 1 arme neutre
+- 6 Dynasties au format 15 objets : Printemps, Été, Hiver, Aube, Crépuscule, Nuit ; 1 arme neutre
   (Lance du guet). Restent l'Automne (Renard) et le Jour (Paon), montures prêtes. Vent et Terre sont retirés.
 - Run sur carte : 3 actes de 10 étages, PV de run, boutique facultative entre les nœuds,
   trois rencontres. Élites et boss sont encore des fantômes en avance.
@@ -702,6 +715,6 @@ donne envie de refaire un Nid ? Si non, rien d'autre ne compte.
 - Une image pour la Serpe de ronces (le Fouet a été remplacé).
 - Objets neutres qui visent une famille d'armes.
 - Glace, les quatre moments du jour, et les hybrides.
-- 7 Cours donnent 21 paires d'hybrides : il faudra sûrement n'en garder qu'une partie.
+- 7 Dynasties donnent 21 paires d'hybrides : il faudra sûrement n'en garder qu'une partie.
 - Stades d'évolution (visuel qui grandit).
 - PvP asynchrone : stocker le Nid de chaque joueur par manche (Supabase), tirer un fantôme du même stade.

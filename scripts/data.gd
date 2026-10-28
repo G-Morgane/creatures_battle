@@ -21,7 +21,7 @@ const FORMES := {
 	"aube":  {"nom": "Lion",          "passif": "Régénère, et ses soins chargent l'Éclat (un coup de lumière)"},
 	"crepuscule": {"nom": "Papillon", "passif": "Un Transfert sans rien à voler ni à renvoyer lance un projectile d'arcane"},
 	"nature":{"nom": "Cerf",          "passif": "Épines : blesse qui le frappe (2 dégâts par coup reçu)"},
-	# Cours sans objets pour l'instant : la monture est prete, le set reste a concevoir.
+	# Dynasties sans objets pour l'instant : la monture est prete, le set reste a concevoir.
 	"automne": {"nom": "Renard",      "passif": "À concevoir"},
 	"jour":  {"nom": "Paon",          "passif": "À concevoir"},
 	"":      {"nom": "Informe",       "passif": "Aucun"},
@@ -358,11 +358,27 @@ const FAMILLES := {"tir": "Tir", "lame": "Lame", "hast": "Hast", "hache": "Hache
 # --- rarete ----------------------------------------------------------------
 
 # Une relique sans champ "rarete" est commune.
-# Les huit Cours (archetypes) et l'element qui les porte dans le code. Seules
-# celles qui ont des objets sont ici ; Automne (Renard) et Jour (Paon) viendront
-# avec leur set.
-const COURS := {"nature": "Cour du Printemps", "feu": "Cour de l'Été", "glace": "Cour de l'Hiver",
-	"aube": "Cour de l'Aube", "crepuscule": "Cour du Crépuscule", "nuit": "Cour de la Nuit"}
+# Les huit Dynasties (archetypes) et l'element qui les porte dans le code, dans
+# l'ordre du choix en debut de partie. Automne (Renard) et Jour (Paon) n'ont pas
+# encore d'objets : on ne peut pas encore les choisir.
+const DYNASTIES := {"nature": "Dynastie du Printemps", "feu": "Dynastie de l'Été", "automne": "Dynastie de l'Automne",
+	"glace": "Dynastie de l'Hiver", "aube": "Dynastie de l'Aube", "jour": "Dynastie du Jour",
+	"crepuscule": "Dynastie du Crépuscule", "nuit": "Dynastie de la Nuit"}
+const DYNASTIES_A_VENIR := ["automne", "jour"]
+# Ce qu'on explique au survol, au moment de les choisir.
+const IDENTITES := {
+	"nature": "Épines et poison. Punit qui le frappe, et le poison s'accumule sans passer par les boucliers.",
+	"feu": "Brûlure, combustion et Braise. Les brûlures s'empilent, la combustion les consume d'un coup, la Braise accélère tout.",
+	"automne": "À venir : la Ruse, entre esquive et feintes.",
+	"glace": "Givre, gel et bouclier qui se brise. Le givre ralentit jusqu'au gel, qui bloque les recharges adverses.",
+	"aube": "Soin et Éclat. Les soins se stockent dans l'Éclat, qui frappe quand la jauge est pleine.",
+	"jour": "À venir : la Parade, des bonus qui montent par paliers.",
+	"crepuscule": "Transfert. Vole les bonus adverses et renvoie ses malus ; sinon, un projectile d'arcane.",
+	"nuit": "Vol de vie, malédictions et coups critiques. Affaiblit l'adversaire et se soigne en frappant.",
+}
+
+static func dynasties_jouables() -> Array:
+	return DYNASTIES.keys().filter(func(d): return not d in DYNASTIES_A_VENIR)
 
 const RARETES := ["commun", "rare", "epique", "legendaire"]
 const NOMS_RARETE := {"commun": "Commun", "rare": "Rare", "epique": "Épique", "legendaire": "Légendaire"}

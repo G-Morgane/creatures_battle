@@ -55,7 +55,7 @@ func choisir_noeud(p: Partie) -> int:
 				return i
 	return acc[rng.randi() % acc.size()]
 
-# Rencontres : sa propre Cour au Heaume, et pas de risque quand la vie baisse.
+# Rencontres : sa propre dynastie au Heaume, et pas de risque quand la vie baisse.
 func choisir_rencontre(p: Partie) -> int:
 	match p.rencontre["id"]:
 		"heaume":

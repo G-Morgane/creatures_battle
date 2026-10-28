@@ -65,7 +65,12 @@ var gagnee := false
 var message := ""        # resultat du dernier noeud, affiche au Nid
 var rencontre := {}      # rencontre en cours : {id, titre, texte, choix, ...}
 
-func _init(g := 0) -> void:
+# Dynasties de la partie : la boutique, les recompenses et le Heaume ne
+# tirent que dans celles-ci (et les objets neutres).
+var dynasties: Array = []
+
+func _init(g := 0, dyn := []) -> void:
+	dynasties = dyn.duplicate() if not dyn.is_empty() else Data.dynasties_jouables()
 	graine = g if g != 0 else randi()
 	rng.seed = graine
 	carte = Carte.new(graine)
@@ -110,7 +115,7 @@ static func prix_revente(id: String, niv := 1) -> int:
 # L'offre offerte survit aux relances.
 func tirer() -> void:
 	var garde: String = offres[gratuite] if gratuite >= 0 and gratuite < offres.size() else ""
-	var ids := Data.RELIQUES.keys()
+	var ids := pool()
 	offres.clear()
 	for i in TAILLE_BOUTIQUE:
 		offres.append(tirer_id(rng, ids, manche + (AVANCE_MARCHE if marche else 0)))
@@ -118,6 +123,10 @@ func tirer() -> void:
 		offres[gratuite] = garde
 	else:
 		gratuite = -1
+
+# Reliques que la partie peut tirer : celles des dynasties choisies, et les neutres.
+func pool() -> Array:
+	return Data.RELIQUES.keys().filter(func(id): return Data.RELIQUES[id]["element"] in dynasties or Data.RELIQUES[id]["element"] == "")
 
 func prix_relance() -> int:
 	return 0 if marche else PRIX_RELANCE
@@ -263,9 +272,9 @@ func _suivant(recompense := "", element := "") -> void:
 func offrir(rarete: String, element := "") -> void:
 	if element == "":
 		element = nid.forme()
-	var ids := Data.RELIQUES.keys().filter(func(id): return Data.rarete(id) == rarete and (element == "" or Data.RELIQUES[id]["element"] == element))
+	var ids := pool().filter(func(id): return Data.rarete(id) == rarete and (element == "" or Data.RELIQUES[id]["element"] == element))
 	if ids.is_empty():
-		ids = Data.RELIQUES.keys().filter(func(id): return Data.rarete(id) == rarete)
+		ids = pool().filter(func(id): return Data.rarete(id) == rarete)
 	# boutique gelee : la relique offerte prend une place vide si possible
 	var i := maxi(0, offres.find(""))
 	offres[i] = ids[rng.randi() % ids.size()]
@@ -276,15 +285,15 @@ func offrir(rarete: String, element := "") -> void:
 func _preparer_rencontre() -> Dictionary:
 	match RENCONTRES[rng.randi() % RENCONTRES.size()]:
 		"heaume":
-			var cours := Data.COURS.keys()
+			var cours := dynasties.duplicate()
 			var trois := []
-			while trois.size() < 3:
+			while trois.size() < mini(3, cours.size()):
 				var c: String = cours[rng.randi() % cours.size()]
 				if not c in trois:
 					trois.append(c)
 			return {"id": "heaume", "titre": "Le Heaume qui Juge",
-				"texte": "Un vieux heaume posé sur une pierre murmure le nom de trois Cours.\nLaquelle écouter ? Elle t'offrira une relique rare.",
-				"choix": trois.map(func(c): return Data.COURS[c]), "cours": trois}
+				"texte": "Un vieux heaume posé sur une pierre murmure le nom de trois dynasties.\nLaquelle écouter ? Elle t'offrira une relique rare.",
+				"choix": trois.map(func(c): return Data.DYNASTIES[c]), "cours": trois}
 		"chaudron":
 			return {"id": "chaudron", "titre": "Le Grand Chaudron",
 				"texte": "Le chaudron bouillonne. Il offre une relique légendaire,\ncontre un peu de ta vie.",
@@ -301,7 +310,7 @@ func choisir(k: int) -> void:
 		"heaume":
 			element = rencontre["cours"][k]
 			recompense = "rare"
-			message = "Le Heaume a parlé : %s." % Data.COURS[element]
+			message = "Le Heaume a parlé : %s." % Data.DYNASTIES[element]
 		"chaudron":
 			if k == 0:
 				pv_run -= CHAUDRON_PV
@@ -337,7 +346,7 @@ func adversaire(avance := 0) -> Nid:
 	var cle := "%d:%d" % [manche % FANTOMES, avance]
 	var f: Dictionary = fantomes.get(cle, {})
 	if f.is_empty() or f["joues"] > total:
-		var p := Partie.new(graine + (manche % FANTOMES + 1) * 7919 + avance * 104729)
+		var p := Partie.new(graine + (manche % FANTOMES + 1) * 7919 + avance * 104729, dynasties)
 		f = {"partie": p, "joueur": JoueurAuto.new("simple", p.graine), "joues": 0}
 		fantomes[cle] = f
 	var fantome: Partie = f["partie"]

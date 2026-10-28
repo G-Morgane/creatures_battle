@@ -1,13 +1,24 @@
 extends Node
 
-# Une run : Nid (boutique facultative) -> carte -> noeud -> Nid, jusqu'au
-# dernier boss ou a 0 PV de run. La partie survit aux allers-retours.
+# Une run : choix des dynasties -> Nid (boutique facultative) -> carte -> noeud
+# -> Nid, jusqu'au dernier boss ou a 0 PV de run. La partie survit aux
+# allers-retours. Le glossaire est par-dessus tout.
 
-var partie := Partie.new()
+var partie: Partie
 var ecran: Node = null
 
 func _ready() -> void:
-	aller_nid()
+	add_child(Glossaire.new())
+	aller_choix()
+
+func aller_choix() -> void:
+	_vider()
+	var c := ChoixScreen.new()
+	c.commencer.connect(func(dyn: Array):
+		partie = Partie.new(0, dyn)
+		aller_nid())
+	ecran = c
+	add_child(c)
 
 func _vider() -> void:
 	if ecran != null:
@@ -19,9 +30,7 @@ func aller_nid() -> void:
 	var e := NidScreen.new()
 	e.partie = partie
 	e.continuer.connect(aller_carte)
-	e.nouvelle_partie.connect(func():
-		partie = Partie.new()
-		aller_nid())
+	e.nouvelle_partie.connect(aller_choix)
 	ecran = e
 	add_child(e)
 

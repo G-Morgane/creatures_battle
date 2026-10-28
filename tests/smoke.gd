@@ -18,6 +18,7 @@ func _ready() -> void:
 	ok = _deux_mains() and ok
 	ok = _hybrides() and ok
 	ok = _gel() and ok
+	ok = _dynasties() and ok
 	ok = _carte() and ok
 	ok = _run() and ok
 	ok = _fusion() and ok
@@ -285,6 +286,30 @@ func _gel() -> bool:
 	p.offres[2] = ""
 	p.conclure_combat(0)
 	return _verifier(p.gratuite == 2, "gelee : la relique offerte prend la place vide") and ok
+
+func _dynasties() -> bool:
+	var p := Partie.new(5, ["feu", "nuit", "aube"])
+	var ok := true
+	for k in 20:
+		for id in p.offres:
+			ok = ok and (id == "" or Data.RELIQUES[id]["element"] in ["feu", "nuit", "aube", ""])
+		p.tirer()
+	ok = _verifier(ok, "boutique : seulement les dynasties choisies et les neutres")
+	ok = _verifier(p.adversaire().cases.values().all(func(id): return Data.RELIQUES[id]["element"] in ["feu", "nuit", "aube", ""]), "le fantome joue les memes dynasties") and ok
+	var c := ChoixScreen.new()
+	add_child(c)
+	c.basculer("automne")
+	ok = _verifier(c.choisies.is_empty(), "une dynastie a venir ne se choisit pas") and ok
+	c.basculer("feu")
+	c.basculer("nuit")
+	ok = _verifier(c.bouton.disabled, "moins de 3 : on ne commence pas") and ok
+	c.basculer("aube")
+	ok = _verifier(not c.bouton.disabled, "3 dynasties : on peut commencer") and ok
+	c._aleatoire()
+	ok = _verifier(c.choisies.size() == 4 and c.choisies.all(func(d): return not d in Data.DYNASTIES_A_VENIR), "aleatoire : 4 dynasties jouables") and ok
+	c.queue_free()
+	ok = _verifier(Glossaire.contenu().contains("Flétrissure") and Glossaire.contenu().contains("Dynastie de la Nuit"), "glossaire : etats et dynasties") and ok
+	return ok
 
 func _carte() -> bool:
 	var c := Carte.new(7)
