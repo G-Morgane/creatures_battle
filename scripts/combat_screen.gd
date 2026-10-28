@@ -52,6 +52,7 @@ func _ready() -> void:
 		v.fond = false
 		v.miroir = i == 1
 		v.size = Vector2(440, 380)
+		v.cavalier = cr.get("cavalier", "capuchon")
 		v.montrer(cr["forme"], cr["affinite"], cr["armes"], cr.get("hybride", ""), cr.get("elite", ""))
 		vues.append(v)
 		add_child(v)

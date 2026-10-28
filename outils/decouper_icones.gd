@@ -275,6 +275,7 @@ func _initialize() -> void:
 		ic.save_png("res://images/ui/%s.png" % UI[k])
 	_bouton()
 	_blasons()
+	_cavaliers()
 	_controle(icones, betes)
 	print("icones : ", icones.size())
 	quit()
@@ -371,6 +372,30 @@ func _blasons() -> void:
 			img = img.get_region(img.get_used_rect())
 			_reduire(img, 256)
 			img.save_png("res://images/blasons/%s.png" % BLASONS[r][c])
+
+# Cavaliers : planche 2 x 2 a fond transparent (l'eclat de la Coquille
+# flotte au-dessus d'elle : la coupe horizontale passe a 625 px).
+const CAVALIERS := [["ombre", "pousse"], ["coquille", "capuchon"]]
+const CAVALIERS_COUPE := 625
+
+func _cavaliers() -> void:
+	DirAccess.make_dir_recursive_absolute("res://images/cavaliers")
+	var planche := Image.load_from_file("res://images/cavaliers.png")
+	planche.convert(Image.FORMAT_RGBA8)
+	var w := planche.get_width() / 2
+	var rangees := [0, CAVALIERS_COUPE, planche.get_height()]
+	for r in 2:
+		for c in 2:
+			var img := planche.get_region(Rect2i(c * w, rangees[r], w, rangees[r + 1] - rangees[r]))
+			# voile presque transparent autour du dessin : on l'efface
+			for y in img.get_height():
+				for x in img.get_width():
+					if img.get_pixel(x, y).a < 0.2:
+						img.set_pixel(x, y, Color(0, 0, 0, 0))
+			_poussiere(img, POUSSIERE_ICONE)
+			img = img.get_region(img.get_used_rect())
+			_reduire(img, 256)
+			img.save_png("res://images/cavaliers/%s.png" % CAVALIERS[r][c])
 
 # Fond de bouton : le cadre du milieu de images/boutons.png, sans la lueur
 # autour (un masque en pilule : bords arrondis, rayon d'une demi-hauteur).

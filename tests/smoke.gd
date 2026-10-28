@@ -21,6 +21,7 @@ func _ready() -> void:
 	ok = _dynasties() and ok
 	ok = _reserve() and ok
 	ok = _elites() and ok
+	ok = _cavaliers() and ok
 	ok = _carte() and ok
 	ok = _run() and ok
 	ok = _fusion() and ok
@@ -351,6 +352,24 @@ func _elites() -> bool:
 	cb.simuler()
 	var tb := cb.evenements.map(func(x): return x["type"])
 	ok = _verifier("ouverture" in tb and "regard" in tb and "resistance" in tb, "Bastion : rempart, ouverture, regard, resistance") and ok
+	return ok
+
+func _cavaliers() -> bool:
+	var p := Partie.new(41)
+	p.choisir_cavalier("pousse")
+	var ok := _verifier(p.nid.colonnes.size() == 5, "Croissance : 5 colonnes")
+	var q := Partie.new(42)
+	q.choisir_cavalier("capuchon")
+	var b := q.bourse
+	q.relancer()
+	q.relancer()
+	ok = _verifier(q.bourse == b - Partie.PRIX_RELANCE, "Erudit : premiere relance gratuite, la suivante payante") and ok
+	var co := Partie.avec_cavalier(Nid.new().eclore(), "coquille")
+	ok = _verifier(co["bouclier"] == Data.ECLOSION_BOUCLIER, "Eclosion : bouclier de 40") and ok
+	var n := Nid.new()
+	n.placer(Vector2i(0, 0), "dague_minuit")
+	var c := Combat.new(Partie.avec_cavalier(n.eclore(), "ombre"), Nid.new().eclore())
+	ok = _verifier(is_equal_approx(c.cotes[0]["sorts"][0]["prochain"], Data.EMBUSCADE_DELAI), "Embuscade : l'arme part tout de suite") and ok
 	return ok
 
 func _carte() -> bool:

@@ -347,6 +347,19 @@ const IDENTITES := {
 	"nuit": "Vol de vie, malédictions et coups critiques. Affaiblit l'adversaire et se soigne en frappant.",
 }
 
+# --- cavaliers ---------------------------------------------------------------
+# Choisi en debut de partie (images/cavaliers). Chacun a un talent, d'un
+# domaine different : combat offensif, sac, combat defensif, boutique.
+const CAVALIERS := {"ombre": "L'Ombre", "pousse": "La Pousse", "coquille": "La Coquille", "capuchon": "Le Capuchon"}
+const TALENTS := {
+	"ombre": ["Embuscade", "Au début de chaque combat, tes armes lancent leur sort tout de suite."],
+	"pousse": ["Croissance", "Ton sac commence avec une colonne de plus (5 au lieu de 4)."],
+	"coquille": ["Éclosion", "Ta monture commence chaque combat avec un bouclier de 40."],
+	"capuchon": ["Érudit", "La première relance de chaque boutique est gratuite."],
+}
+const ECLOSION_BOUCLIER := 40.0
+const EMBUSCADE_DELAI := 0.1
+
 # --- elites (PvE) ------------------------------------------------------------
 # Une elite est le Nid d'un fantome en avance, avec une regle qui lui est propre
 # (voir Combat._elite) et sa propre image (images/montures/ennemis).

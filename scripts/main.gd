@@ -15,8 +15,9 @@ func _ready() -> void:
 func aller_choix() -> void:
 	_vider()
 	var c := ChoixScreen.new()
-	c.commencer.connect(func(dyn: Array):
+	c.commencer.connect(func(dyn: Array, cav: String):
 		partie = Partie.new(0, dyn)
+		partie.choisir_cavalier(cav)
 		aller_nid())
 	ecran = c
 	add_child(c)
@@ -47,7 +48,8 @@ func aller_carte() -> void:
 
 func _combattre() -> void:
 	_vider()
-	var c := CombatScreen.new(partie.nid.eclore(), partie.creature_adverse())
+	var moi := partie.creature_joueur()
+	var c := CombatScreen.new(moi, partie.creature_adverse())
 	c.retour.connect(func():
 		var adverse: Dictionary = c.combat.cotes[1]
 		partie.conclure_combat(c.vainqueur, adverse["pv"] / adverse["cr"]["pv_max"])

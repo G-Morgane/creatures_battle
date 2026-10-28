@@ -340,6 +340,7 @@ func rafraichir() -> void:
 	for c in reserve_cases:
 		c.queue_redraw()
 	var cr := nid.eclore()
+	vue.cavalier = partie.cavalier
 	vue.montrer(cr["forme"], _affinite_totale(), cr["armes"], cr["hybride"])
 	infos.text = _decrire(cr)
 	for o in offres_ui:

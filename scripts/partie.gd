@@ -74,6 +74,9 @@ var rencontre := {}      # rencontre en cours : {id, titre, texte, choix, ...}
 # Dynasties de la partie : la boutique, les recompenses et le Heaume ne
 # tirent que dans celles-ci (et les objets neutres).
 var dynasties: Array = []
+var cavalier := ""          # choisi a l ecran de depart ; vide : pas de talent
+# Erudit : la premiere relance de la boutique en cours est encore gratuite.
+var relance_offerte := true
 
 func _init(g := 0, dyn := []) -> void:
 	dynasties = dyn.duplicate() if not dyn.is_empty() else Data.dynasties_jouables()
@@ -137,12 +140,34 @@ func pool() -> Array:
 	return Data.RELIQUES.keys().filter(func(id): return Data.RELIQUES[id]["element"] in dynasties or Data.RELIQUES[id]["element"] == "")
 
 func prix_relance() -> int:
-	return 0 if marche else PRIX_RELANCE
+	if marche or (cavalier == "capuchon" and relance_offerte):
+		return 0
+	return PRIX_RELANCE
+
+# Le cavalier se choisit une fois, en debut de partie. Croissance : une
+# colonne de plus, offerte (la suivante coute comme la deuxieme).
+func choisir_cavalier(c: String) -> void:
+	cavalier = c
+	if c == "pousse" and nid.colonnes.size() == COLONNES_DEPART.size():
+		agrandir(true)
+
+# Le talent du cavalier qui joue en combat, ajoute a la creature eclose.
+static func avec_cavalier(cr: Dictionary, c: String) -> Dictionary:
+	cr["cavalier"] = c if c != "" else "capuchon"
+	if c == "coquille":
+		cr["bouclier"] += Data.ECLOSION_BOUCLIER
+	cr["embuscade"] = c == "ombre"
+	return cr
+
+func creature_joueur() -> Dictionary:
+	return Partie.avec_cavalier(nid.eclore(), cavalier)
 
 func relancer() -> bool:
 	if bourse < prix_relance():
 		return false
 	bourse -= prix_relance()
+	if cavalier == "capuchon":
+		relance_offerte = false
 	gelee = false
 	tirer()
 	return true
@@ -352,6 +377,9 @@ func elite_de(i: int) -> String:
 # regle, son nom et son image.
 func creature_adverse() -> Dictionary:
 	var cr := adversaire_noeud().eclore()
+	# le cavalier d'en face change d'un noeud a l'autre
+	var cavs := Data.CAVALIERS.keys()
+	Partie.avec_cavalier(cr, cavs[(manche + graine) % cavs.size()])
 	if noeud()["type"] == "boss" and acte < Data.GARDIEN_ACTE.size():
 		var g: String = Data.GARDIEN_ACTE[acte]
 		cr["elite"] = g
@@ -415,6 +443,7 @@ func _suivant(recompense := "", element := "") -> void:
 	manche += 1
 	bourse += OR_PAR_MANCHE
 	marche = false
+	relance_offerte = true
 	if not gelee:
 		tirer()
 	if recompense != "":

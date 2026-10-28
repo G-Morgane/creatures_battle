@@ -35,6 +35,9 @@ func _etat(cr: Dictionary, i: int) -> Dictionary:
 		var copie: Dictionary = s.duplicate()
 		# un Contre ne part pas sur minuterie mais sur coups recus
 		copie["prochain"] = INF if s["contre"] > 0 else s["recharge"]
+		# Embuscade (l'Ombre) : les armes partent des le debut
+		if cr.get("embuscade", false) and s["cavalier"] and s["contre"] == 0:
+			copie["prochain"] = Data.EMBUSCADE_DELAI
 		sorts.append(copie)
 	return {
 		"cr": cr,

@@ -9,6 +9,7 @@ var affinite := 0
 var armes: Array = []   # ids des armes du cavalier (0, 1 ou 2)
 var hybride := ""      # cle "a_b" quand la forme est un hybride
 var elite := ""        # id d'elite : sa propre image, sans cavalier
+var cavalier := "capuchon"  # images/cavaliers/<id>.png
 # Bastion : eclat de l'oeil du temple (0 a 1) et phase du cycle.
 var oeil := 0.0
 var phase := ""
@@ -193,6 +194,16 @@ func _cavalier(c: Dictionary) -> void:
 	# la seconde arme est dans l'autre main, derriere le cavalier
 	if armes.size() > 1:
 		_arme(dos, armes[1], Vector2(-26, 6))
+	# le cavalier peint, assis sur le dos ; a defaut, la silhouette dessinee
+	var peint := Palette.image("res://images/cavaliers/%s.png" % cavalier)
+	if peint != null:
+		var h := 96.0
+		var taille := Vector2(h * peint.get_width() / peint.get_height(), h)
+		var balance := sin(t * 2.4) * 2.0
+		draw_texture_rect(peint, Rect2(dos + Vector2(-taille.x / 2, 22 - taille.y + balance), taille), false)
+		if not armes.is_empty():
+			_arme(dos, armes[0], Vector2(18, -14))
+		return
 	var vent := sin(t * 3.0) * 6.0
 	draw_colored_polygon(PackedVector2Array([dos + Vector2(-6, -40), dos + Vector2(-50 + vent, 20), dos + Vector2(-20, 24), dos + Vector2(10, -30)]), c["vif"].darkened(0.1))
 	draw_colored_polygon(PackedVector2Array([dos + Vector2(-16, -36), dos + Vector2(16, -36), dos + Vector2(20, 14), dos + Vector2(-20, 14)]), c["vif"])

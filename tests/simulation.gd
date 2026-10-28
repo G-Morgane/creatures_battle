@@ -20,6 +20,8 @@ func _initialize() -> void:
 		var par_element := {}           # element choisi -> [runs, gagnees]
 		for g in RUNS:
 			var p := Partie.new(g + 1)
+			# un cavalier a tour de role, comme les adversaires
+			p.choisir_cavalier(Data.CAVALIERS.keys()[g % Data.CAVALIERS.size()])
 			var j := JoueurAuto.new(style, g + 1)
 			while not p.terminee():
 				j.jouer_manche(p)
@@ -27,7 +29,7 @@ func _initialize() -> void:
 				var type: String = p.noeud()["type"]
 				noeuds += 1
 				if p.combat():
-					var c := Combat.new(p.nid.eclore(), p.creature_adverse())
+					var c := Combat.new(p.creature_joueur(), p.creature_adverse())
 					var v := c.simuler()
 					var m: Array = par_type.get(type, [0, 0])
 					m[0] += 1 if v == 0 else 0

@@ -160,6 +160,9 @@ static func contenu() -> String:
 	t += _terme("Éclat", "les soins remplissent une jauge ; pleine (%d), elle frappe l'adversaire." % Data.ECLAT_SEUIL)
 	t += _terme("Transfert", "vole un bonus adverse (bouclier, Braise...) ou lui renvoie un malus (poison, brûlure, givre, malédiction). Rien à déplacer : un projectile d'arcane.")
 	t += _terme("Régénération", "des PV rendus chaque seconde.")
+	t += _section("Les cavaliers")
+	for c in Data.CAVALIERS:
+		t += _terme("%s, %s" % [Data.CAVALIERS[c], Data.TALENTS[c][0]], Data.TALENTS[c][1])
 	t += _section("Les élites")
 	for e in Data.ELITES:
 		t += _terme(Data.ELITES[e]["nom"], Data.ELITES[e]["texte"])
