@@ -19,6 +19,7 @@ func _ready() -> void:
 	ok = _hybrides() and ok
 	ok = _gel() and ok
 	ok = _dynasties() and ok
+	ok = _reserve() and ok
 	ok = _carte() and ok
 	ok = _run() and ok
 	ok = _fusion() and ok
@@ -94,7 +95,8 @@ func _ecran() -> bool:
 	ok = _verifier(e.nid.cases.get(Vector2i(5, 3)) == "charbon", "echanger deux reliques") and ok
 	e.deposer(Vector2i(0, 0), "sceau", null)
 	ok = _verifier(not e.nid.cases.has(Vector2i(0, 0)), "case fermee : on ne pose pas") and ok
-	e.vendre(Vector2i(5, 3))
+	ok = _verifier(e.vente._can_drop_data(Vector2.ZERO, {"id": "charbon", "depuis": Vector2i(5, 3)}), "le comptoir accepte une relique du sac") and ok
+	e.vente._drop_data(Vector2.ZERO, {"id": "charbon", "depuis": Vector2i(5, 3)})
 	ok = _verifier(e.vue.forme == "nuit" and e.nid.cases.size() == 2, "revendre une case") and ok
 	e.queue_free()
 	return ok
@@ -304,6 +306,27 @@ func _dynasties() -> bool:
 	ok = _verifier(c.choisies.size() == 4 and c.choisies.all(func(d): return not d in Data.DYNASTIES_A_VENIR), "aleatoire : 4 dynasties jouables") and ok
 	c.queue_free()
 	ok = _verifier(Glossaire.contenu().contains("Flétrissure") and Glossaire.contenu().contains("Dynastie de la Nuit"), "glossaire : etats et dynasties") and ok
+	return ok
+
+func _reserve() -> bool:
+	var p := Partie.new(31)
+	p.bourse = 100
+	p.offres[0] = "charbon"
+	p.offres[1] = "sceau"
+	var ok := _verifier(p.ranger({"offre": 0}, 0) and p.reserve[0]["id"] == "charbon" and p.bourse == 100 - Partie.prix("charbon"), "acheter vers la reserve")
+	ok = _verifier(p.nid.eclore()["affinite"] == 0, "la reserve n'a pas d'effet") and ok
+	ok = _verifier(p.poser({"reserve": 0}, Vector2i(2, 0), Vector2i(2, 0), 0)["ok"] and p.nid.cases.get(Vector2i(2, 0)) == "charbon" and p.reserve[0].is_empty(), "reserve vers le sac") and ok
+	# lacher sur une autre relique : elle prend la place, l'autre passe en main
+	ok = _verifier(p.poser({"offre": 1}, Vector2i(2, 0), Vector2i(2, 0), 0)["ok"] and p.nid.cases.get(Vector2i(2, 0)) == "sceau" and p.main["id"] == "charbon", "echange : l'ancienne passe en main") and ok
+	ok = _verifier(p.ranger({"main": true}, 3) and p.main.is_empty() and p.reserve[3]["id"] == "charbon", "la main se range") and ok
+	# reserve pleine : la main lachee nulle part va dans le sac
+	for k in Partie.TAILLE_RESERVE:
+		p.reserve[k] = {"id": "ruban", "niv": 1}
+	p.main = {"id": "tison", "niv": 1}
+	p.poser_main()
+	ok = _verifier(p.main.is_empty() and "tison" in p.nid.cases.values(), "reserve pleine : la main va dans le sac") and ok
+	var or_avant := p.bourse
+	ok = _verifier(p.vendre_source({"reserve": 0}) and p.bourse == or_avant + Partie.prix_revente("ruban") and p.reserve[0].is_empty(), "revendre depuis la reserve") and ok
 	return ok
 
 func _carte() -> bool:

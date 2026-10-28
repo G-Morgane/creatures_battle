@@ -3,7 +3,7 @@ extends Control
 
 # Ecran du Nid : boutique a gauche, grille au centre, creature a droite.
 # Glisser une offre dans une case vide l'achete, glisser une case vers une
-# autre echange, la ramener a la boutique ou clic droit la revend.
+# autre echange, la ramener sur le comptoir la revend.
 
 signal continuer
 signal nouvelle_partie
@@ -28,6 +28,11 @@ var haut: Control
 var boutique_ui: Control
 var monture_ui: Control
 var aide_ui: Control
+var vente: Control
+var reserve_ui: Control
+var reserve_cases: Array = []
+var revente := -1        # prix de revente de la relique tenue depuis le sac, -1 sinon
+var bandeau_vente: Label
 # Relique tenue : rotation (R ou molette) et case saisie dans sa forme.
 var rot_prise := 0
 var prise := Vector2i.ZERO
@@ -62,17 +67,34 @@ func _ready() -> void:
 	barre = _titre("")
 	haut = _cadre(barre)
 	add_child(haut)
+	# tout le comptoir est une zone de vente, sous les offres
+	vente = ZoneVente.new(self)
+	add_child(vente)
 	# les offres sont posees sur le comptoir peint, sans cadre
 	boutique_ui = _boutique()
 	add_child(boutique_ui)
 	monture_ui = _cadre(_panneau())
 	add_child(monture_ui)
+	reserve_ui = _cadre(_reserve())
+	add_child(reserve_ui)
 	var aide := Label.new()
-	aide.text = "Glisse pour acheter, R ou molette pour tourner. 3 copies : ★. Clic droit pour revendre."
+	aide.text = "Glisse pour acheter, R ou molette pour tourner. 3 copies : ★. Ramène un objet sur le comptoir pour le revendre. Sur un autre objet : il prend sa place, l'autre passe en main."
 	aide.add_theme_font_size_override("font_size", 13)
 	aide.add_theme_color_override("font_color", Palette.TEXTE_DOUX)
 	aide_ui = _cadre(aide)
 	add_child(aide_ui)
+	# bandeau de revente, au premier plan, qui ne capte pas la souris
+	bandeau_vente = Label.new()
+	bandeau_vente.add_theme_font_size_override("font_size", 24)
+	bandeau_vente.add_theme_color_override("font_color", Color("#f2c94c"))
+	var fond_bandeau := StyleBoxFlat.new()
+	fond_bandeau.bg_color = Color(Palette.FOND, 0.92)
+	fond_bandeau.set_content_margin_all(12)
+	fond_bandeau.set_corner_radius_all(6)
+	bandeau_vente.add_theme_stylebox_override("normal", fond_bandeau)
+	bandeau_vente.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bandeau_vente.visible = false
+	add_child(bandeau_vente)
 	resized.connect(_placer)
 	_placer()
 	rafraichir()
@@ -89,6 +111,10 @@ func _placer() -> void:
 	boutique_ui.position = Vector2((gauche - boutique_ui.size.x) / 2 + marge / 2, 80)
 	aide_ui.reset_size()
 	aide_ui.position = Vector2((gauche - aide_ui.size.x) / 2 + marge / 2, size.y - aide_ui.size.y - 6)
+	reserve_ui.reset_size()
+	reserve_ui.position = Vector2(size.x - reserve_ui.size.x - marge, 80)
+	vente.position = Vector2(marge, 70)
+	vente.size = Vector2(gauche - marge, boutique_ui.position.y + boutique_ui.size.y + 6 - 70)
 	# le tapis prend la place libre sous le comptoir, en cases carrees
 	var dessus := boutique_ui.position.y + boutique_ui.size.y + 14
 	var dessous := aide_ui.position.y - 10
@@ -162,6 +188,24 @@ func _boutique() -> Control:
 	col.add_child(boutons)
 	return col
 
+func _reserve() -> Control:
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 6)
+	var t := Label.new()
+	t.text = "Réserve (sans effet)"
+	t.add_theme_color_override("font_color", Palette.TEXTE_DOUX)
+	col.add_child(t)
+	var g := GridContainer.new()
+	g.columns = 4
+	g.add_theme_constant_override("h_separation", 6)
+	g.add_theme_constant_override("v_separation", 6)
+	for k in Partie.TAILLE_RESERVE:
+		var c := CaseReserve.new(self, k)
+		reserve_cases.append(c)
+		g.add_child(c)
+	col.add_child(g)
+	return col
+
 func _panneau() -> Control:
 	var ligne := VBoxContainer.new()
 	ligne.add_theme_constant_override("separation", 8)
@@ -198,6 +242,31 @@ func _texte() -> RichTextLabel:
 # --- actions ---------------------------------------------------------------
 
 # depuis : case d'origine si on deplace une relique deja posee, null sinon.
+# Un glisser de relique (offre, sac, reserve ou main) ?
+static func glisse(data) -> bool:
+	return data is Dictionary and data.has("id") and (data.has("offre") or data.has("depuis") or data.has("reserve") or data.has("main"))
+
+# Apres une pose : si une relique a ete delogee, on la reprend en main tout de
+# suite, pour la reposer ailleurs.
+func apres_pose() -> void:
+	rafraichir()
+	if not partie.main.is_empty():
+		call_deferred("_reprendre")
+
+func _reprendre() -> void:
+	if partie.main.is_empty():
+		return
+	rot_prise = partie.main.get("rot", 0)
+	prise = Vector2i.ZERO
+	montrer_vente(Partie.prix_revente(partie.main["id"], partie.main["niv"]))
+	force_drag({"id": partie.main["id"], "main": true}, apercu(partie.main["id"]))
+
+# La main lachee nulle part : en reserve, sinon dans le sac, sinon revendue.
+func _fin_glisser() -> void:
+	if not get_viewport().gui_is_dragging() and not partie.main.is_empty():
+		partie.poser_main()
+		rafraichir()
+
 # depuis : ancre de la relique deplacee, ou null pour poser id directement.
 func deposer(c: Vector2i, id: String, depuis, rot := -1) -> void:
 	if depuis != null:
@@ -227,7 +296,22 @@ func _input(ev: InputEvent) -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_DRAG_END and sac != null:
 		pose_vue = {}
+		vente.survol = false
+		montrer_vente(-1)
 		sac.queue_redraw()
+		call_deferred("_fin_glisser")
+
+# Pendant qu'on tient une relique du sac : le comptoir s'eclaire, les offres
+# s'estompent et un bandeau donne le prix de revente. prix < 0 : on cache.
+func montrer_vente(prix: int) -> void:
+	revente = prix
+	vente.queue_redraw()
+	boutique_ui.modulate.a = 0.3 if prix >= 0 else 1.0
+	bandeau_vente.visible = prix >= 0
+	if prix >= 0:
+		bandeau_vente.text = "Lâche sur le comptoir pour revendre : +%d or" % prix
+		bandeau_vente.reset_size()
+		bandeau_vente.position = vente.position + (vente.size - bandeau_vente.size) / 2
 
 func vendre(c: Vector2i) -> void:
 	partie.vendre(c)
@@ -238,6 +322,8 @@ func rafraichir() -> void:
 		_placer()
 	for c in cases_ui:
 		cases_ui[c].queue_redraw()
+	for c in reserve_cases:
+		c.queue_redraw()
 	var cr := nid.eclore()
 	vue.montrer(cr["forme"], _affinite_totale(), cr["armes"], cr["hybride"])
 	infos.text = _decrire(cr)
@@ -740,9 +826,10 @@ class Offre extends Control:
 		return {"id": _id(), "offre": index}
 	# Ramener une relique posee sur la boutique la revend.
 	func _can_drop_data(_p: Vector2, data: Variant) -> bool:
-		return data is Dictionary and data.has("depuis")
+		return NidScreen.glisse(data) and not data.has("offre")
 	func _drop_data(_p: Vector2, data: Variant) -> void:
-		ecran.vendre(data["depuis"])
+		ecran.partie.vendre_source(data)
+		ecran.apres_pose()
 
 class Boutique extends VBoxContainer:
 	var ecran: NidScreen
@@ -750,9 +837,73 @@ class Boutique extends VBoxContainer:
 		ecran = e
 		mouse_filter = Control.MOUSE_FILTER_PASS
 	func _can_drop_data(_p: Vector2, data: Variant) -> bool:
-		return data is Dictionary and data.has("depuis")
+		return NidScreen.glisse(data) and not data.has("offre")
 	func _drop_data(_p: Vector2, data: Variant) -> void:
-		ecran.vendre(data["depuis"])
+		ecran.partie.vendre_source(data)
+		ecran.apres_pose()
+
+# Le comptoir : y lacher une relique du sac la revend. Pendant qu'on en tient
+# une, il s'eclaire et affiche le prix de revente.
+class ZoneVente extends Control:
+	var ecran: NidScreen
+	var survol := false
+	func _init(e: NidScreen) -> void:
+		ecran = e
+		mouse_filter = Control.MOUSE_FILTER_PASS
+		mouse_exited.connect(func():
+			survol = false
+			queue_redraw())
+	func _can_drop_data(_p: Vector2, data: Variant) -> bool:
+		var ok: bool = NidScreen.glisse(data) and not data.has("offre")
+		if ok and not survol:
+			survol = true
+			queue_redraw()
+		return ok
+	func _drop_data(_p: Vector2, data: Variant) -> void:
+		ecran.partie.vendre_source(data)
+		ecran.apres_pose()
+	func _draw() -> void:
+		if ecran.revente < 0:
+			return
+		var r := Rect2(Vector2.ZERO, size)
+		var or_ := Color("#f2c94c")
+		draw_rect(r, Color(or_, 0.22 if survol else 0.1))
+		draw_rect(r, Color(or_, 0.9 if survol else 0.5), false, 3.0)
+
+# Un emplacement de la reserve : une relique de cote, sans effet.
+class CaseReserve extends Control:
+	var ecran: NidScreen
+	var index: int
+	func _init(e: NidScreen, k: int) -> void:
+		ecran = e
+		index = k
+		custom_minimum_size = Vector2(52, 52)
+		tooltip_text = " "
+	func _r() -> Dictionary:
+		return ecran.partie.reserve[index]
+	func _get_tooltip(_p: Vector2) -> String:
+		return "" if _r().is_empty() else NidScreen.info(_r()["id"])
+	func _make_custom_tooltip(_t: String) -> Object:
+		return null if _r().is_empty() else NidScreen.bulle(_r()["id"], _r()["niv"])
+	func _draw() -> void:
+		var r := Rect2(Vector2.ZERO, size)
+		draw_rect(r, Color(Palette.CASE, 0.9))
+		draw_rect(r, Palette.CASE_BORD, false, 1.0)
+		if not _r().is_empty():
+			NidScreen.dessiner_forme(self, [r], _r()["id"], _r()["niv"], size.x)
+	func _get_drag_data(_p: Vector2) -> Variant:
+		if _r().is_empty():
+			return null
+		ecran.rot_prise = 0
+		ecran.prise = Vector2i.ZERO
+		ecran.montrer_vente(Partie.prix_revente(_r()["id"], _r()["niv"]))
+		set_drag_preview(ecran.apercu(_r()["id"]))
+		return {"id": _r()["id"], "reserve": index}
+	func _can_drop_data(_p: Vector2, data: Variant) -> bool:
+		return NidScreen.glisse(data) and ecran.partie.ranger(data, index, true)
+	func _drop_data(_p: Vector2, data: Variant) -> void:
+		ecran.partie.ranger(data, index)
+		ecran.apres_pose()
 
 class CaseNid extends Control:
 	var ecran: NidScreen
@@ -779,40 +930,28 @@ class CaseNid extends Control:
 		var a = _ancre()
 		if a == null:
 			return null
+		ecran.montrer_vente(Partie.prix_revente(ecran.nid.cases[a], ecran.nid.niveau(a)))
 		ecran.rot_prise = ecran.nid.rotation(a)
 		ecran.prise = position_nid - a
 		set_drag_preview(ecran.apercu(ecran.nid.cases[a]))
 		return {"id": ecran.nid.cases[a], "depuis": a}
-	# Ou tomberait la relique tenue si on la lachait ici : son ancre, sa
-	# rotation, et si c'est permis. Sur une copie, une offre fusionne.
+	# Ou tomberait la relique tenue si on la lachait ici. Sur une autre relique,
+	# elle prend sa place et l'autre passe dans la main.
 	func _pose(data: Dictionary) -> Dictionary:
-		var rot: int = ecran.rot_prise
 		var b: Vector2i = position_nid - ecran.prise
-		if data.has("offre"):
-			var a = _ancre()
-			if a != null and ecran.nid.cases[a] == data["id"]:
-				return {"ancre": position_nid, "rot": rot, "ok": ecran.partie.peut_acheter(data["offre"], position_nid, rot),
-					"cases": ecran.nid.cases_de(a)}
-			return {"ancre": b, "rot": rot, "ok": ecran.partie.peut_acheter(data["offre"], b, rot),
-				"cases": ecran.nid.empreinte(b, data["id"], rot)}
-		var ok: bool = (b != data["depuis"] or rot != ecran.nid.rotation(data["depuis"])) and ecran.nid.peut_deplacer(data["depuis"], b, rot)
-		return {"ancre": b, "rot": rot, "ok": ok, "cases": ecran.nid.empreinte(b, data["id"], rot)}
+		var pose := ecran.partie.poser(data, position_nid, b, ecran.rot_prise, true)
+		pose["ancre"] = b
+		return pose
 	func _can_drop_data(_p: Vector2, data: Variant) -> bool:
-		if not data is Dictionary or not (data.has("offre") or data.has("depuis")):
+		if not NidScreen.glisse(data):
 			return false
 		var pose := _pose(data)
 		ecran.pose_vue = pose
 		ecran.sac.queue_redraw()
 		return pose["ok"]
 	func _drop_data(_p: Vector2, data: Variant) -> void:
-		var pose := _pose(data)
-		if data.has("offre"):
-			ecran.acheter(data["offre"], pose["ancre"], pose["rot"])
-		else:
-			ecran.deposer(pose["ancre"], data["id"], data["depuis"], pose["rot"])
-	func _gui_input(ev: InputEvent) -> void:
-		if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_RIGHT:
-			ecran.vendre(position_nid)
+		ecran.partie.poser(data, position_nid, position_nid - ecran.prise, ecran.rot_prise)
+		ecran.apres_pose()
 
 # Tapis du sac, en tuiles : chaque case prend la tuile dont les bords en cuir
 # correspondent a sa place (haut, droite, bas, gauche du tapis). Une case sur

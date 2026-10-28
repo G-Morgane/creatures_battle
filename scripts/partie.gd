@@ -54,6 +54,11 @@ var marche := false
 # Boutique gelee : ses offres restent au noeud suivant (les achetees restent vides).
 # Une relance la degele.
 var gelee := false
+# Reserve : des emplacements hors du sac, sans effet, pour garder des reliques.
+const TAILLE_RESERVE := 8
+var reserve: Array = []  # par emplacement : {} vide, ou {id, niv}
+# Relique delogee par une pose, tenue par le joueur : {id, niv}, {} sinon.
+var main := {}
 
 var carte: Carte
 var acte := 0
@@ -76,6 +81,8 @@ func _init(g := 0, dyn := []) -> void:
 	carte = Carte.new(graine)
 	nid.colonnes = COLONNES_DEPART.duplicate()
 	nid.encombrement = true
+	for k in TAILLE_RESERVE:
+		reserve.append({})
 	tirer()
 
 static func prix(id: String) -> int:
@@ -172,6 +179,126 @@ func agrandir(gratuit := false) -> bool:
 		bourse -= prix
 	nid.colonnes.append(ORDRE_AGRANDIR[nid.colonnes.size() - COLONNES_DEPART.size()])
 	return true
+
+# --- glisser-deposer : sources et destinations --------------------------------
+# Une source est le dictionnaire du glisser : {"offre": i}, {"depuis": ancre du
+# sac}, {"reserve": k} ou {"main": true}.
+
+func relique_de(src: Dictionary) -> Dictionary:
+	if src.has("offre"):
+		return {} if offres[src["offre"]] == "" else {"id": offres[src["offre"]], "niv": 1}
+	if src.has("depuis"):
+		return {"id": nid.cases[src["depuis"]], "niv": nid.niveau(src["depuis"])} if nid.cases.has(src["depuis"]) else {}
+	if src.has("reserve"):
+		return reserve[src["reserve"]]
+	return main
+
+func _payable(src: Dictionary) -> bool:
+	return not src.has("offre") or bourse >= prix_offre(src["offre"])
+
+# Retire la relique de sa source ; une offre se paie.
+func _prendre(src: Dictionary) -> void:
+	if src.has("offre"):
+		var i: int = src["offre"]
+		bourse -= prix_offre(i)
+		offres[i] = ""
+		if i == gratuite:
+			gratuite = -1
+	elif src.has("depuis"):
+		nid.retirer(src["depuis"])
+	elif src.has("reserve"):
+		reserve[src["reserve"]] = {}
+	else:
+		main = {}
+
+# Poser la relique de src dans le sac, ancre b, tournee de rot. cellule : la
+# case visee. Une offre lachee sur une copie qui complete un trio fusionne.
+# Sur une autre relique, elle prend sa place et l'autre passe dans la main.
+# essai : ne change rien, dit seulement si c'est possible et ou ca tombe.
+# Renvoie {ok, cases}.
+func poser(src: Dictionary, cellule: Vector2i, b: Vector2i, rot: int, essai := false) -> Dictionary:
+	var r := relique_de(src)
+	if r.is_empty() or not _payable(src):
+		return {"ok": false, "cases": []}
+	var copie = nid.ancre(cellule)
+	if src.has("offre") and copie != null and nid.cases[copie] == r["id"]:
+		var ok := nid.peut_ajouter(cellule, r["id"], rot)
+		if ok and not essai:
+			acheter(src["offre"], cellule, rot)
+		return {"ok": ok, "cases": nid.cases_de(copie)}
+	var n := nid.dupliquer()
+	if src.has("depuis"):
+		n.retirer(src["depuis"])
+	var cases := n.empreinte(b, r["id"], rot)
+	var occ := n.occupation()
+	var autres := {}
+	for k in cases:
+		if not n.ouverte(k):
+			return {"ok": false, "cases": cases}
+		if occ.has(k):
+			autres[occ[k]] = true
+	if autres.size() > 1:
+		return {"ok": false, "cases": cases}
+	if essai:
+		return {"ok": true, "cases": cases}
+	_prendre(src)
+	if not autres.is_empty():
+		var o: Vector2i = autres.keys()[0]
+		main = {"id": nid.cases[o], "niv": nid.niveau(o), "rot": nid.rotation(o)}
+		nid.retirer(o)
+	nid.placer(b, r["id"], r["niv"], rot)
+	nid.fusionner(b)
+	return {"ok": true, "cases": cases}
+
+# Ranger la relique de src dans l'emplacement k de la reserve. S'il est pris,
+# son occupant passe dans la main.
+func ranger(src: Dictionary, k: int, essai := false) -> bool:
+	if k < 0 or k >= TAILLE_RESERVE or (src.has("reserve") and src["reserve"] == k):
+		return false
+	var r := relique_de(src)
+	if r.is_empty() or not _payable(src):
+		return false
+	if essai:
+		return true
+	var occupant: Dictionary = reserve[k]
+	var copie := {"id": r["id"], "niv": r["niv"]}
+	_prendre(src)
+	reserve[k] = copie
+	if not occupant.is_empty():
+		main = occupant
+	return true
+
+# Revendre depuis le sac, la reserve ou la main (pas une offre).
+func vendre_source(src: Dictionary) -> bool:
+	if src.has("depuis"):
+		vendre(src["depuis"])
+		return true
+	if src.has("offre"):
+		return false
+	var r := relique_de(src)
+	if r.is_empty():
+		return false
+	bourse += prix_revente(r["id"], r["niv"])
+	_prendre(src)
+	return true
+
+# La main lachee nulle part : la relique va en reserve, sinon a la premiere
+# place libre du sac, sinon elle est revendue.
+func poser_main() -> void:
+	if main.is_empty():
+		return
+	var vide := reserve.find({})
+	if vide >= 0:
+		ranger({"main": true}, vide)
+		return
+	for rot in [0, 1]:
+		for y in Data.NID_H:
+			for x in Data.NID_L:
+				if nid.dupliquer().placer(Vector2i(x, y), main["id"], 1, rot):
+					poser({"main": true}, Vector2i(x, y), Vector2i(x, y), rot)
+					return
+	vendre_source({"main": true})
+	message = "Plus de place : la relique en main est revendue."
 
 # c : n'importe quelle case de la relique.
 func vendre(c: Vector2i) -> void:
