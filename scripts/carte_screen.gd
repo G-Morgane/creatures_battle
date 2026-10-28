@@ -54,8 +54,13 @@ func _process(delta: float) -> void:
 # Position a l'ecran d'un noeud, avec un leger decalage fixe pour casser la grille.
 func centre(i: int) -> Vector2:
 	var n: Dictionary = partie.noeuds()[i]
-	var zone := Rect2(Vector2(110, HAUT + 70), size - Vector2(220, HAUT + BAS + 140))
-	var x: float = zone.position.x + n["etage"] * zone.size.x / (Carte.ETAGES - 1)
+	# Les chemins restent dans la plaine claire du fond peint, entre les falaises,
+	# les montagnes et la riviere ; le boss attend au pied du chateau.
+	var fond := Rect2(0, HAUT, size.x, size.y - HAUT - BAS)
+	var zone := Rect2(fond.position + fond.size * PLAINE.position, fond.size * PLAINE.size)
+	var x: float = zone.position.x + n["etage"] * zone.size.x / (Carte.ETAGES - 2)
+	if n["type"] == "boss":
+		x = fond.position.x + fond.size.x * BOSS_X
 	var y: float = zone.position.y + n["col"] * zone.size.y / (Carte.COLONNES - 1)
 	if n["type"] != "boss":
 		var h := absi(hash(Vector2i(n["etage"], int(n["col"])) + Vector2i(partie.acte * 31, 0)))
@@ -65,6 +70,9 @@ func centre(i: int) -> Vector2:
 
 # Fond peint, etire sur toute la largeur entre le bandeau du haut et la legende.
 const HAUT := 90.0
+# Plaine du fond peint, en fraction de l'image, et position du boss.
+const PLAINE := Rect2(0.17, 0.26, 0.62, 0.46)
+const BOSS_X := 0.87
 const BAS := 70.0
 const TRAIT := Color("#2b2117")
 
