@@ -92,6 +92,15 @@ static func theme_jeu() -> Theme:
 		sb.modulate_color = etats[etat]
 		t.set_stylebox(etat, "Button", sb)
 	t.set_stylebox("focus", "Button", StyleBoxEmpty.new())
+	# infobulles : fond opaque, liseré discret, pour lire sur n'importe quel decor
+	var bulle := StyleBoxFlat.new()
+	bulle.bg_color = PANNEAU
+	bulle.border_color = CASE_BORD
+	bulle.set_border_width_all(2)
+	bulle.set_corner_radius_all(6)
+	bulle.set_content_margin_all(12)
+	t.set_stylebox("panel", "TooltipPanel", bulle)
+	t.set_color("font_color", "TooltipLabel", TEXTE)
 	t.set_color("font_color", "Button", Color("#3b2a18"))
 	t.set_color("font_hover_color", "Button", Color("#1f150b"))
 	t.set_color("font_pressed_color", "Button", Color("#1f150b"))
