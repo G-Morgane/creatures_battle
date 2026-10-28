@@ -100,36 +100,6 @@ const ZONES := {
 	"glaive_brume":  ["papillon_armes", 45, 445, 570, 527],
 	"arc_lunes":     ["papillon_armes", 585, 475, 410, 472],
 	"lance_entre":   ["papillon_armes", 35, 1030, 970, 450],
-	"fer":           ["cheval_objets", 40, 95, 200, 215],
-	"ruban_criniere":["cheval_objets", 270, 85, 285, 227],
-	"grelot":        ["cheval_objets", 585, 80, 180, 232],
-	"duvet":         ["cheval_objets", 800, 75, 210, 237],
-	"etrier":        ["cheval_objets", 40, 425, 250, 272],
-	"manche":        ["cheval_objets", 310, 450, 360, 227],
-	"eventail":      ["cheval_objets", 675, 410, 335, 272],
-	"voile_cavale":  ["cheval_objets", 70, 815, 555, 257],
-	"girouette_indocile": ["cheval_objets", 640, 755, 345, 307],
-	"bride":         ["cheval_objets", 30, 1105, 965, 357],
-	"dague_brise":   ["cheval_armes", 95, 75, 390, 308],
-	"javelot_alizes":["cheval_armes", 535, 25, 460, 357],
-	"sabre_rafale":  ["cheval_armes", 45, 520, 450, 405],
-	"lance_bourrasque": ["cheval_armes", 520, 455, 480, 465],
-	"rapiere":       ["cheval_armes", 35, 1045, 965, 425],
-	"brique":        ["tortue_objets", 25, 85, 280, 202],
-	"truelle":       ["tortue_objets", 307, 65, 228, 222],
-	"cale":          ["tortue_objets", 542, 95, 228, 192],
-	"fossile":       ["tortue_objets", 785, 80, 225, 207],
-	"fil_plomb":     ["tortue_objets", 75, 385, 225, 267],
-	"tuile":         ["tortue_objets", 330, 420, 345, 217],
-	"sablier_ensable":["tortue_objets", 720, 380, 265, 272],
-	"clef":          ["tortue_objets", 150, 750, 330, 247],
-	"urne":          ["tortue_objets", 555, 715, 310, 282],
-	"borne":         ["tortue_objets", 270, 1025, 520, 432],
-	"hachette_schiste": ["tortue_armes", 105, 65, 400, 297],
-	"baton_glaise":  ["tortue_armes", 550, 40, 425, 342],
-	"baton_rempart": ["tortue_armes", 70, 465, 480, 462],
-	"hache_fondations": ["tortue_armes", 470, 505, 525, 432],
-	"baton_ages":    ["tortue_armes", 50, 1005, 950, 427],
 }
 
 # Objets de glace blancs et bleu pale, proches du fond creme : tolerance resserree,
@@ -138,10 +108,7 @@ const ZONES := {
 const TOLERANCE := {"objets_loup": [0.045, 0.09, false], "loup_armes": [0.045, 0.09, false],
 	# Aube : ivoire, creme, peche, tout est proche du papier
 	"lion_objets": [0.03, 0.06, false], "lion_arme": [0.03, 0.06, false],
-	"papillon_objets": [0.05, 0.10, true, 0.05], "papillon_armes": [0.05, 0.10, true, 0.05],
-	# Vent : ivoire et menthe pale
-	"cheval_objets": [0.035, 0.07, false], "cheval_armes": [0.035, 0.07, false],
-	"tortue_objets": [0.04, 0.08, false], "tortue_armes": [0.04, 0.08, false]}
+	"papillon_objets": [0.05, 0.10, true, 0.05], "papillon_armes": [0.05, 0.10, true, 0.05]}
 const TOLERANCE_DEFAUT := [0.10, 0.22, true]
 # Reglages propres a un objet (prioritaires sur ceux de sa planche).
 const TOLERANCE_OBJET := {
@@ -206,11 +173,17 @@ const MASQUES := {
 # image de la bete (fond transparent) -> element
 # (l'Ours a remplace le Loup ; Renard et Paon attendent leur set)
 const MONTURES := {"cerf": "nature", "ours_hiver": "glace", "phenix": "feu", "chauvesouris": "nuit", "lion": "aube", "papillon": "crepuscule",
-	"renad_automne": "automne", "paon_jour": "jour", "cheval": "vent", "tortue": "terre"}
+	"renad_automne": "automne", "paon_jour": "jour"}
 
 # Icones de la carte : planche a fond transparent, coupee en trois tiers egaux.
 const CARTE := ["duel", "rencontre", "elite"]
 const TAILLE_CARTE := 160
+
+# Hybrides : une image par paire de Cours dans images/hybrides, nommee d'apres
+# ses deux animaux (orthographe libre). Sortie : images/montures/hybrides/a_b.png,
+# a et b les elements tries.
+const ANIMAUX := {"cerf": "nature", "phenix": "feu", "renard": "automne", "ours": "glace",
+	"lion": "aube", "paon": "jour", "papillon": "crepuscule", "chauve": "nuit"}
 
 # Tapis du sac : 16 tuiles (4 x 4), une par combinaison de bords en cuir.
 # Chaque tuile est reperee (boite opaque), ses bords lus (cuir sombre ou toile
@@ -267,9 +240,33 @@ func _initialize() -> void:
 		ic.save_png("res://images/carte/%s.png" % CARTE[k])
 		betes.append(ic)
 	_tapis()
+	_hybrides()
 	_controle(icones, betes)
 	print("icones : ", icones.size())
 	quit()
+
+func _hybrides() -> void:
+	DirAccess.make_dir_recursive_absolute("res://images/montures/hybrides")
+	var vus := {}
+	for f in DirAccess.get_files_at("res://images/hybrides"):
+		if not f.ends_with(".png"):
+			continue
+		var els := []
+		for animal in ANIMAUX:
+			if animal in f.to_lower():
+				els.append(ANIMAUX[animal])
+		if els.size() != 2:
+			push_error("hybride sans deux animaux reconnus : " + f)
+			continue
+		els.sort()
+		var m := Image.load_from_file("res://images/hybrides/" + f)
+		m.convert(Image.FORMAT_RGBA8)
+		_poussiere(m, POUSSIERE_MONTURE)
+		m = m.get_region(m.get_used_rect())
+		_reduire(m, TAILLE_MONTURE)
+		m.save_png("res://images/montures/hybrides/%s_%s.png" % els)
+		vus["%s_%s" % els] = true
+	print("hybrides : ", vus.size())
 
 # Une tuile par combinaison : images/tapis/<bords>.png, bords parmi H, D, B, G
 # dans cet ordre ("" pour aucun bord : images/tapis/toile.png).

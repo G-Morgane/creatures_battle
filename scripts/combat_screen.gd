@@ -52,7 +52,7 @@ func _ready() -> void:
 		v.fond = false
 		v.miroir = i == 1
 		v.size = Vector2(440, 380)
-		v.montrer(cr["forme"], cr["affinite"], cr["arme"])
+		v.montrer(cr["forme"], cr["affinite"], cr["armes"], cr.get("hybride", ""))
 		vues.append(v)
 		add_child(v)
 	calque = Control.new()
@@ -465,7 +465,8 @@ class MiniNid extends Control:
 			var cellules := []
 			for c in _cases(a):
 				cellules.append(_rect(c))
-			NidScreen.dessiner_forme(self, cellules, id, cr["niveaux"].get(a, 1), CASE + ECART)
+			NidScreen.dessiner_forme(self, cellules, id, cr["niveaux"].get(a, 1), CASE + ECART, false,
+				Data.mains(id) > 0 and not a in cr.get("tenues", []))
 			# recharge : une seule jauge pour toute la relique, qui se devoile de bas
 			# en haut sur sa hauteur entiere, et la relique s'allume au depart
 			if sort_de.has(a):

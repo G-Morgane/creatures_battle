@@ -21,6 +21,7 @@ var barre: Label
 var offres_ui: Array = []
 var relance: Button
 var agrandir: Button
+var geler: Button
 var bouton_combat: Button
 var sac: Control
 var haut: Control
@@ -61,12 +62,13 @@ func _ready() -> void:
 	barre = _titre("")
 	haut = _cadre(barre)
 	add_child(haut)
-	boutique_ui = _cadre(_boutique())
+	# les offres sont posees sur le comptoir peint, sans cadre
+	boutique_ui = _boutique()
 	add_child(boutique_ui)
 	monture_ui = _cadre(_panneau())
 	add_child(monture_ui)
 	var aide := Label.new()
-	aide.text = "Glisse une offre sur le tapis pour l'acheter, R ou la molette la tournent. 3 copies fusionnent (★). Ramène une relique à la boutique ou clic droit pour la revendre. Une seule arme."
+	aide.text = "Glisse pour acheter, R ou molette pour tourner. 3 copies : ★. Clic droit pour revendre. Deux mains, les autres armes sont rangées."
 	aide.add_theme_font_size_override("font_size", 13)
 	aide.add_theme_color_override("font_color", Palette.TEXTE_DOUX)
 	aide_ui = _cadre(aide)
@@ -79,20 +81,23 @@ func _placer() -> void:
 	var marge := 20.0
 	haut.position = Vector2(marge, 14)
 	haut.size = Vector2(size.x - 2 * marge, 0)
-	boutique_ui.position = Vector2(marge, 84)
+	# la monture en bas a droite ; a gauche, le comptoir (offres) puis le tapis
 	monture_ui.reset_size()
-	monture_ui.position = Vector2(size.x - monture_ui.size.x - marge, 84)
+	monture_ui.position = Vector2(size.x - monture_ui.size.x - marge, size.y - monture_ui.size.y - marge)
+	var gauche := monture_ui.position.x - marge
+	boutique_ui.reset_size()
+	boutique_ui.position = Vector2((gauche - boutique_ui.size.x) / 2 + marge / 2, 80)
 	aide_ui.reset_size()
-	aide_ui.position = Vector2((size.x - aide_ui.size.x) / 2, size.y - aide_ui.size.y - 6)
-	# le tapis prend la place libre entre les panneaux et l'aide, en cases carrees
-	var dessus := maxf(boutique_ui.position.y + boutique_ui.size.y, monture_ui.position.y + monture_ui.size.y) + 16
-	var dessous := aide_ui.position.y - 12
-	var cote := minf((dessous - dessus) / Data.NID_H, (size.x - 80) / Data.NID_L)
+	aide_ui.position = Vector2((gauche - aide_ui.size.x) / 2 + marge / 2, size.y - aide_ui.size.y - 6)
+	# le tapis prend la place libre sous le comptoir, en cases carrees
+	var dessus := boutique_ui.position.y + boutique_ui.size.y + 14
+	var dessous := aide_ui.position.y - 10
+	var cote := minf((dessous - dessus) / Data.NID_H, (gauche - marge) / Data.NID_L)
 	var cols := nid.colonnes.duplicate()
 	cols.sort()
 	sac.colonnes = cols
 	sac.cote = cote
-	sac.position = Vector2((size.x - cols.size() * cote) / 2, dessus + (dessous - dessus - Data.NID_H * cote) / 2)
+	sac.position = Vector2((gauche - cols.size() * cote) / 2 + marge / 2, dessus + (dessous - dessus - Data.NID_H * cote) / 2)
 	sac.size = Vector2(cols.size() * cote, Data.NID_H * cote)
 	for c in cases_ui:
 		var i := cols.find(c.x)
@@ -122,11 +127,10 @@ func _titre(texte: String) -> Label:
 
 func _boutique() -> Control:
 	var col := Boutique.new(self)
-	col.add_theme_constant_override("separation", 8)
-	var g := GridContainer.new()
-	g.columns = 3
-	g.add_theme_constant_override("h_separation", 8)
-	g.add_theme_constant_override("v_separation", 4)
+	col.add_theme_constant_override("separation", 6)
+	var g := HBoxContainer.new()
+	g.add_theme_constant_override("separation", 18)
+	g.alignment = BoxContainer.ALIGNMENT_CENTER
 	for i in Partie.TAILLE_BOUTIQUE:
 		var o := Offre.new(self, i)
 		offres_ui.append(o)
@@ -134,34 +138,42 @@ func _boutique() -> Control:
 	col.add_child(g)
 	var boutons := HBoxContainer.new()
 	boutons.add_theme_constant_override("separation", 8)
+	boutons.alignment = BoxContainer.ALIGNMENT_CENTER
 	relance = Button.new()
-	relance.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	relance.custom_minimum_size = Vector2(150, 34)
 	relance.pressed.connect(func():
 		partie.relancer()
 		rafraichir())
 	boutons.add_child(relance)
 	agrandir = Button.new()
-	agrandir.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	agrandir.custom_minimum_size = Vector2(150, 34)
 	agrandir.tooltip_text = "Ouvre une colonne de plus sur le damier."
 	agrandir.pressed.connect(func():
 		partie.agrandir()
 		rafraichir())
 	boutons.add_child(agrandir)
+	geler = Button.new()
+	geler.custom_minimum_size = Vector2(150, 34)
+	geler.tooltip_text = "Garde ces offres pour le prochain passage en boutique. Une relance dégèle."
+	geler.pressed.connect(func():
+		partie.geler()
+		rafraichir())
+	boutons.add_child(geler)
 	col.add_child(boutons)
 	return col
 
 func _panneau() -> Control:
-	var ligne := HBoxContainer.new()
-	ligne.add_theme_constant_override("separation", 12)
+	var ligne := VBoxContainer.new()
+	ligne.add_theme_constant_override("separation", 8)
 	vue = CreatureVue.new()
-	vue.custom_minimum_size = Vector2(230, 230)
-	vue.zoom = 0.65
+	vue.custom_minimum_size = Vector2(340, 230)
+	vue.zoom = 0.7
 	vue.clip_contents = true
 	ligne.add_child(vue)
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 8)
 	var defile := ScrollContainer.new()
-	defile.custom_minimum_size = Vector2(300, 182)
+	defile.custom_minimum_size = Vector2(340, 150)
 	defile.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	infos = _texte()
 	infos.fit_content = true
@@ -227,7 +239,7 @@ func rafraichir() -> void:
 	for c in cases_ui:
 		cases_ui[c].queue_redraw()
 	var cr := nid.eclore()
-	vue.montrer(cr["forme"], _affinite_totale(), cr["arme"])
+	vue.montrer(cr["forme"], _affinite_totale(), cr["armes"], cr["hybride"])
 	infos.text = _decrire(cr)
 	for o in offres_ui:
 		o.queue_redraw()
@@ -236,6 +248,8 @@ func rafraichir() -> void:
 	var prix_sac := partie.prix_agrandir()
 	agrandir.text = "Sac complet" if prix_sac < 0 else "Agrandir (%d or)" % prix_sac
 	agrandir.disabled = prix_sac < 0 or partie.bourse < prix_sac or partie.terminee()
+	geler.text = "Dégeler" if partie.gelee else "Geler"
+	geler.disabled = partie.terminee()
 	barre.text = "Acte %d      Or %d      PV de run %d / %d      %s" % [
 		partie.acte + 1, partie.bourse, maxi(partie.pv_run, 0), Partie.PV_RUN, partie.message]
 	if partie.terminee():
@@ -464,7 +478,7 @@ func _affinites(aff: Dictionary) -> String:
 
 # Les affinites portent le nom de la Cour de leur element.
 const _NOMS_ELEMENTS := {"nature": "Printemps", "feu": "Été", "automne": "Automne", "glace": "Hiver",
-	"aube": "Aube", "jour": "Jour", "crepuscule": "Crépuscule", "nuit": "Nuit", "terre": "Terre", "vent": "Vent"}
+	"aube": "Aube", "jour": "Jour", "crepuscule": "Crépuscule", "nuit": "Nuit"}
 
 func _combattre() -> void:
 	if partie.terminee():
@@ -515,7 +529,8 @@ static func dessiner_relique(ci: CanvasItem, rect: Rect2, id: String, niv := 1, 
 # Une relique sur ses cases : fond de son element (les cases d'une meme
 # relique se rejoignent), contour a la couleur de sa rarete, icone sur
 # l'ensemble, etoiles de niveau. cote : taille d'une case.
-static func dessiner_forme(ci: CanvasItem, cellules: Array, id: String, niv: int, cote: float, survol := false) -> void:
+# rangee : arme que le cavalier ne tient pas (mains prises), dessinee eteinte.
+static func dessiner_forme(ci: CanvasItem, cellules: Array, id: String, niv: int, cote: float, survol := false, rangee := false) -> void:
 	var r: Dictionary = Data.RELIQUES[id]
 	var couleurs: Dictionary = Palette.ELEMENTS[r["element"]]
 	var rarete := Data.rarete(id)
@@ -549,6 +564,11 @@ static func dessiner_forme(ci: CanvasItem, cellules: Array, id: String, niv: int
 	if niv > 1:
 		ci.draw_string(ThemeDB.fallback_font, Vector2(boite.position.x, boite.position.y + marge + 16), "★".repeat(niv - 1),
 			HORIZONTAL_ALIGNMENT_CENTER, boite.size.x, 16, Color("#f2c94c"))
+	if rangee:
+		for c in cellules:
+			ci.draw_rect(c.grow(-marge), Color(0, 0, 0, 0.5))
+		ci.draw_string(ThemeDB.fallback_font, Vector2(boite.position.x, boite.end.y - marge - 6), "rangée",
+			HORIZONTAL_ALIGNMENT_CENTER, boite.size.x, 13, Palette.TEXTE)
 
 # Icone centree dans la zone, proportions gardees.
 static func _icone(ci: CanvasItem, tex: Texture2D, zone: Rect2) -> void:
@@ -579,7 +599,7 @@ static func bulle(id: String, niv := 1, manque := 0) -> Control:
 	pile.add_child(nom)
 	var genre: String = r["type"].capitalize()
 	if r.has("famille"):
-		genre = "Arme (%s)" % Data.FAMILLES[r["famille"]]
+		genre = "Arme (%s), %s" % [Data.FAMILLES[r["famille"]], "une main" if Data.mains(id) == 1 else "deux mains"]
 	var cour: String = Data.COURS.get(r["element"], _NOMS_ELEMENTS.get(r["element"], "Neutre"))
 	var taille := Data.empreinte(id).size()
 	var ligne := "%s, %s, %d case%s" % [Data.NOMS_RARETE[rarete], genre.to_lower(), taille, "s" if taille > 1 else ""]
@@ -637,53 +657,75 @@ class Offre extends Control:
 	func _init(e: NidScreen, i: int) -> void:
 		ecran = e
 		index = i
-		custom_minimum_size = NidScreen.TUILE + Vector2(0, 20)
+		custom_minimum_size = Vector2(130, 146)
 		tooltip_text = " "
 	func _get_tooltip(_p: Vector2) -> String:
 		return "" if _id() == "" else NidScreen.info(_id())
 	func _make_custom_tooltip(_t: String) -> Object:
 		var b := NidScreen.bulle(_id(), 1, _manque())
-		if _remplace():
+		if _rangee():
 			var l := Label.new()
-			l.text = "Le cavalier tient déjà une arme : lâche celle-ci sur\nton arme actuelle pour la remplacer (revendue à moitié prix)."
+			l.text = "Les mains du cavalier sont prises : cette arme sera rangée\n(sans effet) mais peut servir à une fusion. Il tient les armes\ndu haut du sac en premier."
 			l.add_theme_color_override("font_color", Color("#f2c94c"))
 			b.add_child(l)
 		return b
 	func _id() -> String:
 		return ecran.partie.offres[index]
+	# Posee sur le comptoir : une ombre sur le bois, l'icone, une pierre a la
+	# couleur de sa rarete, sa forme en petit, et une etiquette nom et prix.
 	func _draw() -> void:
-		var rect := Rect2(Vector2.ZERO, NidScreen.TUILE)
+		var cote := 92.0
+		var icone := Rect2(Vector2((size.x - cote) / 2, 4), Vector2(cote, cote))
+		var police := ThemeDB.fallback_font
 		if _id() == "":
-			draw_rect(rect.grow(-3), Palette.CASE)
-			draw_string(ThemeDB.fallback_font, Vector2(0, rect.size.y / 2 + 5), "Acheté",
-				HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 13, Palette.TEXTE_DOUX)
+			draw_string(police, Vector2(0, icone.get_center().y), "Vendu", HORIZONTAL_ALIGNMENT_CENTER, size.x, 14, Color(Palette.TEXTE, 0.6))
 			return
-		# trop chere : tuile assombrie avec un cadenas, prix en rouge et ce qui manque
 		var prix := ecran.partie.prix_offre(index)
 		var manque := _manque()
-		NidScreen.dessiner_relique(self, rect, _id())
-		# forme de la relique, en petit dans le coin
+		draw_set_transform(Vector2(size.x / 2, icone.end.y - 6), 0.0, Vector2(1.0, 0.22))
+		draw_circle(Vector2.ZERO, cote * 0.45, Color(0, 0, 0, 0.35))
+		draw_set_transform(Vector2.ZERO)
+		if ecran.partie.gelee:
+			draw_circle(icone.get_center(), cote * 0.55, Color("#9cd3f0", 0.25))
+			draw_arc(icone.get_center(), cote * 0.55, 0, TAU, 40, Color("#9cd3f0"), 2.0, true)
+		var tex := Palette.icone(_id())
+		var teinte := Color(0.45, 0.45, 0.45) if manque > 0 else Color.WHITE
+		if tex != null:
+			var k := minf(cote / tex.get_width(), cote / tex.get_height())
+			var t := tex.get_size() * k
+			draw_texture_rect(tex, Rect2(icone.get_center() - t / 2, t), false, teinte)
+		else:
+			draw_string(police, Vector2(0, icone.get_center().y), Data.RELIQUES[_id()]["nom"], HORIZONTAL_ALIGNMENT_CENTER, size.x, 13, Palette.TEXTE)
+		var rarete := Data.rarete(_id())
+		if rarete != "commun":
+			draw_circle(icone.position + Vector2(8, cote - 8), 7, Palette.RARETES[rarete])
+			draw_arc(icone.position + Vector2(8, cote - 8), 7, 0, TAU, 16, Color(0, 0, 0, 0.6), 1.5, true)
 		var forme := Data.empreinte(_id())
 		if forme.size() > 1:
 			var bas := Vector2i.ZERO
 			for d in forme:
 				bas = Vector2i(maxi(bas.x, d.x), maxi(bas.y, d.y))
-			var o := Vector2(rect.end.x - 8 - (bas.x + 1) * 8, rect.position.y + 7)
+			var o := Vector2(icone.end.x - (bas.x + 1) * 8, icone.position.y)
 			for d in forme:
 				draw_rect(Rect2(o + Vector2(d) * 8, Vector2(7, 7)), Palette.TEXTE)
-		var texte := "Offert" if index == ecran.partie.gratuite else "%d or" % prix
-		var remplace := _remplace()
-		if remplace and manque <= 0:
-			texte += ", remplace"
+				draw_rect(Rect2(o + Vector2(d) * 8, Vector2(7, 7)), Color(0, 0, 0, 0.6), false, 1.0)
 		if manque > 0:
-			draw_rect(rect.grow(-3), Color(0, 0, 0, 0.6))
-			_cadenas(Vector2(rect.size.y / 2 + 2, rect.size.y / 2 + 2))
+			_cadenas(icone.get_center())
+		# etiquette : nom et prix
+		var texte := "Offert" if index == ecran.partie.gratuite else "%d or" % prix
+		if _rangee() and manque <= 0:
+			texte += ", rangée"
+		if manque > 0:
 			texte = "%d or, il manque %d" % [prix, manque]
-		draw_string(ThemeDB.fallback_font, Vector2(0, rect.size.y + 15), texte,
-			HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 14, NidScreen.TROP_CHER if manque > 0 else Color("#f2c94c"))
-	# Une arme alors que le cavalier en tient deja une : elle ne peut que remplacer.
-	func _remplace() -> bool:
-		return Data.RELIQUES[_id()]["type"] == "arme" and ecran.nid.arme() != null
+		var etiquette := Rect2(Vector2(2, icone.end.y + 6), Vector2(size.x - 4, 40))
+		draw_rect(etiquette, Color(Palette.FOND, 0.78))
+		draw_rect(Rect2(etiquette.position, Vector2(etiquette.size.x, 2)), Palette.RARETES[rarete] if rarete != "commun" else Palette.CASE_BORD)
+		draw_string(police, etiquette.position + Vector2(0, 17), Data.RELIQUES[_id()]["nom"], HORIZONTAL_ALIGNMENT_CENTER, etiquette.size.x, 12, Palette.TEXTE)
+		draw_string(police, etiquette.position + Vector2(0, 34), texte, HORIZONTAL_ALIGNMENT_CENTER, etiquette.size.x, 13,
+			NidScreen.TROP_CHER if manque > 0 else Color("#f2c94c"))
+	# Une arme qui ne tiendrait pas dans les mains du cavalier : elle sera rangee.
+	func _rangee() -> bool:
+		return Data.mains(_id()) > 0 and ecran.nid.mains_prises() + Data.mains(_id()) > 2
 	func _manque() -> int:
 		return maxi(0, ecran.partie.prix_offre(index) - ecran.partie.bourse)
 	func _cadenas(c: Vector2) -> void:
@@ -749,9 +791,9 @@ class CaseNid extends Control:
 		var b: Vector2i = position_nid - ecran.prise
 		if data.has("offre"):
 			var a = _ancre()
-			if a != null and (ecran.nid.cases[a] == data["id"] or ecran.nid.remplace_arme(position_nid, data["id"], rot)):
-				var cases: Array = ecran.nid.cases_de(a) if ecran.nid.cases[a] == data["id"] else ecran.nid.empreinte(a, data["id"], rot)
-				return {"ancre": position_nid, "rot": rot, "ok": ecran.partie.peut_acheter(data["offre"], position_nid, rot), "cases": cases}
+			if a != null and ecran.nid.cases[a] == data["id"]:
+				return {"ancre": position_nid, "rot": rot, "ok": ecran.partie.peut_acheter(data["offre"], position_nid, rot),
+					"cases": ecran.nid.cases_de(a)}
 			return {"ancre": b, "rot": rot, "ok": ecran.partie.peut_acheter(data["offre"], b, rot),
 				"cases": ecran.nid.empreinte(b, data["id"], rot)}
 		var ok: bool = (b != data["depuis"] or rot != ecran.nid.rotation(data["depuis"])) and ecran.nid.peut_deplacer(data["depuis"], b, rot)
@@ -812,11 +854,13 @@ class Tapis extends Control:
 		NidScreen.dessiner_tapis(self, colonnes, cote, Vector2.ZERO)
 		var nid := ecran.nid
 		var survolee = nid.ancre(ecran.case_survolee) if ecran.case_survolee != null else null
+		var tenues := nid.tenues()
 		for a in nid.cases:
 			var cellules := []
 			for k in nid.cases_de(a):
 				cellules.append(_rect(k))
-			NidScreen.dessiner_forme(self, cellules, nid.cases[a], nid.niveau(a), cote, a == survolee)
+			NidScreen.dessiner_forme(self, cellules, nid.cases[a], nid.niveau(a), cote, a == survolee,
+				Data.mains(nid.cases[a]) > 0 and not a in tenues)
 		# apercu de la pose : vert si permise, rouge sinon
 		if not ecran.pose_vue.is_empty():
 			var couleur := Color(0.4, 0.9, 0.4, 0.35) if ecran.pose_vue["ok"] else Color(0.95, 0.3, 0.25, 0.35)

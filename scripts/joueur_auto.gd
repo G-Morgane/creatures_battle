@@ -67,7 +67,7 @@ func choisir_rencontre(p: Partie) -> int:
 
 # L'element le plus present dans la premiere boutique.
 func _choisir_element(p: Partie) -> String:
-	var compte := {"feu": 0, "nuit": 0, "terre": 0, "vent": 0, "nature": 0, "glace": 0, "aube": 0, "crepuscule": 0}
+	var compte := {"feu": 0, "nuit": 0, "nature": 0, "glace": 0, "aube": 0, "crepuscule": 0}
 	for id in p.offres:
 		if id != "" and Data.RELIQUES[id]["element"] in compte:
 			compte[Data.RELIQUES[id]["element"]] += 1

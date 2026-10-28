@@ -91,7 +91,18 @@ Les Nids d'exemple et les tests de mécanique gardent une case par relique (`enc
 désactivé) ; la partie l'active. Simulation (100 runs) : joueur simple 30 % de runs gagnées,
 inchangé.
 
+### Les deux mains du cavalier
+
+Le cavalier a **deux mains** : une arme à deux mains (Hast, Faux, Bâton, Tir) ou deux armes à
+une main (Lame, Hache). Chaque arme tenue lance son sort. Le sac accepte **autant de copies que
+de place**, armes comprises : le cavalier tient les premières armes qui rentrent dans ses mains
+(dans l'ordre du sac, de haut en bas), les autres sont **rangées**, sans effet, prêtes à fusionner. À l'écran, la seconde arme est dans l'autre
+main, derrière le cavalier. Simulation : joueur simple 37 % de runs gagnées (30 % avec une seule arme).
+
 ### Boutique entre chaque nœud
+
+**Geler** la boutique garde ses offres pour le prochain passage (les achetées restent vides) ;
+une relance la dégèle. Une relique offerte (élite, boss) prend alors une place vide.
 
 Comme dans TFT : **après chaque nœud, la boutique est ouverte mais facultative**. On achète,
 relance, réorganise le Nid, ou l'on passe directement au nœud suivant. L'or non dépensé se garde.
@@ -219,7 +230,7 @@ parties et les moyennes bougent de ±0,5 d'une mesure à l'autre.)
 - L'affinité des trois copies est conservée : fusionner ne change pas la forme de la monture.
 - Voile (sans dégâts) : recharge plus rapide. Foyer : brûlure plus forte. Lune creuse : plus de vol de vie.
 - Nid plein : on peut poser une offre **sur une copie** si elle complète un trio.
-- Les armes ne fusionnent pas (une seule par Nid).
+- Tout fusionne, armes et légendaires compris (copies illimitées tant que le sac a de la place).
 - Revente : la moitié de ce qu'elle a coûté (3 copies par niveau).
 
 C'est la progression de fin de partie : le Nid de 16 cases se remplit vers la manche 6, et
@@ -250,9 +261,8 @@ Quatre saisons et quatre moments du jour.
 | Crépuscule | Papillon | crepuscule | Transfert | **Vole les bonus** adverses et **renvoie ses malus** ; projectile d'arcane sinon |
 | Nuit | Chauve-souris | nuit | Vol de vie, malédictions | Se soigne en frappant, affaiblit l'adversaire |
 
-L'Ours a remplacé le Loup (même set). La Raie et la Lumière sont abandonnées. **Vent (Cheval)
-et Terre (Tortue) sont retirés** de la conception ; leurs objets restent dans le code jusqu'à
-la refonte. À l'écran, les affinités portent le nom de la Cour (« Été 7 »).
+L'Ours a remplacé le Loup (même set). La Raie et la Lumière sont abandonnées. **Vent (Cheval) et Terre (Tortue) sont retirés**, objets compris
+(les mécaniques de combat qui leur servaient restent dans le code, sans objet pour les déclencher). À l'écran, les affinités portent le nom de la Cour (« Été 7 »).
 
 Paires à garder distinctes :
 - **Hiver / Crépuscule** : l'Hiver ralentit la machine adverse, le Crépuscule retourne ses effets contre elle.
@@ -261,7 +271,9 @@ Paires à garder distinctes :
 Le Crépuscule n'a de sens que face à un build qui a des bonus ou des malus à voler :
 contre un build d'attaques brutes, il reste correct grâce au projectile d'arcane.
 
-- **Hybride** (plus tard) : deux éléments au-dessus d'un seuil donnent une forme mixte
+- **Hybride** : une égalité entre exactement deux Cours en tête donne leur hybride (28 images,
+  `images/hybrides`), nommé d'après ses deux montures (« Phénix-Cerf »). Pas encore de passif propre.
+  Plus tard : deux éléments au-dessus d'un seuil donnent une forme mixte
   (Feu + Nuit : Wyverne cendrée, Glace + Nature : Cerf de givre...).
   Plus de variété de sorts, passif plus faible. Pur = spécialisé et fort.
 - **Aucune affinité** : créature informe, sans passif.
@@ -671,7 +683,7 @@ On adapte son Nid à ce qu'on affronte, pas à une couleur.
 ## 8. Prototype (périmètre actuel)
 
 - 6 Cours au format 15 objets : Printemps, Été, Hiver, Aube, Crépuscule, Nuit ; 1 arme neutre
-  (Lance du guet). Restent l'Automne (Renard) et le Jour (Paon), montures prêtes. Vent et Terre sont encore dans le code, à retirer.
+  (Lance du guet). Restent l'Automne (Renard) et le Jour (Paon), montures prêtes. Vent et Terre sont retirés.
 - Run sur carte : 3 actes de 10 étages, PV de run, boutique facultative entre les nœuds,
   trois rencontres. Élites et boss sont encore des fantômes en avance.
 - Arène : vitesse x1, x2 ou x3.

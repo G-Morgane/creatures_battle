@@ -15,10 +15,12 @@ func _ready() -> void:
 	ok = _partie() and ok
 	ok = _sac() and ok
 	ok = _formes_sac() and ok
+	ok = _deux_mains() and ok
+	ok = _hybrides() and ok
+	ok = _gel() and ok
 	ok = _carte() and ok
 	ok = _run() and ok
 	ok = _fusion() and ok
-	ok = _terre_vent() and ok
 	ok = _nature() and ok
 	ok = _familles() and ok
 	ok = _glace() and ok
@@ -26,9 +28,7 @@ func _ready() -> void:
 	ok = _nuit() and ok
 	ok = _aube() and ok
 	ok = _crepuscule() and ok
-	ok = _vent() and ok
 	ok = _vitesses() and ok
-	ok = _terre() and ok
 	print("SMOKE: ", "OK" if ok else "ECHEC")
 	get_tree().quit(0 if ok else 1)
 
@@ -101,9 +101,8 @@ func _ecran() -> bool:
 func _armes() -> bool:
 	var n := Nid.new()
 	var ok := _verifier(n.placer(Vector2i(0, 0), "lance_guet"), "poser une arme")
-	ok = _verifier(not n.placer(Vector2i(1, 0), "faux_lunaire"), "une seule arme") and ok
-	ok = _verifier(n.accepte(Vector2i(0, 0), "faux_lunaire", null), "remplacer l'arme en place") and ok
-	ok = _verifier(n.accepte(Vector2i(2, 2), "lance_guet", Vector2i(0, 0)), "deplacer l'arme") and ok
+	ok = _verifier(n.placer(Vector2i(1, 0), "faux_lunaire") and n.armes() == ["lance_guet"], "mains prises : la faux est rangee") and ok
+	n.retirer(Vector2i(1, 0))
 	ok = _verifier(n.affinites().is_empty(), "la lance n'a pas d'element") and ok
 	n.placer(Vector2i(1, 0), "fourrure")
 	var s: Dictionary = n.eclore()["sorts"][0]
@@ -217,15 +216,75 @@ func _formes_sac() -> bool:
 	ok = _verifier(q.acheter(2, Vector2i(3, 1)) and q.nid.cases.size() == 1 and q.nid.niveau(Vector2i(2, 1)) == 2, "trois rares : fusion sur la copie visee") and ok
 	q.vendre(Vector2i(3, 1))
 	ok = _verifier(q.nid.cases.is_empty(), "revendre par n'importe quelle case") and ok
-	# une seule arme : la nouvelle remplace l'ancienne si on la lache dessus
-	q.offres[0] = "lance_guet"
-	q.offres[1] = "faux_lunaire"
+	# copies sans limite : trois lances fusionnent, meme si les mains sont prises
+	for k in 3:
+		q.offres[k] = "lance_guet"
 	q.acheter(0, Vector2i(2, 0))
-	ok = _verifier(not q.peut_acheter(1, Vector2i(4, 0)), "deuxieme arme ailleurs : refusee") and ok
-	var or_avant := q.bourse
-	ok = _verifier(q.acheter(1, Vector2i(2, 2)) and q.nid.arme() == "faux_lunaire" and q.nid.cases.size() == 1, "lachee sur l'arme : elle la remplace") and ok
-	ok = _verifier(q.bourse == or_avant - Partie.prix("faux_lunaire") + Partie.prix_revente("lance_guet"), "l'ancienne arme est revendue") and ok
+	ok = _verifier(q.acheter(1, Vector2i(3, 0)) and q.nid.armes().size() == 1, "deuxieme lance : rangee") and ok
+	ok = _verifier(q.acheter(2, Vector2i(4, 0)) and q.nid.cases.size() == 1 and q.nid.niveau(Vector2i(4, 0)) == 2, "trois lances : lance etoilee") and ok
 	return ok
+
+func _famille(f: String, rang := 0) -> String:
+	var l := Data.RELIQUES.keys().filter(func(id): return Data.RELIQUES[id].get("famille", "") == f)
+	l.sort()
+	return l[rang]
+
+func _deux_mains() -> bool:
+	var lame := _famille("lame")
+	var lame2 := _famille("lame", 1)
+	var hache := _famille("hache")
+	var ok := _verifier(Data.mains(lame) == 1 and Data.mains("lance_guet") == 2 and Data.mains("charbon") == 0, "mains par famille")
+	var n := Nid.new()
+	ok = _verifier(n.placer(Vector2i(0, 0), lame) and n.placer(Vector2i(1, 0), hache), "deux armes a une main") and ok
+	ok = _verifier(n.placer(Vector2i(2, 0), lame2) and n.armes().size() == 2 and not Vector2i(2, 0) in n.tenues(), "troisieme lame : rangee") and ok
+	n.retirer(Vector2i(2, 0))
+	var cr := n.eclore()
+	ok = _verifier(cr["armes"].size() == 2 and cr["sorts"].filter(func(s): return s["cavalier"]).size() == 2, "deux sorts du cavalier") and ok
+	var m := Nid.new()
+	m.placer(Vector2i(0, 0), "lance_guet")
+	ok = _verifier(m.placer(Vector2i(1, 0), lame) and m.armes() == ["lance_guet"], "deux mains prises : la lame est rangee") and ok
+	ok = _verifier(m.eclore()["sorts"].filter(func(s): return s["cavalier"]).size() == 1, "une arme rangee ne lance rien") and ok
+	var p := Partie.new(4)
+	p.bourse = 100
+	p.offres[0] = lame
+	p.offres[1] = lame2
+	p.offres[2] = "lance_guet"
+	ok = _verifier(p.acheter(0, Vector2i(2, 0)) and p.acheter(1, Vector2i(4, 0)), "boutique : deux lames") and ok
+	ok = _verifier(p.acheter(2, Vector2i(3, 1)) and p.nid.armes().size() == 2, "la lance s'achete mais reste rangee") and ok
+	return ok
+
+func _hybrides() -> bool:
+	var ok := true
+	# egalite a deux : hybride ; egalite a trois ou aucune affinite : informe
+	var h := Nid.new()
+	h.placer(Vector2i(0, 0), "charbon")
+	var autre := ""
+	for id in Data.RELIQUES:
+		var r: Dictionary = Data.RELIQUES[id]
+		if r["element"] == "nature" and r["affinite"] == 2 and r["type"] != "arme":
+			autre = id
+			break
+	h.placer(Vector2i(1, 0), autre)
+	var cr := h.eclore()
+	ok = _verifier(cr["forme"] == "" and cr["hybride"] == "feu_nature" and cr["nom"] == "Phénix-Cerf", "egalite Ete-Printemps : Phenix-Cerf") and ok
+	ok = _verifier(Nid.new().hybride() == "", "nid vide : pas d'hybride") and ok
+	return ok
+
+func _gel() -> bool:
+	var p := Partie.new(21)
+	p.entrer(p.accessibles()[0])
+	var avant := p.offres.duplicate()
+	p.offres[1] = ""
+	avant[1] = ""
+	p.geler()
+	p.conclure_combat(0)
+	var ok := _verifier(p.offres == avant, "boutique gelee : memes offres au noeud suivant, l'achetee reste vide")
+	ok = _verifier(p.relancer() and not p.gelee, "une relance degele") and ok
+	p.geler()
+	p.noeud()["type"] = "elite"
+	p.offres[2] = ""
+	p.conclure_combat(0)
+	return _verifier(p.gratuite == 2, "gelee : la relique offerte prend la place vide") and ok
 
 func _carte() -> bool:
 	var c := Carte.new(7)
@@ -320,34 +379,19 @@ func _fusion() -> bool:
 	for i in 9:
 		k.ajouter(Vector2i(i % 4, i / 4), "ruban")
 	ok = _verifier(k.cases.size() == 1 and k.niveau(k.cases.keys()[0]) == 3, "9 copies : niveau 3") and ok
-	# armes exclues
+	# armes et legendaires fusionnent aussi
 	var a := Nid.new()
-	a.ajouter(Vector2i(0, 0), "lance_guet")
-	ok = _verifier(not a.peut_ajouter(Vector2i(0, 0), "lance_guet") and not a.peut_ajouter(Vector2i(1, 0), "lance_guet"), "les armes ne fusionnent pas") and ok
+	for x in 3:
+		a.ajouter(Vector2i(x, 0), "lance_guet")
+	ok = _verifier(a.cases.size() == 1 and a.niveau(Vector2i(2, 0)) == 2, "trois lances fusionnent") and ok
+	var leg := Nid.new()
+	for x in 3:
+		leg.ajouter(Vector2i(x, 0), "lanterne")
+	ok = _verifier(leg.cases.size() == 1 and leg.niveau(Vector2i(2, 0)) == 2, "trois legendaires fusionnent") and ok
 	ok = _verifier(Partie.prix_revente("charbon", 2) == 4, "revente niveau 2 : 9 / 2 = 4") and ok
 	n.deplacer(Vector2i(2, 0), Vector2i(3, 3))
 	ok = _verifier(n.niveau(Vector2i(3, 3)) == 2 and not n.niveaux.has(Vector2i(2, 0)), "deplacer garde le niveau") and ok
 	return ok
-
-func _terre_vent() -> bool:
-	var t := Exemples.nid_terre().eclore()
-	var v := Exemples.nid_vent().eclore()
-	var ok := _verifier(t["nom"] == "Tortue" and v["nom"] == "Cheval", "terre -> tortue, vent -> cheval")
-	# briques : 0,06 chacune, celle a cote du fossile x1,5 ; cale (a cote du fossile) 0,08 x1,5
-	ok = _verifier(is_equal_approx(t["reduction"], 0.06 * 1.5 + 0.06) and is_equal_approx(t["cale"], 0.12), "brique, cale et fossile") and ok
-	var mortier: Dictionary = t["sorts"][0]
-	# truelle : (15 + 1,5 x terre 8) x 1,5 (fossile voisin) ; aucun degat
-	ok = _verifier(is_equal_approx(mortier["mortier"], (15.0 + 1.5 * 8) * 1.5) and mortier["degats"] == 0.0, "truelle : mortier selon affinite, fossile") and ok
-	ok = _verifier(is_equal_approx(v["esquive"], Data.ESQUIVE_CHEVAL + 0.06), "cheval : esquive passive + duvet") and ok
-	# combat : le bouclier encaisse, le cheval charge l'Elan et lance la Foudre
-	var c := Combat.new(t, v)
-	c.simuler()
-	ok = _verifier(c.evenements.any(func(e): return e["type"] == "foudre"), "le cheval lance la foudre") and ok
-	ok = _verifier(c.evenements.any(func(e): return e["type"] == "bouclier"), "la tortue gagne du bouclier") and ok
-	ok = _verifier(c.cotes[1]["fatigue_debut"] == Data.MORT_SUBITE - Data.TORTUE_AVANCE_FATIGUE and c.cotes[0]["fatigue_mult"] == Data.TORTUE_FATIGUE_MULT, "fatigue de la tortue") and ok
-	var c2 := Combat.new(t, v)
-	c2.simuler()
-	return _verifier(c2.journal == c.journal, "esquive au hasard mais deterministe") and ok
 
 func _nature() -> bool:
 	var cr := Exemples.nid_nature().eclore()
@@ -358,7 +402,7 @@ func _nature() -> bool:
 	# spore : (2 + 0,2 x nature 7) x 1,5 amanite
 	ok = _verifier(is_equal_approx(spore["poison"], (2.0 + 0.2 * 7) * 1.5), "nuage de spores : poison selon affinite") and ok
 	# poison : s'empile, plafonne, passe le bouclier ; epines : ripostent
-	var tortue := Exemples.nid_terre().eclore()
+	var tortue := Exemples.nid_glace().eclore()
 	var c := Combat.new(cr, tortue)
 	c.cotes[1]["bouclier"] = 30.0
 	c._empoisonner(c.cotes[1], 150.0)
@@ -404,7 +448,7 @@ func _nature() -> bool:
 	g.ajouter(Vector2i(0, 0), "graine_jardin")
 	g.ajouter(Vector2i(1, 0), "graine_jardin")
 	g.ajouter(Vector2i(2, 0), "graine_jardin")
-	ok = _verifier(g.cases.size() == 3, "les legendaires ne fusionnent pas") and ok
+	ok = _verifier(g.cases.size() == 1 and g.niveau(Vector2i(2, 0)) == 2, "trois Graines du Jardin fusionnent") and ok
 	# rarete : manche 1 que des communs ; prix
 	var p := Partie.new(5)
 	ok = _verifier(p.offres.all(func(id): return Data.rarete(id) == "commun"), "manche 1 : que des communs") and ok
@@ -834,76 +878,6 @@ func _crepuscule() -> bool:
 		r._lancer(r.cotes[0], r.cotes[1], fle)
 	return _verifier(r.cotes[0]["transferts"] == 1, "flechettes : transfert tous les 3 tirs") and ok
 
-func _vent() -> bool:
-	var vide := Nid.new().eclore()
-	var cr := Exemples.nid_vent().eclore()
-	var ok := _verifier(cr["elan"] and is_equal_approx(cr["ruban_criniere"], 6.0), "vent : elan et rubans")
-	# grelot : 15 d'Elan x 1,5 (fer voisin)
-	ok = _verifier(is_equal_approx(cr["sorts"][0]["elan"], 22.5), "fer voisin : plus d'elan") and ok
-	# Elan : la Foudre part au seuil, ne s'esquive pas
-	var c := Combat.new(cr, vide)
-	var pv: float = c.cotes[1]["pv"]
-	c._gagner_elan(c.cotes[0], c.cotes[1], 100.0)
-	ok = _verifier(c.cotes[1]["pv"] == pv - Data.FOUDRE_DEGATS and c.cotes[0]["elan_jauge"] == 0.0, "foudre a 100 d'elan") and ok
-	# esquive : de l'Elan et la hate du Ruban
-	var d := Combat.new(cr, vide)
-	d._esquive_reussie(d.cotes[0], d.cotes[1])
-	ok = _verifier(d.cotes[0]["elan_jauge"] == Data.ELAN_PAR_ESQUIVE and d._braise(d.cotes[0]) == 6.0, "esquive : elan et hate") and ok
-	# etrier : la serie donne plus d'Elan, un coup recu la casse
-	var e_nid := Nid.new()
-	e_nid.placer(Vector2i(0, 0), "etrier")
-	e_nid.placer(Vector2i(1, 0), "duvet")
-	var e := Combat.new(e_nid.eclore(), vide)
-	e.cotes[0]["prochaine_attaque"] = 0.0
-	e._agir(e.cotes[0], e.cotes[1])
-	e.cotes[0]["prochaine_attaque"] = 0.0
-	e._agir(e.cotes[0], e.cotes[1])
-	ok = _verifier(e.cotes[0]["elan_jauge"] == 10.0 + 2.0 + 10.0 + 4.0, "etrier : elan de serie") and ok
-	e.cotes[0]["cr"]["esquive"] = 0.0
-	e._frapper(e.cotes[1], e.cotes[0], 1.0, 0.0)
-	ok = _verifier(e.cotes[0]["serie"] == 0, "etrier : un coup recu casse la serie") and ok
-	# manche, eventail, girouette, voile de cavale, bride
-	var f_nid := Exemples.nid_vent()
-	var libres := [Vector2i(2, 1), Vector2i(3, 1), Vector2i(0, 2), Vector2i(1, 2), Vector2i(2, 2)]
-	for id in ["manche", "eventail", "girouette_indocile", "voile_cavale", "bride"]:
-		f_nid.placer(libres.pop_front(), id)
-	var f := Combat.new(f_nid.eclore(), vide)
-	f._esquive_reussie(f.cotes[0], f.cotes[1])
-	ok = _verifier(f.cotes[0]["girouette_bonus"] == 5.0, "girouette : la foudre grossit") and ok
-	pv = f.cotes[1]["pv"]
-	f._gagner_elan(f.cotes[0], f.cotes[1], 80.0 - f.cotes[0]["elan_jauge"])
-	ok = _verifier(is_equal_approx(pv - f.cotes[1]["pv"], Data.FOUDRE_DEGATS + 15.0 + 5.0), "manche (seuil 80), eventail, girouette") and ok
-	ok = _verifier(is_equal_approx(f._esquive(f.cotes[0]), minf(f.cotes[0]["cr"]["esquive"] + 0.3, Data.ESQUIVE_MAX_TEMP)), "voile de cavale : esquive renforcee") and ok
-	ok = _verifier(f.cotes[0]["galop_jusqu"] > f.t, "bride : galop libre") and ok
-	var fin: float = f.cotes[0]["galop_jusqu"]
-	f._foudre(f.cotes[0], f.cotes[1])
-	ok = _verifier(f.cotes[0]["galop_jusqu"] == fin, "bride : pas renouvele pendant le galop") and ok
-	f.cotes[0]["elan_jauge"] = 0.0
-	f._gagner_elan(f.cotes[0], f.cotes[1], 10.0)
-	ok = _verifier(f.cotes[0]["elan_jauge"] == 20.0, "galop libre : elan double") and ok
-	# sabre : riposte de 3 coups apres une esquive ; lance : double apres la foudre
-	var sb := Nid.new()
-	sb.placer(Vector2i(0, 0), "sabre_rafale")
-	var g := Combat.new(sb.eclore(), vide)
-	pv = g.cotes[1]["pv"]
-	g._esquive_reussie(g.cotes[0], g.cotes[1])
-	ok = _verifier(pv - g.cotes[1]["pv"] == 9.0, "sabre de rafale : riposte de 3 coups") and ok
-	var lb := Nid.new()
-	lb.placer(Vector2i(0, 0), "lance_bourrasque")
-	var h := Combat.new(lb.eclore(), vide)
-	h.cotes[0]["foudre_prete"] = true
-	h.cotes[1]["esquive"] = true
-	pv = h.cotes[1]["pv"]
-	h._lancer(h.cotes[0], h.cotes[1], h.cotes[0]["sorts"][0])
-	ok = _verifier(pv - h.cotes[1]["pv"] == 20.0 and not h.cotes[0]["foudre_prete"], "lance de bourrasque : perce et double") and ok
-	# javelot : l'attaque suivante arrive plus tot
-	var jv := Nid.new()
-	jv.placer(Vector2i(0, 0), "javelot_alizes")
-	var j := Combat.new(jv.eclore(), vide)
-	var avant: float = j.cotes[0]["prochaine_attaque"]
-	j._lancer(j.cotes[0], j.cotes[1], j.cotes[0]["sorts"][0])
-	return _verifier(is_equal_approx(j.cotes[0]["prochaine_attaque"], avant - Data.ALIZE_AVANCE), "javelot des alizes") and ok
-
 func _vitesses() -> bool:
 	var e := CombatScreen.new(Exemples.nid_feu().eclore(), Exemples.nid_nuit().eclore())
 	add_child(e)
@@ -914,84 +888,3 @@ func _vitesses() -> bool:
 	e.queue_free()
 	return _verifier(vues == [[1.0, "Vitesse x1"], [2.0, "Vitesse x2"], [3.0, "Vitesse x3"], [1.0, "Vitesse x1"]], "vitesse x1, x2, x3 puis x1")
 
-func _terre() -> bool:
-	var vide := Nid.new().eclore()
-	var cr := Exemples.nid_terre().eclore()
-	# reduction : sur les coups, avant le bouclier ; la cale ne compte qu'avec du bouclier
-	var c := Combat.new(vide, cr)
-	var pv: float = c.cotes[1]["pv"]
-	c._blesser(c.cotes[1], 100.0, c.cotes[0])
-	var ok_reduc := is_equal_approx(pv - c.cotes[1]["pv"], 100.0 * (1.0 - cr["reduction"]))
-	var ok := _verifier(ok_reduc, "reduction de degats")
-	c.cotes[1]["bouclier"] = 500.0
-	ok = _verifier(is_equal_approx(c._reduction(c.cotes[1]), cr["reduction"] + cr["cale"]), "cale : seulement avec du bouclier") and ok
-	var plein := Nid.new()
-	for i in 12:
-		plein.placer(Vector2i(i % 4, i / 4), "brique")
-	var d := Combat.new(plein.eclore(), vide)
-	ok = _verifier(d._reduction(d.cotes[0]) == Data.REDUCTION_MAX, "reduction plafonnee a 50 %") and ok
-	# truelle : renouvelle, la clef garde la moitie
-	var e := Combat.new(cr, vide)
-	var truelle: Dictionary = e.cotes[0]["sorts"][0]
-	e._lancer(e.cotes[0], e.cotes[1], truelle)
-	var b1: float = e.cotes[0]["bouclier"]
-	e._lancer(e.cotes[0], e.cotes[1], truelle)
-	ok = _verifier(is_equal_approx(e.cotes[0]["bouclier"], b1), "truelle : renouvelle au lieu d'ajouter") and ok
-	var k := Exemples.nid_terre()
-	k.placer(Vector2i(3, 3), "clef")
-	var f := Combat.new(k.eclore(), vide)
-	var tr: Dictionary = f.cotes[0]["sorts"][0]
-	f._lancer(f.cotes[0], f.cotes[1], tr)
-	f._lancer(f.cotes[0], f.cotes[1], tr)
-	ok = _verifier(is_equal_approx(f.cotes[0]["bouclier"], tr["mortier"] * 1.5), "clef de voute : garde la moitie") and ok
-	# fil a plomb, tuile, sablier
-	var n := Nid.new()
-	n.placer(Vector2i(0, 0), "fil_plomb")
-	n.placer(Vector2i(1, 0), "tuile")
-	n.placer(Vector2i(2, 0), "sablier_ensable")
-	var g := Combat.new(n.eclore(), vide)
-	g.cotes[0]["bouclier"] = 20.0
-	for i in 31:
-		g._subir(g.cotes[0], g.cotes[1])
-	ok = _verifier(g.cotes[0]["bouclier"] == 28.0, "fil a plomb : bouclier tenu renforce") and ok
-	pv = g.cotes[0]["pv"] + g.cotes[0]["bouclier"]
-	g._blesser(g.cotes[0], 10.0, g.cotes[1])
-	ok = _verifier(is_equal_approx(pv - g.cotes[0]["pv"] - g.cotes[0]["bouclier"], 5.0), "tuile : premier coup reduit") and ok
-	ok = _verifier(g.cotes[0]["fatigue_debut"] == Data.MORT_SUBITE + 5.0, "sablier ensable : fatigue retardee") and ok
-	# urne : soigne au debut de la fatigue ; borne : survit une fois a 1 PV
-	var u := Nid.new()
-	u.placer(Vector2i(0, 0), "urne")
-	u.placer(Vector2i(1, 0), "brique")
-	u.placer(Vector2i(2, 0), "borne")
-	var h := Combat.new(u.eclore(), vide)
-	h._blesser(h.cotes[0], 100.0, h.cotes[1])
-	pv = h.cotes[0]["pv"]
-	h.t = h.cotes[0]["fatigue_debut"]
-	h._subir(h.cotes[0], h.cotes[1])
-	ok = _verifier(h.cotes[0]["pv"] > pv, "urne : soin au debut de la fatigue") and ok
-	h.cotes[0]["pv"] = 0.1
-	h.t += 1.0
-	h._subir(h.cotes[0], h.cotes[1])
-	ok = _verifier(h.cotes[0]["pv"] == 1.0 and h.cotes[0]["fatigue_suspendue_jusqu"] > h.t, "borne : reste a 1 PV") and ok
-	# armes : schiste affaiblit, fondations donne du bouclier, rempart monte la reduction
-	var hs := Nid.new()
-	hs.placer(Vector2i(0, 0), "hachette_schiste")
-	var m := Combat.new(hs.eclore(), vide)
-	m._lancer(m.cotes[0], m.cotes[1], m.cotes[0]["sorts"][0])
-	pv = m.cotes[0]["pv"]
-	m._blesser(m.cotes[0], 10.0, m.cotes[1])
-	ok = _verifier(is_equal_approx(pv - m.cotes[0]["pv"], 7.5), "hachette de schiste : la cible frappe moins fort") and ok
-	var hf := Nid.new()
-	hf.placer(Vector2i(0, 0), "hache_fondations")
-	var q := Combat.new(hf.eclore(), vide)
-	q._lancer(q.cotes[0], q.cotes[1], q.cotes[0]["sorts"][0])
-	ok = _verifier(is_equal_approx(q.cotes[0]["bouclier"], 18.0 * Data.FONDATIONS), "hache des fondations : bouclier") and ok
-	var br := Nid.new()
-	br.placer(Vector2i(0, 0), "baton_rempart")
-	var r := Combat.new(br.eclore(), vide)
-	r.cotes[0]["bouclier"] = 50.0
-	for i in 6:
-		r._lancer(r.cotes[0], r.cotes[1], r.cotes[0]["sorts"][0])
-	ok = _verifier(r.cotes[0]["rempart_bonus"] == Data.REMPART_MAX, "baton du rempart : reduction plafonnee") and ok
-	r._blesser(r.cotes[0], 100.0, r.cotes[1])
-	return _verifier(r.cotes[0]["rempart_bonus"] == 0.0, "baton du rempart : perdu au bris") and ok

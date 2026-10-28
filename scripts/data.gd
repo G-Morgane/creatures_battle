@@ -17,8 +17,6 @@ const INTERVALLE_BASE := 1.0   # secondes entre deux attaques de base
 const FORMES := {
 	"feu":   {"nom": "Phénix",        "passif": "Renaît une fois à 25 % de PV, plus vite à chaque combustion (Braise)"},
 	"nuit":  {"nom": "Chauve-souris", "passif": "Vol de vie sur les attaques, +12 % de dégâts par malédiction sur la cible"},
-	"terre": {"nom": "Tortue",        "passif": "Fatigue de l'adversaire 10 s plus tôt, la sienne réduite de moitié"},
-	"vent":  {"nom": "Cheval",        "passif": "15 % d'esquive ; attaques et esquives chargent l'Élan, qui déclenche la Foudre"},
 	"glace": {"nom": "Ours",          "passif": "Ses attaques posent du givre, +50 % de dégâts contre une cible gelée"},
 	"aube":  {"nom": "Lion",          "passif": "Régénère, et ses soins chargent l'Éclat (un coup de lumière)"},
 	"crepuscule": {"nom": "Papillon", "passif": "Un Transfert sans rien à voler ni à renvoyer lance un projectile d'arcane"},
@@ -194,49 +192,6 @@ const RELIQUES := {
 		"grimoire": 40.0},
 	"pacte":          {"nom": "Pacte de la Nuit profonde","element": "nuit", "affinite": 2, "type": "essence", "rarete": "legendaire",
 		"pacte": 5.0},
-	# terre : un bouclier qui tient, la reduction de degats, et la fatigue.
-	# Fossile spirale renforce bouclier et reduction de ses voisins.
-	"brique":         {"nom": "Brique d'argile","element": "terre", "affinite": 2, "type": "essence",
-		"reduction": 0.06},
-	"truelle":        {"nom": "Truelle de mortier","element": "terre", "affinite": 1, "type": "sort",
-		"sort": "Mortier", "recharge": 5.0, "mortier": 15.0, "par_affinite": 1.5, "echelle": "mortier"},
-	"cale":           {"nom": "Cale de chêne",  "element": "terre", "affinite": 2, "type": "essence",
-		"cale": 0.08},
-	"fossile":        {"nom": "Fossile spiralé","element": "terre", "affinite": 1, "type": "catalyseur",
-		"effet": "terre", "valeur": 0.5},
-	"fil_plomb":      {"nom": "Fil à plomb",    "element": "terre", "affinite": 1, "type": "essence", "rarete": "rare",
-		"fil_plomb": 8.0},
-	"tuile":          {"nom": "Tuile vernissée","element": "terre", "affinite": 1, "type": "essence", "rarete": "rare",
-		"tuile": true},
-	"sablier_ensable":{"nom": "Sablier ensablé","element": "terre", "affinite": 1, "type": "essence", "rarete": "rare",
-		"sablier_ensable": 5.0},
-	"clef":           {"nom": "Clef de voûte",  "element": "terre", "affinite": 1, "type": "essence", "rarete": "epique",
-		"clef": true},
-	"urne":           {"nom": "Urne des siècles","element": "terre", "affinite": 1, "type": "essence", "rarete": "epique",
-		"urne": true},
-	"borne":          {"nom": "Borne de l'Éternité","element": "terre", "affinite": 2, "type": "essence", "rarete": "legendaire",
-		"borne": true},
-	# vent : Elan et Foudre. Fer allege renforce l'Elan des voisins.
-	"fer":            {"nom": "Fer allégé",     "element": "vent",  "affinite": 1, "type": "catalyseur",
-		"effet": "elan", "valeur": 0.5},
-	"ruban_criniere": {"nom": "Ruban de crinière","element": "vent", "affinite": 2, "type": "essence",
-		"ruban_criniere": 3.0},
-	"grelot":         {"nom": "Grelot de course","element": "vent", "affinite": 1, "type": "sort",
-		"sort": "Galop", "recharge": 4.0, "degats": 4.0, "coups": 1, "elan": 15.0},
-	"duvet":          {"nom": "Duvet de pissenlit","element": "vent", "affinite": 2, "type": "essence",
-		"esquive": 0.06},
-	"etrier":         {"nom": "Étrier du grand galop","element": "vent", "affinite": 1, "type": "essence", "rarete": "rare",
-		"etrier": 2.0},
-	"manche":         {"nom": "Manche à air",   "element": "vent",  "affinite": 1, "type": "essence", "rarete": "rare",
-		"manche": 20.0},
-	"eventail":       {"nom": "Éventail de bourrasque","element": "vent", "affinite": 1, "type": "essence", "rarete": "rare",
-		"eventail": 15.0},
-	"voile_cavale":   {"nom": "Voile de cavale","element": "vent",  "affinite": 1, "type": "essence", "rarete": "epique",
-		"voile_cavale": 0.3},
-	"girouette_indocile": {"nom": "Girouette indocile","element": "vent", "affinite": 1, "type": "essence", "rarete": "epique",
-		"girouette": 5.0},
-	"bride":          {"nom": "Bride des vents libres","element": "vent", "affinite": 2, "type": "essence", "rarete": "legendaire",
-		"bride": true},
 	# nature : epines et poison. Ortie et Amanite renforcent leurs voisins.
 	"epine_ronce":    {"nom": "Épine de ronce", "element": "nature", "affinite": 2, "type": "essence",
 		"epines": 2.0},
@@ -322,7 +277,7 @@ const RELIQUES := {
 		"aile_lune": true},
 	"inversion":      {"nom": "Inversion",      "element": "crepuscule", "affinite": 2, "type": "essence", "rarete": "legendaire",
 		"inversion": true},
-	# armes : le cavalier en tient une seule et lance son propre sort.
+	# armes : le cavalier en tient dans ses deux mains, chacune lance son sort.
 	# Les catalyseurs voisins s'appliquent aussi a ce sort.
 	# armes du Phenix : Baton et Faux
 	"baton_braise":   {"nom": "Bâton de braise","element": "feu",   "affinite": 1, "type": "arme", "famille": "baton",
@@ -357,7 +312,7 @@ const RELIQUES := {
 		"sort": "Flèche de chasse", "recharge": 5.0, "degats": 10.0, "par_poison": 1.0, "coups": 1},
 	"serpe_ronces":   {"nom": "Serpe de ronces","element": "nature", "affinite": 1, "type": "arme", "famille": "lame", "rarete": "epique",
 		"sort": "Lacération", "recharge": 4.0, "degats": 2.0, "coups": 4, "degats_epines": true},
-	# armes du Loup : Hast et Hache
+	# armes de l'Ours : Hast et Hache
 	"javelot":        {"nom": "Javelot de stalactite","element": "glace", "affinite": 1, "type": "arme", "famille": "hast",
 		"sort": "Javelot", "recharge": 3.0, "degats": 8.0, "coups": 1, "givre": 2.0},
 	"hachette":       {"nom": "Hachette de givre","element": "glace", "affinite": 1, "type": "arme", "famille": "hache",
@@ -390,28 +345,6 @@ const RELIQUES := {
 		"sort": "Deux lunes", "recharge": 4.0, "degats": 6.0, "coups": 1, "par_transfert": 1.5},
 	"lance_entre":    {"nom": "Lance de l'entre-deux","element": "crepuscule", "affinite": 2, "type": "arme", "famille": "hast", "rarete": "legendaire",
 		"sort": "Entre-deux", "recharge": 3.0, "degats": 8.0, "coups": 1, "transfert": "echange", "puissance": 10.0},
-	# armes du Cheval : Lame et Hast
-	"dague_brise":    {"nom": "Dague de brise", "element": "vent",  "affinite": 1, "type": "arme", "famille": "lame",
-		"sort": "Brise", "recharge": 1.5, "degats": 3.0, "coups": 1, "elan": 8.0},
-	"javelot_alizes": {"nom": "Javelot des alizés","element": "vent", "affinite": 1, "type": "arme", "famille": "hast",
-		"sort": "Alizé", "recharge": 3.0, "degats": 7.0, "coups": 1, "perce": true, "alize": true},
-	"sabre_rafale":   {"nom": "Sabre de rafale","element": "vent",  "affinite": 1, "type": "arme", "famille": "lame", "rarete": "rare",
-		"sort": "Riposte", "riposte_esquive": true, "degats": 3.0, "coups": 3, "elan": 5.0},
-	"lance_bourrasque": {"nom": "Lance de bourrasque","element": "vent", "affinite": 1, "type": "arme", "famille": "hast", "rarete": "epique",
-		"sort": "Bourrasque", "recharge": 4.0, "degats": 10.0, "coups": 1, "apres_foudre": true},
-	"rapiere":        {"nom": "Rapière des vents libres","element": "vent", "affinite": 2, "type": "arme", "famille": "lame", "rarete": "legendaire",
-		"sort": "Vents libres", "recharge": 2.0, "degats": 6.0, "coups": 1, "elan": 6.0, "rapiere": true},
-	# armes de la Tortue : Hache et Baton
-	"hachette_schiste": {"nom": "Hachette de schiste","element": "terre", "affinite": 1, "type": "arme", "famille": "hache",
-		"sort": "Schiste", "recharge": 5.0, "degats": 12.0, "coups": 1, "schiste": true},
-	"baton_glaise":   {"nom": "Bâton de glaise","element": "terre", "affinite": 1, "type": "arme", "famille": "baton",
-		"sort": "Glaise", "recharge": 3.0, "degats": 4.0, "coups": 1, "bouclier": 5.0, "par_affinite": 1.0, "echelle": "bouclier"},
-	"baton_rempart":  {"nom": "Bâton du rempart","element": "terre", "affinite": 1, "type": "arme", "famille": "baton", "rarete": "rare",
-		"sort": "Rempart", "recharge": 3.0, "degats": 4.0, "coups": 1, "rempart": true},
-	"hache_fondations": {"nom": "Hache des fondations","element": "terre", "affinite": 1, "type": "arme", "famille": "hache", "rarete": "epique",
-		"sort": "Fondations", "recharge": 7.0, "degats": 18.0, "coups": 1, "fondations": true},
-	"baton_ages":     {"nom": "Bâton des âges enfouis","element": "terre", "affinite": 2, "type": "arme", "famille": "baton", "rarete": "legendaire",
-		"sort": "Âges enfouis", "recharge": 3.0, "degats": 5.0, "coups": 1, "soin": 4.0, "ages": true},
 	"arc_jardin":     {"nom": "Arc du Jardin interdit","element": "nature", "affinite": 2, "type": "arme", "famille": "tir", "rarete": "legendaire",
 		"sort": "Flèche-graine", "recharge": 6.0, "degats": 12.0, "coups": 1, "graine": true},
 }
@@ -433,6 +366,15 @@ const COURS := {"nature": "Cour du Printemps", "feu": "Cour de l'Été", "glace"
 
 const RARETES := ["commun", "rare", "epique", "legendaire"]
 const NOMS_RARETE := {"commun": "Commun", "rare": "Rare", "epique": "Épique", "legendaire": "Légendaire"}
+
+# --- mains -----------------------------------------------------------------
+# Le cavalier a deux mains : une arme a deux mains, ou deux armes a une main.
+const MAINS := {"hast": 2, "faux": 2, "baton": 2, "tir": 2, "lame": 1, "hache": 1}
+
+# Mains que prend la relique id (0 si ce n'est pas une arme).
+static func mains(id: String) -> int:
+	var r: Dictionary = RELIQUES[id]
+	return MAINS[r["famille"]] if r["type"] == "arme" else 0
 
 # --- formes ----------------------------------------------------------------
 # Cases qu'occupe une relique dans le sac, en decalages depuis son ancre (coin

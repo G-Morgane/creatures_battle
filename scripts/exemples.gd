@@ -22,27 +22,6 @@ static func nid_nuit() -> Nid:
 	n.placer(Vector2i(2, 1), "ruban")
 	return n
 
-# Fossile au milieu : il renforce les Briques, la Truelle et la Cale autour de lui.
-static func nid_terre() -> Nid:
-	var n := Nid.new()
-	n.placer(Vector2i(0, 0), "brique")
-	n.placer(Vector2i(1, 0), "fossile")
-	n.placer(Vector2i(2, 0), "truelle")
-	n.placer(Vector2i(1, 1), "cale")
-	n.placer(Vector2i(0, 1), "brique")
-	return n
-
-# Fer entre le Grelot et le Ruban (Elan renforce).
-static func nid_vent() -> Nid:
-	var n := Nid.new()
-	n.placer(Vector2i(0, 0), "grelot")
-	n.placer(Vector2i(1, 0), "fer")
-	n.placer(Vector2i(2, 0), "ruban_criniere")
-	n.placer(Vector2i(0, 1), "duvet")
-	n.placer(Vector2i(1, 1), "ruban_criniere")
-	return n
-
-# Ortie a cote de l'Epine (epines), Amanite a cote de la Baie et de la Spore (poison).
 static func nid_nature() -> Nid:
 	var n := Nid.new()
 	n.placer(Vector2i(0, 0), "epine_ronce")

@@ -67,8 +67,6 @@ func placer(c: Vector2i, id: String, niv := 1, rot := 0) -> bool:
 	for k in empreinte(c, id, rot):
 		if not ouverte(k) or occ.has(k):
 			return false
-	if Data.RELIQUES[id]["type"] == "arme" and arme() != null:
-		return false
 	cases[c] = id
 	if niv > 1:
 		niveaux[c] = niv
@@ -85,7 +83,7 @@ func copies(id: String, niv: int) -> Array:
 	return cases.keys().filter(func(c): return cases[c] == id and niveau(c) == niv)
 
 func peut_fusionner(id: String, niv: int) -> bool:
-	return Data.RELIQUES[id]["type"] != "arme" and Data.rarete(id) != "legendaire" and niv < Data.NIVEAU_MAX
+	return niv < Data.NIVEAU_MAX
 
 # Fusionne en cascade a partir de c. Renvoie true si au moins une fusion a eu lieu.
 func fusionner(c: Vector2i) -> bool:
@@ -105,21 +103,11 @@ func fusionner(c: Vector2i) -> bool:
 func peut_ajouter(c: Vector2i, id: String, rot := 0) -> bool:
 	var a = ancre(c)
 	if a != null:
-		return _complete_trio(a, id) or remplace_arme(c, id, rot)
+		return _complete_trio(a, id)
 	return dupliquer().placer(c, id, 1, rot)
 
 func _complete_trio(a: Vector2i, id: String) -> bool:
 	return cases[a] == id and niveau(a) == 1 and peut_fusionner(id, 1) and copies(id, 1).size() >= 2
-
-# Une arme lachee sur l'arme en place (n'importe laquelle de ses cases) la
-# remplace, si elle tient a sa place.
-func remplace_arme(c: Vector2i, id: String, rot := 0) -> bool:
-	var a = ancre(c)
-	if a == null or cases[a] == id or Data.RELIQUES[id]["type"] != "arme" or Data.RELIQUES[cases[a]]["type"] != "arme":
-		return false
-	var n := dupliquer()
-	n.retirer(a)
-	return n.placer(a, id, 1, rot)
 
 func ajouter(c: Vector2i, id: String, rot := 0) -> bool:
 	if not peut_ajouter(c, id, rot):
@@ -128,10 +116,6 @@ func ajouter(c: Vector2i, id: String, rot := 0) -> bool:
 	if a == null:
 		placer(c, id, 1, rot)
 		fusionner(c)
-		return true
-	if not _complete_trio(a, id):
-		retirer(a)
-		placer(a, id, 1, rot)
 		return true
 	# la pose sur une copie compte comme la troisieme : on en retire une autre
 	retirer(copies(id, 1).filter(func(k): return k != a)[0])
@@ -183,19 +167,35 @@ func peut_deplacer(a: Vector2i, b: Vector2i, rot := -1) -> bool:
 func accepte(c: Vector2i, id: String, depuis) -> bool:
 	if not ouverte(c):
 		return false
-	if Data.RELIQUES[id]["type"] != "arme":
-		return true
-	for a in cases:
-		if Data.RELIQUES[cases[a]]["type"] == "arme" and a != c and a != depuis:
-			return false
 	return true
 
-# Le cavalier n'a que deux mains : une seule arme dans le Nid.
+# Le cavalier a deux mains : une arme a deux mains, ou deux a une main. Le sac
+# accepte autant d'armes qu'il a de place (pour les fusionner) ; le cavalier
+# tient les premieres qui rentrent dans ses mains, dans l'ordre du sac (de haut
+# en bas, puis de gauche a droite). Les autres sont rangees, sans effet.
+func tenues() -> Array:
+	var ancres := cases.keys().filter(func(a): return Data.mains(cases[a]) > 0)
+	ancres.sort_custom(func(a, b): return a.y < b.y or (a.y == b.y and a.x < b.x))
+	var l := []
+	var mains := 0
+	for a in ancres:
+		if mains + Data.mains(cases[a]) <= 2:
+			l.append(a)
+			mains += Data.mains(cases[a])
+	return l
+
+func mains_prises() -> int:
+	var n := 0
+	for a in tenues():
+		n += Data.mains(cases[a])
+	return n
+
+func armes() -> Array:
+	return tenues().map(func(a): return cases[a])
+
 func arme():
-	for c in cases:
-		if Data.RELIQUES[cases[c]]["type"] == "arme":
-			return cases[c]
-	return null
+	var l := armes()
+	return null if l.is_empty() else l[0]
 
 func retirer(c: Vector2i) -> void:
 	cases.erase(c)
@@ -237,6 +237,20 @@ func forme() -> String:
 		elif v == max_a:
 			egalite = true
 	return "" if egalite else meilleur
+
+# Egalite entre exactement deux elements en tete : la monture est un hybride
+# des deux (cle "a_b", elements tries), "" sinon. Sans passif pour l'instant.
+func hybride() -> String:
+	var aff := affinites()
+	var meilleur := 0
+	for e in aff:
+		meilleur = maxi(meilleur, aff[e])
+	var tete := aff.keys().filter(func(e): return aff[e] == meilleur and meilleur > 0)
+	if tete.size() != 2:
+		return ""
+	tete.sort()
+	var cle := "%s_%s" % tete
+	return cle if ResourceLoader.exists("res://images/montures/hybrides/%s.png" % cle) else ""
 
 func eclore() -> Dictionary:
 	var aff := affinites()
@@ -324,9 +338,13 @@ func eclore() -> Dictionary:
 		"aile_lune": false,
 		"inversion": false,
 		"arme": arme(),
+		"armes": armes(),
+		"tenues": tenues(),
+		"hybride": hybride(),
 		"sorts": [],
 	}
 	var vitesse := 0.0
+	var tenues_ici := tenues()
 	for c in cases:
 		var r: Dictionary = Data.RELIQUES[cases[c]]
 		var m: float = Data.NIVEAU_MULT[niveau(c)]
@@ -377,6 +395,9 @@ func eclore() -> Dictionary:
 				for drapeau in ["belladone", "coeur", "graine", "rose"]:
 					cr[drapeau] = cr[drapeau] or r.get(drapeau, false)
 			"sort", "arme":
+				# une arme rangee (mains prises) ne fait rien
+				if r["type"] == "arme" and not c in tenues_ici:
+					continue
 				cr["sorts"].append(_sort(c, r, aff))
 				# une Lame donne du crit a toute la monture
 				if r.get("famille", "") == "lame":
@@ -390,6 +411,9 @@ func eclore() -> Dictionary:
 	if cr["oeuf"]:
 		cr["renaissances"] += 1
 	# pour l'arene : le Nid tel qu'il etait, et ses niveaux
+	if cr["hybride"] != "":
+		var deux: PackedStringArray = cr["hybride"].split("_")
+		cr["nom"] = "%s-%s" % [Data.FORMES[deux[0]]["nom"], Data.FORMES[deux[1]]["nom"]]
 	cr["cases"] = cases.duplicate()
 	cr["niveaux"] = niveaux.duplicate()
 	cr["colonnes"] = colonnes.duplicate()

@@ -51,6 +51,9 @@ var nid := Nid.new()
 var offres: Array = []   # ids, "" pour une offre deja achetee
 var gratuite := -1       # index de l'offre offerte, -1 sans
 var marche := false
+# Boutique gelee : ses offres restent au noeud suivant (les achetees restent vides).
+# Une relance la degele.
+var gelee := false
 
 var carte: Carte
 var acte := 0
@@ -123,8 +126,12 @@ func relancer() -> bool:
 	if bourse < prix_relance():
 		return false
 	bourse -= prix_relance()
+	gelee = false
 	tirer()
 	return true
+
+func geler() -> void:
+	gelee = not gelee
 
 # On achete en posant : l'offre va dans une case vide du Nid, ou sur une copie
 # d'elle-meme si cela complete un trio (fusion).
@@ -136,10 +143,6 @@ func acheter(i: int, c: Vector2i, rot := 0) -> bool:
 	if not peut_acheter(i, c, rot):
 		return false
 	var id: String = offres[i]
-	# nouvelle arme sur l'ancienne : l'ancienne est revendue
-	var a = nid.ancre(c)
-	if a != null and nid.remplace_arme(c, id, rot):
-		bourse += prix_revente(nid.cases[a], nid.niveau(a))
 	nid.ajouter(c, id, rot)
 	bourse -= prix_offre(i)
 	offres[i] = ""
@@ -236,7 +239,8 @@ func conclure() -> void:
 		"marche":
 			_suivant()
 			marche = true
-			tirer()
+			if not gelee:
+				tirer()
 			message = "Marché : raretés en avance, relances gratuites."
 
 func _suivant(recompense := "", element := "") -> void:
@@ -249,7 +253,8 @@ func _suivant(recompense := "", element := "") -> void:
 	manche += 1
 	bourse += OR_PAR_MANCHE
 	marche = false
-	tirer()
+	if not gelee:
+		tirer()
 	if recompense != "":
 		offrir(recompense, element)
 
@@ -261,8 +266,10 @@ func offrir(rarete: String, element := "") -> void:
 	var ids := Data.RELIQUES.keys().filter(func(id): return Data.rarete(id) == rarete and (element == "" or Data.RELIQUES[id]["element"] == element))
 	if ids.is_empty():
 		ids = Data.RELIQUES.keys().filter(func(id): return Data.rarete(id) == rarete)
-	offres[0] = ids[rng.randi() % ids.size()]
-	gratuite = 0
+	# boutique gelee : la relique offerte prend une place vide si possible
+	var i := maxi(0, offres.find(""))
+	offres[i] = ids[rng.randi() % ids.size()]
+	gratuite = i
 
 # --- rencontres (hommages) -------------------------------------------------
 
