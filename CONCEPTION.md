@@ -23,13 +23,13 @@ sur la créature ou dans le combat. Une relique qui ne fait que +2 en silence es
 
 ## 2. Univers
 
-**Le royaume fae de Sylvaën** (nom de travail), partagé entre **sept Dynasties** : quatre saisons
-et trois moments du jour. Chaque Dynastie est un archétype, avec sa monture.
+**Le royaume fae de Sylvaën** (nom de travail), partagé entre **huit Dynasties** : quatre saisons
+et quatre moments du jour. Chaque Dynastie est un archétype, avec sa monture.
 
 **Hommages, jamais de références directes.** Le jeu s'inspire d'univers de fantasy aimés
 (cours fae, cavaliers liés à leur monture, assassins et sorcières, anneau et spectres,
 école de magie) mais n'en reprend aucun nom propre, aucun personnage, aucun lieu. Les noms
-de Dynasties restent génériques (Printemps, Été, Automne, Hiver, Jour, Nuit, Aube) ; tout le reste
+de Dynasties restent génériques (Printemps, Été, Automne, Hiver, Aube, Jour, Crépuscule, Nuit) ; tout le reste
 est inventé : élites, rencontres, objets neutres.
 
 Le cœur du jeu est déjà un hommage : un cavalier **lié** à sa monture, et l'arme qu'il tient
@@ -92,13 +92,13 @@ entre chaque nœud.
 | **Duel** | PvP asynchrone : le Nid d'un autre joueur, enregistré au même stade | Or |
 | **Élite** | PvE : une créature plus forte, avec un gimmick lisible | Or et choix d'une relique rare ou mieux |
 | **Rencontre** | Événement à choix (voir plus bas) | Variable, parfois un prix à payer |
-| **Marché** | Boutique spéciale : plus de rares, retirer une relique, objets neutres | |
 | **Feu de camp** | Repos : rendre des PV de run, ou une fusion gratuite | |
 | **Boss** | Fin d'acte, PvE | Relique légendaire au choix |
 
 Génération (`scripts/carte.gd`) : le premier étage est fait de Duels, l'étage avant le boss de
-Feux de camp. Ailleurs, tirage pondéré : Duel 50, Rencontre 22, Élite 12, Marché 8, Feu 8. Pas
-d'Élite avant le 5e étage du premier acte, pas de Feu avant le 5e étage.
+Feux de camp. Ailleurs, tirage pondéré : Duel 55, Rencontre 25, Élite 12, Feu 8. Pas
+d'Élite avant le 5e étage du premier acte, pas de Feu avant le 5e étage. Pas de Marché : la
+boutique est déjà ouverte entre chaque nœud.
 
 ### Choix des dynasties
 
@@ -173,7 +173,6 @@ Les **PV de run** remplacent « 7 victoires ou 3 défaites ». À 0, la run est 
   Boss battu : une **légendaire offerte**. L'offre offerte survit aux relances.
 - Élites et boss du prototype : le fantôme, avec 2 (élite) ou 4 (boss) manches d'avance.
   Les vraies élites à gimmick viendront ensuite.
-- Marché du prototype : raretés de 3 manches en avance et relances gratuites jusqu'au nœud suivant.
 - Rencontres du prototype : le Heaume qui Juge, le Grand Chaudron, le Pont des Lames.
 
 Mesure sur 100 runs par joueur automatique (`tests/simulation.gd`), environ 26 nœuds par run :
@@ -256,7 +255,7 @@ Commun, rare, épique, légendaire. Les chances de tirage en boutique dépendent
 | 4 | 55 % | 30 % | 15 % | |
 | 6 | 40 % | 30 % | 20 % | 10 % |
 
-Les légendaires ne fusionnent pas. Une tuile non commune porte une bande de couleur
+Toutes les raretés fusionnent, légendaires compris (voir Fusion). Une tuile non commune porte une bande de couleur
 (bleu rare, violet épique, or légendaire).
 
 ### Adversaire fantôme
@@ -294,7 +293,6 @@ parties et les moyennes bougent de ±0,5 d'une mesure à l'autre.)
 - Stats multipliées : x2,5 au niveau 2, x6 au niveau 3. Un peu moins que trois copies
   (x3), mais deux cases libérées.
 - L'affinité des trois copies est conservée : fusionner ne change pas la forme de la monture.
-- Voile (sans dégâts) : recharge plus rapide. Foyer : brûlure plus forte. Lune creuse : plus de vol de vie.
 - Nid plein : on peut poser une offre **sur une copie** si elle complète un trio.
 - Tout fusionne, armes et légendaires compris (copies illimitées tant que le sac a de la place).
 - Revente : la moitié de ce qu'elle a coûté (3 copies par niveau).
@@ -346,17 +344,24 @@ contre un build d'attaques brutes, il reste correct grâce au projectile d'arcan
 
 La créature est une **monture** : un petit cavalier encapuchonné (visage sombre, deux yeux
 lumineux) est assis dessus. Sa cape prend la couleur de l'élément dominant.
-Le cavalier tient **une seule arme**, qui vient d'une relique de type Arme et lance
-son propre sort. Les catalyseurs voisins de l'arme s'appliquent à ce sort.
 
-| Arme | Élément | Sort du cavalier |
+On **choisit son cavalier** en début de partie, après les dynasties (`images/cavaliers`). Il est
+peint sur la monture en boutique et en combat. Chacun a un talent, d'un domaine différent
+(combat offensif, sac, combat défensif, boutique). Les adversaires ont aussi un cavalier et son talent.
+
+| Cavalier | Talent | Effet |
 |---|---|---|
-| Bâton de braise | Feu | Boule de feu, dégâts selon l'affinité Feu |
-| Lance du guet | Aucun | Estoc, rapide, **ignore l'esquive** (contre le Voile) |
-| Faux lunaire | Nuit | Moisson, lente, **double sous 40 % de PV** |
+| L'Ombre | Embuscade | Au début de chaque combat, les armes lancent leur sort tout de suite |
+| La Pousse | Croissance | Le sac commence avec une colonne de plus (5 au lieu de 4) |
+| La Coquille | Éclosion | La monture commence chaque combat avec un bouclier de 40 |
+| Le Capuchon | Érudit | La première relance de chaque boutique est gratuite |
 
-La lance n'a pas d'élément : elle ne change pas la forme de la monture, c'est un choix
-tactique pur. L'arme garde la couleur de son élément, pas celle de la monture.
+Le cavalier tient **toutes les armes** du sac (voir Les armes du cavalier) : chacune vient d'une
+relique de type Arme et lance son propre sort. Les catalyseurs voisins d'une arme s'appliquent à son sort.
+
+La **Lance du guet** (Hast, estoc rapide qui **ignore l'esquive**) n'a pas d'élément : elle ne change
+pas la forme de la monture, c'est un choix tactique pur. Une arme garde la couleur de son élément,
+pas celle de la monture.
 
 ---
 
@@ -367,7 +372,7 @@ tactique pur. L'arme garde la couleur de son élément, pas celle de la monture.
 | **Essence** | Affinité et stats brutes (PV, attaque, vitesse) |
 | **Sort** | Capacité active avec recharge, plus forte si l'affinité de son élément est haute |
 | **Catalyseur** | Modifie ses voisins orthogonaux |
-| **Arme** | Une seule par Nid, tenue par le cavalier, lance son propre sort |
+| **Arme** | Tenue par le cavalier, lance son propre sort (autant que le sac en tient) |
 
 ### Format cible : 15 objets par archétype
 
@@ -380,8 +385,8 @@ La rareté est décrite dans la section Boutique.
 ### Printemps (Cerf) : épines et poison
 
 **Fait** (images de `images/`, découpées par `outils/decouper_icones.gd`). Chiffres de départ :
-épines du Cerf 2 par coup reçu, Épine de ronce +2, Baie 0,5 dose par attaque, Nuage de spores
-2 doses + 0,2 par point de Nature toutes les 6 s, poison 0,2 dégât par dose et par seconde,
+épines du Cerf 3 par coup reçu, Épine de ronce +2 et +40 PV, Baie 0,5 dose par attaque, Nuage de spores
+2 doses + 0,2 par point de Nature toutes les 6 s, poison 0,5 dégât par dose et par seconde,
 Ortie et Amanite +50 % à leurs voisins, Gousse : salve de 15 tous les 5 coups reçus.
 
 Deux axes avec des ponts entre eux. **Les épines** blessent qui frappe le Cerf (contre les builds
@@ -433,19 +438,20 @@ croisés, objets neutres utiles sans être universels, style lisible quel que so
 
 | Famille | Style | Armes actuelles |
 |---|---|---|
-| Tir | Rapide, plusieurs petits coups | armes du Cerf, armes du Papillon |
-| Lame | Rapide, riposte, **coups critiques** | Dague d'épine, Serpe de ronces, armes de la Nuit |
+| Tir | Rapide, plusieurs petits coups | armes du Cerf, armes du Papillon, Arc de l'écho (Nuit) |
+| Lame | Rapide, riposte, **coups critiques** | Dague d'épine, Serpe de ronces, Dague de minuit, Lame de la veuve |
 | Hast | Allonge, perce l'esquive | Lance du guet (neutre), armes de l'Ours, armes du Papillon |
-| Hache | Lent, gros coup | armes de l'Ours, du Lion |
+| Hache | Lent, gros coup | armes de l'Ours, du Lion, Hache du bourreau (Nuit) |
 | Bâton | Magie, grandit avec l'affinité | armes du Phénix, du Lion |
-| Faux | Achève les cibles affaiblies | Faux de tison, Faux des cendres, armes de la Nuit |
+| Faux | Achève les cibles affaiblies | Faux de tison, Faux des cendres, Faux de la Nuit profonde |
 
 Familles par Dynastie : **Printemps (Cerf) : Tir et Lame. Hiver (Ours) : Hast et Hache. Été (Phénix) : Bâton et Faux.
-Nuit : Faux et Lame. Aube (Lion) : Bâton et Hache. Crépuscule (Papillon) : Tir et Hast.**
+Nuit : Lame surtout, plus un Tir, une Hache et une Faux. Aube (Lion) : Bâton et Hache. Crépuscule (Papillon) : Tir et Hast.**
 
-Huit Dynasties à 2 familles donnent 16 places pour 6 familles. Les six Dynasties actuelles en prennent
-12, chaque famille à 2 Dynasties. Restent 4 places pour l'Automne (Renard) et le Jour (Paon) :
-quatre familles passeront à 3 Dynasties.
+Huit Dynasties à 2 familles donnent 16 places pour 6 familles. Avec la Nuit sur quatre familles,
+les six Dynasties actuelles en prennent déjà 14 (Tir et Hache à 3 Dynasties). **À trancher** pour
+l'Automne (Renard) et le Jour (Paon) : assouplir la règle d'une ou deux familles par Dynastie, ou
+recentrer la Nuit.
 
 **Coups critiques** : identité de la famille Lame. Un crit fait **x1,75** de dégâts ; les chances
 viennent des armes Lame et de certains objets (aucune chance de base). Les Lames du Cerf
@@ -458,9 +464,10 @@ le drain et les malédictions pour la Nuit.
 ### Hiver (Ours) : givre et bouclier qui se brise
 
 **Fait** (images de `images/`). Chiffres de départ : passif de l'Ours, 1 charge de givre par attaque
-et **+50 % de dégâts contre une cible gelée** (le gel est une fenêtre d'attaque, sinon l'Ours
-jouait comme une seconde Tortue : combats de 24 à 40 s, trop peu de dégâts) ; Armure de givre
-6 + 1 par point de Glace ; Éclat de givre 20 ; Javelot 8 ; Écorce 20 de bouclier 3 s après un bris ;
+et **+100 % de dégâts contre une cible gelée** (le gel est une fenêtre d'attaque, sinon l'Ours
+jouait comme une seconde Tortue : combats de 24 à 40 s, trop peu de dégâts) ; Flocon +1 attaque ;
+ralentissement du givre plafonné à 40 % ; Armure de givre 5 + 0,5 par point de Glace ;
+Éclat de givre 30 ; Javelot 8 ; Écorce 20 de bouclier 3 s après un bris ;
 Cœur de banquise 25 ; Noyau 20 ; Rose des neiges 3 charges de moins.
 
 Là où la Tortue veut que son bouclier tienne, **l'Ours veut qu'il se brise** : chaque bris
@@ -553,15 +560,16 @@ Règles :
 | Légendaire | Bâton du Premier Brasier | Bâton | Une combustion totale après plusieurs tirs ; la renaissance déclenche aussitôt un tir renforcé |
 
 Points ouverts :
-- **Faux de tison et Faux lunaire** : réglé avec le set de la Nuit (trait « achever » commun,
-  saveur propre à chaque élément).
+- **Faux de tison et Faux de la Nuit profonde** : trait « achever » commun, saveur propre à
+  chaque élément (le feu pour le Phénix, le drain et les malédictions pour la Nuit).
 - **Le Phénix se soigne** (Cendre tiède, Fleur, Faux des cendres) : à surveiller face à l'Aube,
   dont le soin est l'identité. La Belladone du Cerf le contre.
 
 ### Nuit (Chauve-souris) : vol de vie et malédictions
 
 **Fait** (images de `images/`, le Chapelet et la Serpe de ronces dans `chapelet_serpe.png`). Chiffres : malédictions 6 s, Faiblesse -15 %
-de dégâts, Langueur -15 % de vitesse d'attaque, Flétrissure -30 % de soins par charge ; passif
+de dégâts, Langueur -15 % de vitesse d'attaque, Flétrissure -30 % de soins par charge, Stigmate
++10 % de dégâts reçus ; passif
 de la Chauve-souris **+12 % de dégâts par malédiction différente sur la cible** (sans lui, et
 sans attaque sur ses essences, elle ne faisait presque aucun dégât : 0,8 victoire en moyenne) ;
 Ruban sanguin +2 attaque et 8 % de vol de vie ; Aiguille noire +2 attaque, Faiblesse toutes les
@@ -569,10 +577,10 @@ Ruban sanguin +2 attaque et 8 % de vol de vie ; Aiguille noire +2 attaque, Faibl
 malédiction ; Grimoire tous les 40 PV volés ; Pacte 5 par attaque. Crit : x1,75, 10 % par Lame
 (25 % pour la Dague de minuit, 15 % pour la Lame de la veuve), 8 % pour le Peigne.
 
-Deux axes : **le vol de vie** et **les malédictions**, trois états qui affaiblissent l'adversaire.
+Deux axes : **le vol de vie** et **les malédictions**, quatre états qui affaiblissent l'adversaire.
 Des objets **comptent les malédictions différentes** (Masque, Grimoire, Pacte) ; le Chapelet
 permet au contraire d'**empiler la même** : un choix de build en largeur ou en profondeur.
-Familles d'armes : **Faux et Lame**. Ce set remplace l'ancienne Nuit (Croc noir, Nuée, Voile,
+Familles d'armes : **Lame** surtout, plus un Tir, une Hache et la Faux légendaire. Ce set remplace l'ancienne Nuit (Croc noir, Nuée, Voile,
 Lune creuse). Passif de la Chauve-souris inchangé : vol de vie sur les attaques de base.
 
 Règles des malédictions :
@@ -581,6 +589,8 @@ Règles des malédictions :
   et durée limitée, là où le givre de l'Ours s'accumule, touche aussi les sorts et finit en gel).
 - **Flétrissure** : la cible reçoit moins de soins (réduction, là où la Belladone du Cerf bloque
   tout soin, mais seulement sur une cible empoisonnée).
+- **Stigmate** : la cible reçoit plus de dégâts, de toutes les sources. Posée par l'Arc de l'écho
+  et les crits de la Lame de la veuve.
 - **Durée : 6 s**, renouvelée si on la réapplique. Sans le Chapelet, une malédiction ne compte
   qu'une fois. Avec lui, jusqu'à 3 charges : Faiblesse -10 % de dégâts par charge, Langueur -10 %
   de vitesse d'attaque par charge, Flétrissure -25 % de soins par charge (valeurs de départ).
@@ -598,26 +608,28 @@ Règles des malédictions :
 | Rare | Chapelet des rancunes | *Un chapelet de perles noires dont une seule rougeoie* : chaque malédiction peut s'empiler jusqu'à 3 fois |
 | Épique | Masque du festin | Plus de vol de vie pour chaque malédiction différente sur l'adversaire |
 | Épique | Grimoire des noms perdus | Après une certaine quantité de vie volée, applique une malédiction manquante |
-| Légendaire | Pacte de la Nuit profonde | Quand la cible porte les trois malédictions, tes attaques drainent aussi un peu de vie, indépendamment de leurs dégâts (le drain passe le bouclier) |
+| Légendaire | Pacte de la Nuit profonde | Quand la cible porte au moins trois malédictions différentes, tes attaques drainent aussi un peu de vie, indépendamment de leurs dégâts (le drain passe le bouclier) |
 
 La Coupelle d'étain (bonus de vol de vie) a été retirée au profit du Chapelet.
 
-#### Armes du cavalier (5, Faux et Lame)
+#### Armes du cavalier (5, Lame, Tir, Hache, Faux)
 
 | Rareté | Arme | Famille | Sort du cavalier |
 |---|---|---|---|
 | Commun | Dague de minuit | Lame | Coups rapides, fortes chances de crit |
-| Commun | Faux lunaire | Faux | Achève sous 40 % de vie **et vole de la vie** (retravaillée) |
-| Rare | Lame de la veuve | Lame | Chaque crit pose une malédiction au hasard |
-| Épique | Faux du festin | Faux | Plus forte pour chaque malédiction sur la cible |
+| Commun | Arc de l'écho | Tir | *Écho* : deux flèches guidées par l'écho, qui posent Stigmate |
+| Rare | Lame de la veuve | Lame | Chaque crit pose Stigmate |
+| Épique | Hache du bourreau | Hache | *Sentence* : un coup lent, plus fort pour chaque malédiction sur la cible, double sous 40 % de vie |
 | Légendaire | Faux de la Nuit profonde | Faux | Consume toutes les malédictions de la cible pour un coup énorme et un gros drain |
+
+L'Arc de l'écho et la Hache du bourreau remplacent la Faux lunaire et la Faux du festin.
 
 ### Aube (Lion) : soin et Éclat
 
-**Fait** (images de `images/`). Chiffres : régénération du Lion 1,5 PV/s ; charge 0,75 par point
+**Fait** (images de `images/`). Chiffres : régénération du Lion 0,5 PV/s ; charge 0,75 par point
 de soin et 2 par point d'excédent (le Voile ajoute +100 % sur l'excédent) ; seuil 60 (Miroir -10,
-20 au moins) ; Éclat 40 dégâts (Prisme +15, Lanterne + l'excédent accumulé) ; Veille (Mèche) 8 de
-soin + 1 par point d'Aube toutes les 4 s ; Bande de lin +2 PV/s sous 50 % ; Encensoir +3 PV/s pendant
+20 au moins) ; Éclat 60 dégâts (Prisme +15, Lanterne + l'excédent accumulé) ; Veille (Mèche) 6 de
+soin + 0,75 par point d'Aube toutes les 4 s ; Bande de lin +1 PV/s sous 50 % ; Encensoir +3 PV/s pendant
 4 s ; Vasque 50 % de l'excédent en bouclier ; Carillon 40 tous les 3 Éclats. L'outil de découpe
 retire maintenant aussi les « poussières » (petits îlots isolés) des icônes et des montures.
 
@@ -749,10 +761,12 @@ On adapte son Nid à ce qu'on affronte, pas à une couleur.
 - 6 Dynasties au format 15 objets : Printemps, Été, Hiver, Aube, Crépuscule, Nuit ; 1 arme neutre
   (Lance du guet). Restent l'Automne (Renard) et le Jour (Paon), montures prêtes. Vent et Terre sont retirés.
 - Run sur carte : 3 actes de 10 étages, PV de run, boutique facultative entre les nœuds,
-  trois rencontres. Élites et boss sont encore des fantômes en avance.
+  trois rencontres. Trois élites à règle et le gardien de l'acte I (Bastion endormi) ; les boss
+  des actes II et III sont encore des fantômes en avance.
+- Choix des dynasties, puis du cavalier et de son talent.
 - Arène : vitesse x1, x2 ou x3.
 - Sac de 4 à 8 colonnes sur 4 rangées, reliques à formes (1 à 4 cases), rotation.
-- Pas d'hybride, pas de réseau. Rareté en place.
+- Hybrides en place (28 images). Rareté et fusion en place. Pas de réseau.
 - Boutique, manches, combat animé contre un adversaire généré, fin de partie.
 
 **Question à valider avec le prototype** : est-ce que voir sa créature changer selon son Nid
@@ -763,9 +777,9 @@ donne envie de refaire un Nid ? Si non, rien d'autre ne compte.
 ## 9. Plus tard
 
 - Formes à la main pour les objets dont l'image le demande (`FORMES_OBJETS`).
-- Une image pour la Serpe de ronces (le Fouet a été remplacé).
 - Objets neutres qui visent une famille d'armes.
-- Glace, les quatre moments du jour, et les hybrides.
-- 7 Dynasties donnent 21 paires d'hybrides : il faudra sûrement n'en garder qu'une partie.
+- Les sets de l'Automne (Renard) et du Jour (Paon).
+- Les gardiens des actes II et III.
+- 8 Dynasties donnent 28 paires d'hybrides : il faudra peut-être n'en garder qu'une partie.
 - Stades d'évolution (visuel qui grandit).
 - PvP asynchrone : stocker le Nid de chaque joueur par manche (Supabase), tirer un fantôme du même stade.

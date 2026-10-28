@@ -10,3 +10,19 @@ export_presets.cfg
 # Editeurs
 .idea/
 .vscode/
+
+# Vault de connaissances (Claude)
+# Sources brutes, potentiellement privées
+nid-vault/00-inbox/
+# Identifiants, clés, fichiers privés
+nid-vault/secrets/*
+!nid-vault/secrets/README.md
+.env
+.env.*
+!.env.example
+# État local d'Obsidian
+nid-vault/.obsidian/workspace*
+nid-vault/.obsidian/cache
+nid-vault/.obsidian/appearance.json
+nid-vault/.obsidian/hotkeys.json
+Thumbs.db
