@@ -13,6 +13,8 @@ func _ready() -> void:
 	ok = _armes() and ok
 	ok = _combat_anime() and ok
 	ok = _partie() and ok
+	ok = _sac() and ok
+	ok = _formes_sac() and ok
 	ok = _carte() and ok
 	ok = _run() and ok
 	ok = _fusion() and ok
@@ -80,16 +82,18 @@ func _renaissance() -> bool:
 func _ecran() -> bool:
 	var e := NidScreen.new()
 	add_child(e)
-	e.deposer(Vector2i(0, 0), "charbon", null)
+	e.deposer(Vector2i(2, 0), "charbon", null)
 	var ok := _verifier(e.nid.forme() == "feu" and e.vue.forme == "feu", "poser une braise -> phenix")
-	e.deposer(Vector2i(1, 0), "ruban", null)
-	e.deposer(Vector2i(2, 0), "sceau", null)
+	e.deposer(Vector2i(3, 0), "ruban", null)
+	e.deposer(Vector2i(4, 0), "sceau", null)
 	ok = _verifier(e.vue.forme == "nuit", "plus de nuit -> chauve-souris") and ok
-	e.deposer(Vector2i(3, 3), "ruban", Vector2i(1, 0))
-	ok = _verifier(e.nid.cases.get(Vector2i(3, 3)) == "ruban" and not e.nid.cases.has(Vector2i(1, 0)), "deplacer une relique") and ok
-	e.deposer(Vector2i(0, 0), "ruban", Vector2i(3, 3))
-	ok = _verifier(e.nid.cases.get(Vector2i(3, 3)) == "charbon", "echanger deux reliques") and ok
-	e.vendre(Vector2i(3, 3))
+	e.deposer(Vector2i(5, 3), "ruban", Vector2i(3, 0))
+	ok = _verifier(e.nid.cases.get(Vector2i(5, 3)) == "ruban" and not e.nid.cases.has(Vector2i(3, 0)), "deplacer une relique") and ok
+	e.deposer(Vector2i(2, 0), "ruban", Vector2i(5, 3))
+	ok = _verifier(e.nid.cases.get(Vector2i(5, 3)) == "charbon", "echanger deux reliques") and ok
+	e.deposer(Vector2i(0, 0), "sceau", null)
+	ok = _verifier(not e.nid.cases.has(Vector2i(0, 0)), "case fermee : on ne pose pas") and ok
+	e.vendre(Vector2i(5, 3))
 	ok = _verifier(e.vue.forme == "nuit" and e.nid.cases.size() == 2, "revendre une case") and ok
 	e.queue_free()
 	return ok
@@ -143,12 +147,12 @@ func _partie() -> bool:
 	ok = _verifier(p.offres.size() == Partie.TAILLE_BOUTIQUE and p.bourse == Partie.OR_PAR_MANCHE, "depart : 5 offres, 10 or") and ok
 	p.offres[0] = "charbon"
 	p.offres[1] = "baton_braise"
-	ok = _verifier(p.acheter(0, Vector2i(0, 0)) and p.bourse == 7 and p.offres[0] == "", "acheter : -3 or, offre vendue") and ok
-	ok = _verifier(not p.acheter(0, Vector2i(1, 0)), "offre deja vendue") and ok
-	ok = _verifier(not p.acheter(1, Vector2i(0, 0)), "case occupee") and ok
+	ok = _verifier(p.acheter(0, Vector2i(2, 0)) and p.bourse == 7 and p.offres[0] == "", "acheter : -3 or, offre vendue") and ok
+	ok = _verifier(not p.acheter(0, Vector2i(3, 0)), "offre deja vendue") and ok
+	ok = _verifier(not p.acheter(1, Vector2i(2, 0)), "case occupee") and ok
 	p.bourse = 4
-	ok = _verifier(not p.acheter(1, Vector2i(1, 0)), "pas assez d'or") and ok
-	p.vendre(Vector2i(0, 0))
+	ok = _verifier(not p.acheter(1, Vector2i(3, 0)), "pas assez d'or") and ok
+	p.vendre(Vector2i(2, 0))
 	ok = _verifier(p.bourse == 5 and p.nid.cases.is_empty(), "revendre : moitie du prix") and ok
 	ok = _verifier(p.relancer() and p.bourse == 4, "relancer coute 1 or") and ok
 	var a := p.adversaire()
@@ -157,6 +161,70 @@ func _partie() -> bool:
 		cout += Partie.prix(id)
 	ok = _verifier(cout <= Partie.OR_PAR_MANCHE * p.manche and cout > 0, "adversaire dans le budget de la manche") and ok
 	ok = _verifier(a.cases == p.adversaire().cases, "adversaire deterministe") and ok
+	return ok
+
+func _sac() -> bool:
+	var p := Partie.new(3)
+	var ok := _verifier(p.nid.places() == 16 and not p.nid.ouverte(Vector2i(0, 0)) and p.nid.ouverte(Vector2i(2, 0)), "sac de depart : 4 colonnes au centre")
+	p.offres[0] = "charbon"
+	ok = _verifier(not p.acheter(0, Vector2i(0, 0)), "colonne fermee : pas d'achat") and ok
+	p.bourse = 30
+	ok = _verifier(p.prix_agrandir() == 8 and p.agrandir() and p.bourse == 22 and p.nid.ouverte(Vector2i(1, 3)), "agrandir : 8 or, colonne 1") and ok
+	ok = _verifier(p.prix_agrandir() == 12 and p.agrandir() and p.nid.ouverte(Vector2i(6, 0)), "puis colonne 6, plus chere") and ok
+	p.bourse = 100
+	p.agrandir()
+	p.agrandir()
+	ok = _verifier(p.nid.places() == 32 and p.prix_agrandir() == -1 and not p.agrandir(), "damier entier : plus d'agrandissement") and ok
+	ok = _verifier(p.nid.eclore()["colonnes"].size() == 8, "la creature garde les colonnes ouvertes") and ok
+	return ok
+
+func _premier(rarete: String, type := "") -> String:
+	for id in Data.RELIQUES:
+		var r: Dictionary = Data.RELIQUES[id]
+		if Data.rarete(id) == rarete and r["type"] != "arme" and (type == "" or r["type"] == type):
+			return id
+	return ""
+
+func _formes_sac() -> bool:
+	var rare := _premier("rare")
+	var epique := _premier("epique")
+	var legende := _premier("legendaire")
+	var ok := _verifier(Data.empreinte("charbon") == [Vector2i(0, 0)], "commun : 1 case")
+	ok = _verifier(Data.empreinte(rare) == [Vector2i(0, 0), Vector2i(1, 0)], "rare : 2 cases couchees") and ok
+	ok = _verifier(Data.empreinte(rare, 1) == [Vector2i(0, 0), Vector2i(0, 1)], "un quart de tour : debout") and ok
+	ok = _verifier(Data.empreinte(epique).size() == 3 and Data.empreinte(legende).size() == 4, "epique 3 cases, legendaire 4") and ok
+	ok = _verifier(Data.empreinte("lance_guet") == [Vector2i(0, 0), Vector2i(0, 1), Vector2i(0, 2)], "hast : 1 x 3") and ok
+	var p := Partie.new(9)
+	p.bourse = 100
+	p.offres[0] = rare
+	ok = _verifier(not p.peut_acheter(0, Vector2i(5, 0)) and p.acheter(0, Vector2i(5, 0), 1), "colonne 6 fermee : on la pose debout") and ok
+	ok = _verifier(p.nid.ancre(Vector2i(5, 1)) == Vector2i(5, 0) and p.nid.occupation().size() == 2, "la relique couvre ses 2 cases") and ok
+	p.offres[1] = "charbon"
+	ok = _verifier(not p.peut_acheter(1, Vector2i(5, 1)), "pas de pose sur une case prise") and ok
+	ok = _verifier(p.acheter(1, Vector2i(4, 1)), "pose a cote") and ok
+	ok = _verifier(p.nid.voisins(Vector2i(4, 1)) == [Vector2i(5, 0)], "voisine par sa deuxieme case") and ok
+	# deplacer : refuse si ca deborde, echange avec une relique qui tient a la place laissee
+	ok = _verifier(not p.nid.deplacer(Vector2i(5, 0), Vector2i(5, 3)), "deplacer hors du sac : refuse") and ok
+	ok = _verifier(p.nid.deplacer(Vector2i(5, 0), Vector2i(2, 0), 0) and p.nid.ancre(Vector2i(3, 0)) == Vector2i(2, 0), "deplacer et coucher") and ok
+	ok = _verifier(p.nid.deplacer(Vector2i(4, 1), Vector2i(2, 0)) and p.nid.cases.get(Vector2i(2, 0)) == "charbon" and p.nid.cases.get(Vector2i(4, 1)) == rare, "echange : le charbon prend la place, la rare tient en (4, 1)") and ok
+	# fusion : la troisieme copie posee sur une copie
+	var q := Partie.new(10)
+	q.bourse = 100
+	for k in 3:
+		q.offres[k] = rare
+	q.acheter(0, Vector2i(2, 0))
+	q.acheter(1, Vector2i(2, 1))
+	ok = _verifier(q.acheter(2, Vector2i(3, 1)) and q.nid.cases.size() == 1 and q.nid.niveau(Vector2i(2, 1)) == 2, "trois rares : fusion sur la copie visee") and ok
+	q.vendre(Vector2i(3, 1))
+	ok = _verifier(q.nid.cases.is_empty(), "revendre par n'importe quelle case") and ok
+	# une seule arme : la nouvelle remplace l'ancienne si on la lache dessus
+	q.offres[0] = "lance_guet"
+	q.offres[1] = "faux_lunaire"
+	q.acheter(0, Vector2i(2, 0))
+	ok = _verifier(not q.peut_acheter(1, Vector2i(4, 0)), "deuxieme arme ailleurs : refusee") and ok
+	var or_avant := q.bourse
+	ok = _verifier(q.acheter(1, Vector2i(2, 2)) and q.nid.arme() == "faux_lunaire" and q.nid.cases.size() == 1, "lachee sur l'arme : elle la remplace") and ok
+	ok = _verifier(q.bourse == or_avant - Partie.prix("faux_lunaire") + Partie.prix_revente("lance_guet"), "l'ancienne arme est revendue") and ok
 	return ok
 
 func _carte() -> bool:
@@ -200,7 +268,7 @@ func _run() -> bool:
 	var offerte: String = p.offres[0]
 	p.relancer()
 	ok = _verifier(p.offres[0] == offerte and p.prix_offre(0) == 0, "l'offre offerte survit a la relance") and ok
-	ok = _verifier(p.acheter(0, Vector2i(0, 0)) and p.gratuite == -1, "acheter l'offre offerte ne coute rien") and ok
+	ok = _verifier(p.acheter(0, Vector2i(2, 0)) and p.gratuite == -1, "acheter l'offre offerte ne coute rien") and ok
 	# marche : relance gratuite jusqu'au noeud suivant
 	p.noeud()["type"] = "marche"
 	p.conclure()
@@ -218,6 +286,7 @@ func _run() -> bool:
 	p.noeud()["type"] = "boss"
 	p.conclure_combat(0)
 	ok = _verifier(p.acte == 1 and p.position == -1 and p.chemin.is_empty() and not p.terminee(), "boss battu : acte suivant") and ok
+	ok = _verifier(p.nid.colonnes.size() == 5 and p.nid.ouverte(Vector2i(1, 0)), "boss battu : une colonne offerte") and ok
 	p.acte = Carte.ACTES - 1
 	p.entrer(p.accessibles()[0])
 	p.noeud()["type"] = "boss"
@@ -353,7 +422,7 @@ func _familles() -> bool:
 
 func _glace() -> bool:
 	var cr := Exemples.nid_glace().eclore()
-	var ok := _verifier(cr["nom"] == "Loup", "glace -> loup")
+	var ok := _verifier(cr["nom"] == "Ours", "glace -> ours")
 	# givre par attaque : 1 (passif) + 1 x 1,5 (flocon a cote du croc)
 	ok = _verifier(is_equal_approx(cr["givre_attaque"], 2.5), "croc du blizzard renforce le flocon voisin") and ok
 	# armure de givre : (6 + 1 x glace 7) x 1,5 (fourrure voisine)

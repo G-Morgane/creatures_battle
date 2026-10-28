@@ -18,6 +18,12 @@ const CHANCES_RARETE := [
 	[6, [40, 30, 20, 10]],
 ]
 const PRIX_RELANCE := 1
+# Le sac commence sur les 4 colonnes du centre du damier et s'agrandit d'une
+# colonne a la fois, en alternant les cotes : en boutique (prix croissant, comme
+# l'experience de TFT) ou gratuitement apres un boss battu.
+const COLONNES_DEPART := [2, 3, 4, 5]
+const ORDRE_AGRANDIR := [1, 6, 0, 7]
+const PRIX_AGRANDIR := [8, 12, 16, 20]
 const TAILLE_BOUTIQUE := 5
 
 const PV_RUN := 60
@@ -60,6 +66,8 @@ func _init(g := 0) -> void:
 	graine = g if g != 0 else randi()
 	rng.seed = graine
 	carte = Carte.new(graine)
+	nid.colonnes = COLONNES_DEPART.duplicate()
+	nid.encombrement = true
 	tirer()
 
 static func prix(id: String) -> int:
@@ -120,26 +128,46 @@ func relancer() -> bool:
 
 # On achete en posant : l'offre va dans une case vide du Nid, ou sur une copie
 # d'elle-meme si cela complete un trio (fusion).
-func peut_acheter(i: int, c: Vector2i) -> bool:
+func peut_acheter(i: int, c: Vector2i, rot := 0) -> bool:
 	var id: String = offres[i]
-	return id != "" and bourse >= prix_offre(i) and nid.peut_ajouter(c, id)
+	return id != "" and bourse >= prix_offre(i) and nid.peut_ajouter(c, id, rot)
 
-func acheter(i: int, c: Vector2i) -> bool:
-	if not peut_acheter(i, c):
+func acheter(i: int, c: Vector2i, rot := 0) -> bool:
+	if not peut_acheter(i, c, rot):
 		return false
 	var id: String = offres[i]
-	nid.ajouter(c, id)
+	# nouvelle arme sur l'ancienne : l'ancienne est revendue
+	var a = nid.ancre(c)
+	if a != null and nid.remplace_arme(c, id, rot):
+		bourse += prix_revente(nid.cases[a], nid.niveau(a))
+	nid.ajouter(c, id, rot)
 	bourse -= prix_offre(i)
 	offres[i] = ""
 	if i == gratuite:
 		gratuite = -1
 	return true
 
+# Prix de la prochaine colonne, -1 quand le damier est entier.
+func prix_agrandir() -> int:
+	var n := nid.colonnes.size() - COLONNES_DEPART.size()
+	return PRIX_AGRANDIR[n] if n < PRIX_AGRANDIR.size() else -1
+
+func agrandir(gratuit := false) -> bool:
+	var prix := prix_agrandir()
+	if prix < 0 or (not gratuit and bourse < prix):
+		return false
+	if not gratuit:
+		bourse -= prix
+	nid.colonnes.append(ORDRE_AGRANDIR[nid.colonnes.size() - COLONNES_DEPART.size()])
+	return true
+
+# c : n'importe quelle case de la relique.
 func vendre(c: Vector2i) -> void:
-	if not nid.cases.has(c):
+	var a = nid.ancre(c)
+	if a == null:
 		return
-	bourse += prix_revente(nid.cases[c], nid.niveau(c))
-	nid.retirer(c)
+	bourse += prix_revente(nid.cases[a], nid.niveau(a))
+	nid.retirer(a)
 
 # --- carte -----------------------------------------------------------------
 
@@ -193,6 +221,8 @@ func conclure_combat(vainqueur: int, reste := 0.0) -> void:
 	if type == "boss" and acte == Carte.ACTES - 1:
 		finie = true
 		gagnee = vainqueur == 0
+	elif type == "boss" and vainqueur == 0 and agrandir(true):
+		message += " Le sac s'agrandit."
 	_suivant(recompense)
 
 # Feu de camp et marche : rien a choisir.

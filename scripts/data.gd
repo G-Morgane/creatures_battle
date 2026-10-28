@@ -1,7 +1,9 @@
 class_name Data
 extends RefCounted
 
-const NID_L := 4
+# Le sac : un damier de 8 colonnes sur 4 rangees, dont la partie n'ouvre
+# d'abord que le centre (Partie.COLONNES_DEPART).
+const NID_L := 8
 const NID_H := 4
 
 # --- creature --------------------------------------------------------------
@@ -17,10 +19,13 @@ const FORMES := {
 	"nuit":  {"nom": "Chauve-souris", "passif": "Vol de vie sur les attaques, +12 % de dégâts par malédiction sur la cible"},
 	"terre": {"nom": "Tortue",        "passif": "Fatigue de l'adversaire 10 s plus tôt, la sienne réduite de moitié"},
 	"vent":  {"nom": "Cheval",        "passif": "15 % d'esquive ; attaques et esquives chargent l'Élan, qui déclenche la Foudre"},
-	"glace": {"nom": "Loup",          "passif": "Ses attaques posent du givre, +50 % de dégâts contre une cible gelée"},
+	"glace": {"nom": "Ours",          "passif": "Ses attaques posent du givre, +50 % de dégâts contre une cible gelée"},
 	"aube":  {"nom": "Lion",          "passif": "Régénère, et ses soins chargent l'Éclat (un coup de lumière)"},
 	"crepuscule": {"nom": "Papillon", "passif": "Un Transfert sans rien à voler ni à renvoyer lance un projectile d'arcane"},
 	"nature":{"nom": "Cerf",          "passif": "Épines : blesse qui le frappe (2 dégâts par coup reçu)"},
+	# Cours sans objets pour l'instant : la monture est prete, le set reste a concevoir.
+	"automne": {"nom": "Renard",      "passif": "À concevoir"},
+	"jour":  {"nom": "Paon",          "passif": "À concevoir"},
 	"":      {"nom": "Informe",       "passif": "Aucun"},
 }
 
@@ -420,13 +425,45 @@ const FAMILLES := {"tir": "Tir", "lame": "Lame", "hast": "Hast", "hache": "Hache
 # --- rarete ----------------------------------------------------------------
 
 # Une relique sans champ "rarete" est commune.
-# Les sept Cours (archetypes) et l'element qui les porte dans le code.
-# L'Ete (lumiere) n'a pas encore d'objets.
-const COURS := {"nature": "Cour du Printemps", "glace": "Cour de l'Hiver", "feu": "Cour de l'Automne",
-	"nuit": "Cour de la Nuit", "aube": "Cour de l'Aube", "crepuscule": "Cour du Jour"}
+# Les huit Cours (archetypes) et l'element qui les porte dans le code. Seules
+# celles qui ont des objets sont ici ; Automne (Renard) et Jour (Paon) viendront
+# avec leur set.
+const COURS := {"nature": "Cour du Printemps", "feu": "Cour de l'Été", "glace": "Cour de l'Hiver",
+	"aube": "Cour de l'Aube", "crepuscule": "Cour du Crépuscule", "nuit": "Cour de la Nuit"}
 
 const RARETES := ["commun", "rare", "epique", "legendaire"]
 const NOMS_RARETE := {"commun": "Commun", "rare": "Rare", "epique": "Épique", "legendaire": "Légendaire"}
+
+# --- formes ----------------------------------------------------------------
+# Cases qu'occupe une relique dans le sac, en decalages depuis son ancre (coin
+# haut gauche). Regle : les armes selon leur famille, les autres selon leur
+# rarete ; FORMES_OBJETS corrige a la main ceux qui le meritent.
+const FORMES_FAMILLE := {
+	"hast": [Vector2i(0, 0), Vector2i(0, 1), Vector2i(0, 2)],
+	"faux": [Vector2i(0, 0), Vector2i(0, 1), Vector2i(0, 2)],
+	"baton": [Vector2i(0, 0), Vector2i(0, 1), Vector2i(0, 2)],
+	"tir": [Vector2i(0, 0), Vector2i(0, 1)],
+	"lame": [Vector2i(0, 0), Vector2i(0, 1)],
+	"hache": [Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)],
+}
+const FORMES_RARETE := {
+	"commun": [Vector2i(0, 0)],
+	"rare": [Vector2i(0, 0), Vector2i(1, 0)],
+	"epique": [Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 1)],
+	"legendaire": [Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)],
+}
+const FORMES_OBJETS := {}
+
+# Forme de id tournee de rot quarts de tour (sens horaire), ramenee en (0, 0).
+static func empreinte(id: String, rot := 0) -> Array:
+	var r: Dictionary = RELIQUES[id]
+	var f: Array = FORMES_OBJETS.get(id, FORMES_FAMILLE[r["famille"]] if r.has("famille") else FORMES_RARETE[rarete(id)])
+	for k in posmod(rot, 4):
+		f = f.map(func(d): return Vector2i(-d.y, d.x))
+	var mini := Vector2i(999, 999)
+	for d in f:
+		mini = Vector2i(mini(mini.x, d.x), mini(mini.y, d.y))
+	return f.map(func(d): return d - mini)
 
 static func rarete(id: String) -> String:
 	return RELIQUES[id].get("rarete", "commun")

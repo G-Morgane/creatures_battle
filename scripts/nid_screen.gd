@@ -20,7 +20,18 @@ var infos: RichTextLabel
 var barre: Label
 var offres_ui: Array = []
 var relance: Button
+var agrandir: Button
 var bouton_combat: Button
+var sac: Control
+var haut: Control
+var boutique_ui: Control
+var monture_ui: Control
+var aide_ui: Control
+# Relique tenue : rotation (R ou molette) et case saisie dans sa forme.
+var rot_prise := 0
+var prise := Vector2i.ZERO
+var pose_vue := {}       # apercu de la pose en cours : {cases, ok}
+var case_survolee = null # case du sac sous la souris
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -29,89 +40,140 @@ func _ready() -> void:
 	fond.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	fond.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(fond)
+	# l'echoppe peinte, qui couvre tout l'ecran sans se deformer
+	var peint := TextureRect.new()
+	peint.texture = Palette.image("res://images/boutique_fond.png")
+	peint.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	peint.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	peint.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	peint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(peint)
 
-	var marge := MarginContainer.new()
-	marge.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	for cote in ["left", "right", "top", "bottom"]:
-		marge.add_theme_constant_override("margin_" + cote, 32)
-	add_child(marge)
-	var pile := VBoxContainer.new()
-	pile.add_theme_constant_override("separation", 20)
-	marge.add_child(pile)
+	# le sac : un tapis assemble en tuiles, une par colonne ouverte
+	sac = Tapis.new(self)
+	add_child(sac)
+	for y in Data.NID_H:
+		for x in Data.NID_L:
+			var c := CaseNid.new(self, Vector2i(x, y))
+			cases_ui[c.position_nid] = c
+			sac.add_child(c)
+
 	barre = _titre("")
-	pile.add_child(barre)
-	var colonnes := HBoxContainer.new()
-	colonnes.add_theme_constant_override("separation", 40)
-	colonnes.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	pile.add_child(colonnes)
-
-	colonnes.add_child(_boutique())
-	colonnes.add_child(_grille())
-	colonnes.add_child(_panneau())
+	haut = _cadre(barre)
+	add_child(haut)
+	boutique_ui = _cadre(_boutique())
+	add_child(boutique_ui)
+	monture_ui = _cadre(_panneau())
+	add_child(monture_ui)
+	var aide := Label.new()
+	aide.text = "Glisse une offre sur le tapis pour l'acheter, R ou la molette la tournent. 3 copies fusionnent (★). Ramène une relique à la boutique ou clic droit pour la revendre. Une seule arme."
+	aide.add_theme_font_size_override("font_size", 13)
+	aide.add_theme_color_override("font_color", Palette.TEXTE_DOUX)
+	aide_ui = _cadre(aide)
+	add_child(aide_ui)
+	resized.connect(_placer)
+	_placer()
 	rafraichir()
+
+func _placer() -> void:
+	var marge := 20.0
+	haut.position = Vector2(marge, 14)
+	haut.size = Vector2(size.x - 2 * marge, 0)
+	boutique_ui.position = Vector2(marge, 84)
+	monture_ui.reset_size()
+	monture_ui.position = Vector2(size.x - monture_ui.size.x - marge, 84)
+	aide_ui.reset_size()
+	aide_ui.position = Vector2((size.x - aide_ui.size.x) / 2, size.y - aide_ui.size.y - 6)
+	# le tapis prend la place libre entre les panneaux et l'aide, en cases carrees
+	var dessus := maxf(boutique_ui.position.y + boutique_ui.size.y, monture_ui.position.y + monture_ui.size.y) + 16
+	var dessous := aide_ui.position.y - 12
+	var cote := minf((dessous - dessus) / Data.NID_H, (size.x - 80) / Data.NID_L)
+	var cols := nid.colonnes.duplicate()
+	cols.sort()
+	sac.colonnes = cols
+	sac.cote = cote
+	sac.position = Vector2((size.x - cols.size() * cote) / 2, dessus + (dessous - dessus - Data.NID_H * cote) / 2)
+	sac.size = Vector2(cols.size() * cote, Data.NID_H * cote)
+	for c in cases_ui:
+		var i := cols.find(c.x)
+		cases_ui[c].visible = i >= 0
+		cases_ui[c].position = Vector2(i, c.y) * cote
+		cases_ui[c].size = Vector2(cote, cote)
+	sac.queue_redraw()
+
+# Cadre sombre sous une zone, pour lire le texte sur le fond peint.
+func _cadre(contenu: Control) -> PanelContainer:
+	var c := PanelContainer.new()
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(Palette.FOND, 0.8)
+	style.set_corner_radius_all(6)
+	style.set_content_margin_all(12)
+	c.add_theme_stylebox_override("panel", style)
+	c.mouse_filter = Control.MOUSE_FILTER_PASS
+	c.add_child(contenu)
+	return c
 
 func _titre(texte: String) -> Label:
 	var l := Label.new()
 	l.text = texte
-	l.add_theme_font_size_override("font_size", 22)
+	l.add_theme_font_size_override("font_size", 20)
 	l.add_theme_color_override("font_color", Palette.TEXTE)
 	return l
 
 func _boutique() -> Control:
 	var col := Boutique.new(self)
-	col.add_theme_constant_override("separation", 12)
-	col.add_child(_titre("Boutique"))
+	col.add_theme_constant_override("separation", 8)
 	var g := GridContainer.new()
-	g.columns = 2
+	g.columns = 3
 	g.add_theme_constant_override("h_separation", 8)
-	g.add_theme_constant_override("v_separation", 8)
+	g.add_theme_constant_override("v_separation", 4)
 	for i in Partie.TAILLE_BOUTIQUE:
 		var o := Offre.new(self, i)
 		offres_ui.append(o)
 		g.add_child(o)
 	col.add_child(g)
+	var boutons := HBoxContainer.new()
+	boutons.add_theme_constant_override("separation", 8)
 	relance = Button.new()
+	relance.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	relance.pressed.connect(func():
 		partie.relancer()
 		rafraichir())
-	col.add_child(relance)
-	var aide := Label.new()
-	aide.text = "Glisse une offre dans le Nid pour l'acheter.\n3 copies fusionnent en niveau 2 (★).\nRamène une relique ici ou clic droit\npour la revendre (moitié du prix).\nUne seule arme pour le cavalier."
-	aide.add_theme_color_override("font_color", Palette.TEXTE_DOUX)
-	col.add_child(aide)
-	return col
-
-func _grille() -> Control:
-	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 12)
-	col.add_child(_titre("Nid"))
-	var g := GridContainer.new()
-	g.columns = Data.NID_L
-	g.add_theme_constant_override("h_separation", 6)
-	g.add_theme_constant_override("v_separation", 6)
-	for y in Data.NID_H:
-		for x in Data.NID_L:
-			var c := CaseNid.new(self, Vector2i(x, y))
-			cases_ui[c.position_nid] = c
-			g.add_child(c)
-	col.add_child(g)
+	boutons.add_child(relance)
+	agrandir = Button.new()
+	agrandir.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	agrandir.tooltip_text = "Ouvre une colonne de plus sur le damier."
+	agrandir.pressed.connect(func():
+		partie.agrandir()
+		rafraichir())
+	boutons.add_child(agrandir)
+	col.add_child(boutons)
 	return col
 
 func _panneau() -> Control:
-	var col := VBoxContainer.new()
-	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	col.add_theme_constant_override("separation", 12)
+	var ligne := HBoxContainer.new()
+	ligne.add_theme_constant_override("separation", 12)
 	vue = CreatureVue.new()
-	vue.custom_minimum_size = Vector2(340, 300)
-	col.add_child(vue)
+	vue.custom_minimum_size = Vector2(230, 230)
+	vue.zoom = 0.65
+	vue.clip_contents = true
+	ligne.add_child(vue)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 8)
+	var defile := ScrollContainer.new()
+	defile.custom_minimum_size = Vector2(300, 182)
+	defile.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	infos = _texte()
 	infos.fit_content = true
-	col.add_child(infos)
+	infos.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	defile.add_child(infos)
+	col.add_child(defile)
 	bouton_combat = Button.new()
-	bouton_combat.custom_minimum_size.y = 44
+	bouton_combat.custom_minimum_size.y = 40
 	bouton_combat.pressed.connect(_combattre)
 	col.add_child(bouton_combat)
-	return col
+	ligne.add_child(col)
+	return ligne
 
 func _texte() -> RichTextLabel:
 	var t := RichTextLabel.new()
@@ -124,25 +186,44 @@ func _texte() -> RichTextLabel:
 # --- actions ---------------------------------------------------------------
 
 # depuis : case d'origine si on deplace une relique deja posee, null sinon.
-func deposer(c: Vector2i, id: String, depuis) -> void:
-	if depuis == c or not nid.accepte(c, id, depuis):
-		return
+# depuis : ancre de la relique deplacee, ou null pour poser id directement.
+func deposer(c: Vector2i, id: String, depuis, rot := -1) -> void:
 	if depuis != null:
-		nid.deplacer(depuis, c)
-	else:
+		nid.deplacer(depuis, c, rot)
+	elif nid.accepte(c, id, null):
 		nid.retirer(c)
 		nid.placer(c, id)
 	rafraichir()
 
-func acheter(i: int, c: Vector2i) -> void:
-	partie.acheter(i, c)
+func acheter(i: int, c: Vector2i, rot := 0) -> void:
+	partie.acheter(i, c, rot)
 	rafraichir()
+
+# Pendant qu'on tient une relique : R ou la molette la tournent d'un quart.
+func _input(ev: InputEvent) -> void:
+	if not get_viewport().gui_is_dragging():
+		return
+	var tourne: bool = ev is InputEventKey and ev.pressed and not ev.echo and ev.keycode == KEY_R
+	tourne = tourne or (ev is InputEventMouseButton and ev.pressed and ev.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN])
+	if tourne:
+		rot_prise = (rot_prise + 1) % 4
+		prise = Vector2i.ZERO
+		pose_vue = {}
+		sac.queue_redraw()
+		get_viewport().set_input_as_handled()
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_DRAG_END and sac != null:
+		pose_vue = {}
+		sac.queue_redraw()
 
 func vendre(c: Vector2i) -> void:
 	partie.vendre(c)
 	rafraichir()
 
 func rafraichir() -> void:
+	if sac.colonnes.size() != nid.colonnes.size():
+		_placer()
 	for c in cases_ui:
 		cases_ui[c].queue_redraw()
 	var cr := nid.eclore()
@@ -152,6 +233,9 @@ func rafraichir() -> void:
 		o.queue_redraw()
 	relance.text = "Relancer (%s)" % ("gratuit" if partie.prix_relance() == 0 else "%d or" % partie.prix_relance())
 	relance.disabled = partie.bourse < partie.prix_relance() or partie.terminee()
+	var prix_sac := partie.prix_agrandir()
+	agrandir.text = "Sac complet" if prix_sac < 0 else "Agrandir (%d or)" % prix_sac
+	agrandir.disabled = prix_sac < 0 or partie.bourse < prix_sac or partie.terminee()
 	barre.text = "Acte %d      Or %d      PV de run %d / %d      %s" % [
 		partie.acte + 1, partie.bourse, maxi(partie.pv_run, 0), Partie.PV_RUN, partie.message]
 	if partie.terminee():
@@ -378,8 +462,9 @@ func _affinites(aff: Dictionary) -> String:
 			l.append("%s %d" % [_NOMS_ELEMENTS.get(e, e), aff[e]])
 	return "   ".join(l) if not l.is_empty() else "Aucune affinité"
 
-const _NOMS_ELEMENTS := {"feu": "Feu", "nuit": "Nuit", "terre": "Terre", "vent": "Vent", "nature": "Nature",
-	"glace": "Glace", "aube": "Aube", "crepuscule": "Crépuscule"}
+# Les affinites portent le nom de la Cour de leur element.
+const _NOMS_ELEMENTS := {"nature": "Printemps", "feu": "Été", "automne": "Automne", "glace": "Hiver",
+	"aube": "Aube", "jour": "Jour", "crepuscule": "Crépuscule", "nuit": "Nuit", "terre": "Terre", "vent": "Vent"}
 
 func _combattre() -> void:
 	if partie.terminee():
@@ -389,7 +474,8 @@ func _combattre() -> void:
 
 # --- elements d'interface --------------------------------------------------
 
-static func dessiner_relique(ci: CanvasItem, rect: Rect2, id: String, niv := 1) -> void:
+# nom : false dans le sac, ou l'infobulle donne le nom et l'icone prend toute la case.
+static func dessiner_relique(ci: CanvasItem, rect: Rect2, id: String, niv := 1, nom := true) -> void:
 	var r: Dictionary = Data.RELIQUES[id]
 	var couleurs: Dictionary = Palette.ELEMENTS[r["element"]]
 	var police := ThemeDB.fallback_font
@@ -414,6 +500,8 @@ static func dessiner_relique(ci: CanvasItem, rect: Rect2, id: String, niv := 1) 
 		var x := cadre.position.x + cote + 10
 		ci.draw_multiline_string(police, Vector2(x, cadre.position.y + 22), r["nom"],
 			HORIZONTAL_ALIGNMENT_LEFT, cadre.end.x - x - 4, 12, 2, Palette.TEXTE)
+	elif not nom:
+		_icone(ci, tex, cadre.grow(-6))
 	else:
 		# case du Nid : icone en haut, nom en bas
 		_icone(ci, tex, Rect2(cadre.position + Vector2(8, 6), Vector2(cadre.size.x - 16, cadre.size.y - 34)))
@@ -423,6 +511,44 @@ static func dessiner_relique(ci: CanvasItem, rect: Rect2, id: String, niv := 1) 
 	if niv > 1:
 		ci.draw_string(police, Vector2(rect.position.x, rect.position.y + 20), "★".repeat(niv - 1),
 			HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 16, Color("#f2c94c"))
+
+# Une relique sur ses cases : fond de son element (les cases d'une meme
+# relique se rejoignent), contour a la couleur de sa rarete, icone sur
+# l'ensemble, etoiles de niveau. cote : taille d'une case.
+static func dessiner_forme(ci: CanvasItem, cellules: Array, id: String, niv: int, cote: float, survol := false) -> void:
+	var r: Dictionary = Data.RELIQUES[id]
+	var couleurs: Dictionary = Palette.ELEMENTS[r["element"]]
+	var rarete := Data.rarete(id)
+	var bord: Color = Palette.RARETES[rarete] if rarete != "commun" else couleurs["vif"]
+	var marge := cote * 0.12
+	var boite: Rect2 = cellules[0]
+	for c in cellules:
+		boite = boite.merge(c)
+	for c in cellules:
+		# on ne rentre que sur les cotes qui ne touchent pas une autre case de la relique
+		var g := 0.0 if cellules.has(Rect2(c.position - Vector2(cote, 0), c.size)) else marge
+		var d := 0.0 if cellules.has(Rect2(c.position + Vector2(cote, 0), c.size)) else marge
+		var h := 0.0 if cellules.has(Rect2(c.position - Vector2(0, cote), c.size)) else marge
+		var b := 0.0 if cellules.has(Rect2(c.position + Vector2(0, cote), c.size)) else marge
+		var plein := Rect2(c.position + Vector2(g, h), c.size - Vector2(g + d, h + b))
+		ci.draw_rect(plein, couleurs["fond"].lightened(0.12) if survol else couleurs["fond"])
+		if g > 0.0:
+			ci.draw_line(plein.position, Vector2(plein.position.x, plein.end.y), bord, 2.0)
+		if d > 0.0:
+			ci.draw_line(Vector2(plein.end.x, plein.position.y), plein.end, bord, 2.0)
+		if h > 0.0:
+			ci.draw_line(plein.position, Vector2(plein.end.x, plein.position.y), bord, 2.0)
+		if b > 0.0:
+			ci.draw_line(Vector2(plein.position.x, plein.end.y), plein.end, bord, 2.0)
+	var tex := Palette.icone(id)
+	if tex != null:
+		_icone(ci, tex, boite.grow(-marge - 4))
+	else:
+		ci.draw_string(ThemeDB.fallback_font, Vector2(boite.position.x, boite.get_center().y), r["nom"],
+			HORIZONTAL_ALIGNMENT_CENTER, boite.size.x, 12, Palette.TEXTE)
+	if niv > 1:
+		ci.draw_string(ThemeDB.fallback_font, Vector2(boite.position.x, boite.position.y + marge + 16), "★".repeat(niv - 1),
+			HORIZONTAL_ALIGNMENT_CENTER, boite.size.x, 16, Color("#f2c94c"))
 
 # Icone centree dans la zone, proportions gardees.
 static func _icone(ci: CanvasItem, tex: Texture2D, zone: Rect2) -> void:
@@ -455,7 +581,8 @@ static func bulle(id: String, niv := 1, manque := 0) -> Control:
 	if r.has("famille"):
 		genre = "Arme (%s)" % Data.FAMILLES[r["famille"]]
 	var cour: String = Data.COURS.get(r["element"], _NOMS_ELEMENTS.get(r["element"], "Neutre"))
-	var ligne := "%s, %s" % [Data.NOMS_RARETE[rarete], genre.to_lower()]
+	var taille := Data.empreinte(id).size()
+	var ligne := "%s, %s, %d case%s" % [Data.NOMS_RARETE[rarete], genre.to_lower(), taille, "s" if taille > 1 else ""]
 	var sous := Label.new()
 	sous.text = ligne + "\n" + cour + ("" if r["affinite"] == 0 else ", affinité +%d" % r["affinite"])
 	sous.add_theme_color_override("font_color", Palette.ELEMENTS[r["element"]]["clair"])
@@ -476,17 +603,33 @@ static func bulle(id: String, niv := 1, manque := 0) -> Control:
 		pile.add_child(prix)
 	return pile
 
-static func apercu(id: String) -> Control:
+# Ce qu'on tient sous la souris : la forme de la relique, a la taille des
+# cases du sac, qui tourne avec R ou la molette.
+# Le moteur replace la racine de l'apercu sous la souris a chaque mouvement :
+# la forme est un enfant decale, pour que la case saisie reste sous le curseur.
+func apercu(id: String) -> Control:
+	var racine := Control.new()
+	racine.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var a := Apercu.new()
 	a.id = id
-	a.size = TUILE
+	a.ecran = self
 	a.modulate.a = 0.85
-	return a
+	racine.add_child(a)
+	return racine
 
 class Apercu extends Control:
 	var id := ""
+	var ecran: NidScreen
+	func _process(_d: float) -> void:
+		var cote: float = ecran.sac.cote
+		position = -(Vector2(ecran.prise) * cote + Vector2(cote, cote) / 2)
+		queue_redraw()
 	func _draw() -> void:
-		NidScreen.dessiner_relique(self, Rect2(Vector2.ZERO, size), id)
+		var cote: float = ecran.sac.cote
+		var cellules := []
+		for d in Data.empreinte(id, ecran.rot_prise):
+			cellules.append(Rect2(Vector2(d) * cote, Vector2(cote, cote)))
+		NidScreen.dessiner_forme(self, cellules, id, 1, cote)
 
 class Offre extends Control:
 	var ecran: NidScreen
@@ -499,7 +642,13 @@ class Offre extends Control:
 	func _get_tooltip(_p: Vector2) -> String:
 		return "" if _id() == "" else NidScreen.info(_id())
 	func _make_custom_tooltip(_t: String) -> Object:
-		return NidScreen.bulle(_id(), 1, _manque())
+		var b := NidScreen.bulle(_id(), 1, _manque())
+		if _remplace():
+			var l := Label.new()
+			l.text = "Le cavalier tient déjà une arme : lâche celle-ci sur\nton arme actuelle pour la remplacer (revendue à moitié prix)."
+			l.add_theme_color_override("font_color", Color("#f2c94c"))
+			b.add_child(l)
+		return b
 	func _id() -> String:
 		return ecran.partie.offres[index]
 	func _draw() -> void:
@@ -513,13 +662,28 @@ class Offre extends Control:
 		var prix := ecran.partie.prix_offre(index)
 		var manque := _manque()
 		NidScreen.dessiner_relique(self, rect, _id())
+		# forme de la relique, en petit dans le coin
+		var forme := Data.empreinte(_id())
+		if forme.size() > 1:
+			var bas := Vector2i.ZERO
+			for d in forme:
+				bas = Vector2i(maxi(bas.x, d.x), maxi(bas.y, d.y))
+			var o := Vector2(rect.end.x - 8 - (bas.x + 1) * 8, rect.position.y + 7)
+			for d in forme:
+				draw_rect(Rect2(o + Vector2(d) * 8, Vector2(7, 7)), Palette.TEXTE)
 		var texte := "Offert" if index == ecran.partie.gratuite else "%d or" % prix
+		var remplace := _remplace()
+		if remplace and manque <= 0:
+			texte += ", remplace"
 		if manque > 0:
 			draw_rect(rect.grow(-3), Color(0, 0, 0, 0.6))
 			_cadenas(Vector2(rect.size.y / 2 + 2, rect.size.y / 2 + 2))
 			texte = "%d or, il manque %d" % [prix, manque]
 		draw_string(ThemeDB.fallback_font, Vector2(0, rect.size.y + 15), texte,
 			HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 14, NidScreen.TROP_CHER if manque > 0 else Color("#f2c94c"))
+	# Une arme alors que le cavalier en tient deja une : elle ne peut que remplacer.
+	func _remplace() -> bool:
+		return Data.RELIQUES[_id()]["type"] == "arme" and ecran.nid.arme() != null
 	func _manque() -> int:
 		return maxi(0, ecran.partie.prix_offre(index) - ecran.partie.bourse)
 	func _cadenas(c: Vector2) -> void:
@@ -529,7 +693,9 @@ class Offre extends Control:
 	func _get_drag_data(_p: Vector2) -> Variant:
 		if _id() == "" or ecran.partie.bourse < ecran.partie.prix_offre(index):
 			return null
-		set_drag_preview(NidScreen.apercu(_id()))
+		ecran.rot_prise = 0
+		ecran.prise = Vector2i.ZERO
+		set_drag_preview(ecran.apercu(_id()))
 		return {"id": _id(), "offre": index}
 	# Ramener une relique posee sur la boutique la revend.
 	func _can_drop_data(_p: Vector2, data: Variant) -> bool:
@@ -550,42 +716,112 @@ class Boutique extends VBoxContainer:
 class CaseNid extends Control:
 	var ecran: NidScreen
 	var position_nid: Vector2i
-	var survol := false
 	func _init(e: NidScreen, c: Vector2i) -> void:
 		ecran = e
 		position_nid = c
-		custom_minimum_size = NidScreen.CASE_TAILLE
 		tooltip_text = " "
-		mouse_entered.connect(func(): survol = true; queue_redraw())
-		mouse_exited.connect(func(): survol = false; queue_redraw())
-	func _id():
-		return ecran.nid.cases.get(position_nid)
+		mouse_entered.connect(func(): ecran.case_survolee = position_nid; ecran.sac.queue_redraw())
+		mouse_exited.connect(func():
+			if ecran.case_survolee == position_nid:
+				ecran.case_survolee = null
+			ecran.sac.queue_redraw())
+	# ancre de la relique qui couvre cette case, null si vide
+	func _ancre():
+		return ecran.nid.ancre(position_nid)
 	func _get_tooltip(_p: Vector2) -> String:
-		return "" if _id() == null else NidScreen.info(_id())
+		var a = _ancre()
+		return "" if a == null else NidScreen.info(ecran.nid.cases[a])
 	func _make_custom_tooltip(_t: String) -> Object:
-		return NidScreen.bulle(_id(), ecran.nid.niveau(position_nid))
-	func _draw() -> void:
-		var rect := Rect2(Vector2.ZERO, size)
-		draw_rect(rect, Palette.SURVOL if survol else Palette.CASE)
-		draw_rect(rect, Palette.CASE_BORD, false, 1.0)
-		if _id() != null:
-			NidScreen.dessiner_relique(self, rect.grow(-4), _id(), ecran.nid.niveau(position_nid))
+		var a = _ancre()
+		return null if a == null else NidScreen.bulle(ecran.nid.cases[a], ecran.nid.niveau(a))
 	func _get_drag_data(_p: Vector2) -> Variant:
-		if _id() == null:
+		var a = _ancre()
+		if a == null:
 			return null
-		set_drag_preview(NidScreen.apercu(_id()))
-		return {"id": _id(), "depuis": position_nid}
+		ecran.rot_prise = ecran.nid.rotation(a)
+		ecran.prise = position_nid - a
+		set_drag_preview(ecran.apercu(ecran.nid.cases[a]))
+		return {"id": ecran.nid.cases[a], "depuis": a}
+	# Ou tomberait la relique tenue si on la lachait ici : son ancre, sa
+	# rotation, et si c'est permis. Sur une copie, une offre fusionne.
+	func _pose(data: Dictionary) -> Dictionary:
+		var rot: int = ecran.rot_prise
+		var b: Vector2i = position_nid - ecran.prise
+		if data.has("offre"):
+			var a = _ancre()
+			if a != null and (ecran.nid.cases[a] == data["id"] or ecran.nid.remplace_arme(position_nid, data["id"], rot)):
+				var cases: Array = ecran.nid.cases_de(a) if ecran.nid.cases[a] == data["id"] else ecran.nid.empreinte(a, data["id"], rot)
+				return {"ancre": position_nid, "rot": rot, "ok": ecran.partie.peut_acheter(data["offre"], position_nid, rot), "cases": cases}
+			return {"ancre": b, "rot": rot, "ok": ecran.partie.peut_acheter(data["offre"], b, rot),
+				"cases": ecran.nid.empreinte(b, data["id"], rot)}
+		var ok: bool = (b != data["depuis"] or rot != ecran.nid.rotation(data["depuis"])) and ecran.nid.peut_deplacer(data["depuis"], b, rot)
+		return {"ancre": b, "rot": rot, "ok": ok, "cases": ecran.nid.empreinte(b, data["id"], rot)}
 	func _can_drop_data(_p: Vector2, data: Variant) -> bool:
-		if not data is Dictionary:
+		if not data is Dictionary or not (data.has("offre") or data.has("depuis")):
 			return false
-		if data.has("offre"):
-			return ecran.partie.peut_acheter(data["offre"], position_nid)
-		return data.has("depuis") and ecran.nid.accepte(position_nid, data["id"], data["depuis"])
+		var pose := _pose(data)
+		ecran.pose_vue = pose
+		ecran.sac.queue_redraw()
+		return pose["ok"]
 	func _drop_data(_p: Vector2, data: Variant) -> void:
+		var pose := _pose(data)
 		if data.has("offre"):
-			ecran.acheter(data["offre"], position_nid)
+			ecran.acheter(data["offre"], pose["ancre"], pose["rot"])
 		else:
-			ecran.deposer(position_nid, data["id"], data["depuis"])
+			ecran.deposer(pose["ancre"], data["id"], data["depuis"], pose["rot"])
 	func _gui_input(ev: InputEvent) -> void:
 		if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_RIGHT:
 			ecran.vendre(position_nid)
+
+# Tapis du sac, en tuiles : chaque case prend la tuile dont les bords en cuir
+# correspondent a sa place (haut, droite, bas, gauche du tapis). Une case sur
+# deux est assombrie pour lire la grille.
+# Les tuiles du tapis pour ces colonnes ouvertes (dans l'ordre), cases de
+# cote pixels, a partir de origine. Sert au sac et au Nid en combat.
+const TAPIS_SOMBRE := Color(0.8, 0.75, 0.68)
+
+static func dessiner_tapis(ci: CanvasItem, colonnes: Array, cote: float, origine: Vector2) -> void:
+	var n := colonnes.size()
+	for i in n:
+		for y in Data.NID_H:
+			var bords := ""
+			if y == 0:
+				bords += "H"
+			if i == n - 1:
+				bords += "D"
+			if y == Data.NID_H - 1:
+				bords += "B"
+			if i == 0:
+				bords += "G"
+			var tex := Palette.image("res://images/tapis/%s.png" % (bords if bords != "" else "toile"))
+			var r := Rect2(origine + Vector2(i, y) * cote, Vector2(cote, cote))
+			var teinte := TAPIS_SOMBRE if (colonnes[i] + y) % 2 == 1 else Color.WHITE
+			if tex != null:
+				ci.draw_texture_rect(tex, r, false, teinte)
+			else:
+				ci.draw_rect(r, Color("#d9c9a6") * teinte)
+
+class Tapis extends Control:
+	var ecran: NidScreen
+	var colonnes: Array = []
+	var cote := 100.0
+	func _init(e: NidScreen) -> void:
+		ecran = e
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+	func _draw() -> void:
+		NidScreen.dessiner_tapis(self, colonnes, cote, Vector2.ZERO)
+		var nid := ecran.nid
+		var survolee = nid.ancre(ecran.case_survolee) if ecran.case_survolee != null else null
+		for a in nid.cases:
+			var cellules := []
+			for k in nid.cases_de(a):
+				cellules.append(_rect(k))
+			NidScreen.dessiner_forme(self, cellules, nid.cases[a], nid.niveau(a), cote, a == survolee)
+		# apercu de la pose : vert si permise, rouge sinon
+		if not ecran.pose_vue.is_empty():
+			var couleur := Color(0.4, 0.9, 0.4, 0.35) if ecran.pose_vue["ok"] else Color(0.95, 0.3, 0.25, 0.35)
+			for k in ecran.pose_vue["cases"]:
+				if colonnes.has(k.x) and k.y >= 0 and k.y < Data.NID_H:
+					draw_rect(_rect(k).grow(-cote * 0.06), couleur)
+	func _rect(k: Vector2i) -> Rect2:
+		return Rect2(Vector2(colonnes.find(k.x), k.y) * cote, Vector2(cote, cote))

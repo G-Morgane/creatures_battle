@@ -15,7 +15,9 @@ var combat: Combat
 var vainqueur := -1
 var vues: Array = []
 var lecture := 0.0
-var vitesse := 1.0
+# La vitesse choisie reste pour les combats suivants.
+static var vitesse_retenue := 1.0
+var vitesse := vitesse_retenue
 var prochain := 0          # index du prochain evenement a jouer
 var effets: Array = []     # projectiles et textes flottants en cours
 var fini := false
@@ -75,7 +77,7 @@ func _ready() -> void:
 	boutons.offset_top = -110
 	boutons.offset_bottom = -60
 	boutons.alignment = BoxContainer.ALIGNMENT_CENTER
-	bouton_vitesse = _bouton("Vitesse x1", _changer_vitesse)
+	bouton_vitesse = _bouton("Vitesse x%d" % vitesse, _changer_vitesse)
 	boutons.add_child(bouton_vitesse)
 	boutons.add_child(_bouton("Rejouer", _rejouer))
 	bouton_recap = _bouton("Récap", func(): recap.visible = not recap.visible)
@@ -104,8 +106,8 @@ func _placer() -> void:
 	var milieu := size.y * 0.52
 	vues[0].position = Vector2(size.x * 0.27 - 220, milieu - 190)
 	vues[1].position = Vector2(size.x * 0.73 - 220, milieu - 190)
-	nids[0].position = Vector2(24, size.y - MiniNid.COTE - 64)
-	nids[1].position = Vector2(size.x - MiniNid.COTE - 24, size.y - MiniNid.COTE - 64)
+	nids[0].position = Vector2(24, size.y - nids[0].size.y - 38)
+	nids[1].position = Vector2(size.x - nids[1].size.x - 24, size.y - nids[1].size.y - 38)
 	recap.position = (size - recap.size) / 2 - Vector2(0, 30)
 
 # x1, x2, x3, puis retour a x1. Le bouton affiche la vitesse en cours.
@@ -113,6 +115,7 @@ const VITESSES := [1.0, 2.0, 3.0]
 
 func _changer_vitesse() -> void:
 	vitesse = VITESSES[(VITESSES.find(vitesse) + 1) % VITESSES.size()]
+	vitesse_retenue = vitesse
 	bouton_vitesse.text = "Vitesse x%d" % vitesse
 
 func _rejouer() -> void:
@@ -405,64 +408,79 @@ func _brulure(v: CreatureVue) -> void:
 # Le Nid d'un cote, en petit : chaque relique a sorts se remplit avec sa
 # recharge et s'allume quand elle part. Survol : l'infobulle de la relique.
 class MiniNid extends Control:
-	const CASE := 44.0
-	const ECART := 4.0
-	const COTE := CASE * 4 + ECART * 3
+	const ECART := 0.0   # cases jointives, comme le tapis du sac
 	var ecran: CombatScreen
 	var cote: int
 	var cr: Dictionary
 	var sort_de := {}   # case -> index du sort
+	var colonnes: Array  # colonnes ouvertes du sac, dans l'ordre du damier
+	var CASE := 44.0
 	func _init(e: CombatScreen, i: int) -> void:
 		ecran = e
 		cote = i
 		cr = e.combat.cotes[i]["cr"]
 		for k in cr["sorts"].size():
 			sort_de[cr["sorts"][k]["case"]] = k
-		size = Vector2(COTE, COTE + 26)
+		colonnes = cr.get("colonnes", range(Data.NID_L)).duplicate()
+		colonnes.sort()
+		# un grand sac prend des cases plus petites
+		CASE = 48.0 if colonnes.size() <= 4 else 36.0
+		size = Vector2(colonnes.size() * (CASE + ECART) - ECART, Data.NID_H * (CASE + ECART) - ECART + 26)
 		tooltip_text = " "
-	func _case_sous(p: Vector2):
-		var c := Vector2i(int(p.x / (CASE + ECART)), int((p.y - 26) / (CASE + ECART)))
-		return c if cr["cases"].has(c) else null
+	# Cases de la relique d'ancre a (sa forme si le sac en a).
+	func _cases(a: Vector2i) -> Array:
+		if not cr.get("encombrement", false):
+			return [a]
+		return Data.empreinte(cr["cases"][a], cr["rotations"].get(a, 0)).map(func(d): return a + d)
+	func _ancre_sous(p: Vector2):
+		var i := int(p.x / (CASE + ECART))
+		if p.y < 26 or i < 0 or i >= colonnes.size():
+			return null
+		var c := Vector2i(colonnes[i], int((p.y - 26) / (CASE + ECART)))
+		for a in cr["cases"]:
+			if c in _cases(a):
+				return a
+		return null
 	func _get_tooltip(p: Vector2) -> String:
-		var c = _case_sous(p)
-		return "" if c == null else NidScreen.info(cr["cases"][c])
+		var a = _ancre_sous(p)
+		return "" if a == null else NidScreen.info(cr["cases"][a])
 	func _make_custom_tooltip(_t: String) -> Object:
-		var c = _case_sous(get_local_mouse_position())
-		return null if c == null else NidScreen.bulle(cr["cases"][c], cr["niveaux"].get(c, 1))
+		var a = _ancre_sous(get_local_mouse_position())
+		return null if a == null else NidScreen.bulle(cr["cases"][a], cr["niveaux"].get(a, 1))
 	func _process(_d: float) -> void:
 		queue_redraw()
+	# Case du sac -> rectangle a l'ecran, agrandi de la moitie de l'ecart pour
+	# que les cases d'une meme relique se touchent.
+	func _rect(c: Vector2i) -> Rect2:
+		var pas := CASE + ECART
+		return Rect2(Vector2(colonnes.find(c.x), c.y) * pas + Vector2(0, 26), Vector2(CASE, CASE)).grow(ECART / 2)
 	func _draw() -> void:
 		var police := ThemeDB.fallback_font
 		draw_rect(Rect2(-8, -4, size.x + 16, size.y + 12), Color(Palette.FOND, 0.7))
 		draw_string(police, Vector2(0, 16), "Ton Nid" if cote == 0 else "Nid adverse", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Palette.TEXTE)
+		NidScreen.dessiner_tapis(self, colonnes, CASE, Vector2(0, 26))
 		var prog := ecran.recharges(cote)
-		for y in Data.NID_H:
-			for x in Data.NID_L:
-				var c := Vector2i(x, y)
-				var r := Rect2(Vector2(x, y) * (CASE + ECART) + Vector2(0, 26), Vector2(CASE, CASE))
-				if not cr["cases"].has(c):
-					draw_rect(r, Color(Palette.CASE, 0.8))
-					continue
-				var id: String = cr["cases"][c]
-				var el: Dictionary = Palette.ELEMENTS[Data.RELIQUES[id]["element"]]
-				draw_rect(r, el["fond"])
-				var tex := Palette.icone(id)
-				if tex != null:
-					var k := minf((CASE - 6) / tex.get_width(), (CASE - 6) / tex.get_height())
-					var t := tex.get_size() * k
-					draw_texture_rect(tex, Rect2(r.get_center() - t / 2, t), false)
-				# recharge : la case se devoile de bas en haut, et s'allume au depart
-				if sort_de.has(c):
-					var p: float = prog[sort_de[c]]
-					if p >= 0.0:
-						draw_rect(Rect2(r.position, Vector2(CASE, CASE * (1.0 - p))), Color(0, 0, 0, 0.55))
+		for a in cr["cases"]:
+			var id: String = cr["cases"][a]
+			var cellules := []
+			for c in _cases(a):
+				cellules.append(_rect(c))
+			NidScreen.dessiner_forme(self, cellules, id, cr["niveaux"].get(a, 1), CASE + ECART)
+			# recharge : une seule jauge pour toute la relique, qui se devoile de bas
+			# en haut sur sa hauteur entiere, et la relique s'allume au depart
+			if sort_de.has(a):
+				var p: float = prog[sort_de[a]]
+				if p >= 0.0:
+					var boite: Rect2 = cellules[0]
+					for r in cellules:
+						boite = boite.merge(r)
+					var ombre := Rect2(boite.position, Vector2(boite.size.x, boite.size.y * (1.0 - p)))
+					for r in cellules:
+						var morceau: Rect2 = r.grow(-ECART / 2).intersection(ombre)
+						if morceau.has_area():
+							draw_rect(morceau, Color(0, 0, 0, 0.55))
 						if p < 0.12:
-							draw_rect(r.grow(2), el["clair"], false, 3.0)
-				var rarete := Data.rarete(id)
-				draw_rect(r, Palette.RARETES[rarete] if rarete != "commun" else el["vif"], false, 1.5)
-				var niv: int = cr["niveaux"].get(c, 1)
-				if niv > 1:
-					draw_string(police, r.position + Vector2(2, 12), "★".repeat(niv - 1), HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color("#f2c94c"))
+							draw_rect(r.grow(-ECART / 2), Color(Palette.ELEMENTS[Data.RELIQUES[id]["element"]]["clair"], 0.45))
 
 # --- recap -----------------------------------------------------------------
 

@@ -6,22 +6,74 @@ extends RefCounted
 
 const VOISINAGE := [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 
-var cases := {}     # Vector2i -> id de relique
-var niveaux := {}   # Vector2i -> niveau, absent = 1
+var cases := {}     # ancre (coin haut gauche) -> id de relique
+var niveaux := {}   # ancre -> niveau, absent = 1
+var rotations := {} # ancre -> quarts de tour, absent = 0
+# true : chaque relique occupe sa forme (en partie). false : une case chacune,
+# pour les Nids d'exemple et les tests de mecanique.
+var encombrement := false
+# Colonnes du damier ou l'on peut poser. Toutes par defaut ; une partie
+# commence au centre et en ouvre d'autres.
+var colonnes: Array = range(Data.NID_L)
+
+func ouverte(c: Vector2i) -> bool:
+	return c.y >= 0 and c.y < Data.NID_H and c.x in colonnes
+
+func places() -> int:
+	return colonnes.size() * Data.NID_H
 
 func niveau(c: Vector2i) -> int:
 	return niveaux.get(c, 1)
 
-func placer(c: Vector2i, id: String, niv := 1) -> bool:
-	if c.x < 0 or c.y < 0 or c.x >= Data.NID_L or c.y >= Data.NID_H:
+func rotation(c: Vector2i) -> int:
+	return rotations.get(c, 0)
+
+# --- formes ------------------------------------------------------------------
+
+# Cases couvertes par id pose en ancre c, tourne de rot.
+func empreinte(c: Vector2i, id: String, rot := 0) -> Array:
+	if not encombrement:
+		return [c]
+	return Data.empreinte(id, rot).map(func(d): return c + d)
+
+func cases_de(a: Vector2i) -> Array:
+	return empreinte(a, cases[a], rotation(a))
+
+# Case -> ancre de la relique qui la couvre.
+func occupation() -> Dictionary:
+	var o := {}
+	for a in cases:
+		for c in cases_de(a):
+			o[c] = a
+	return o
+
+# Ancre de la relique qui couvre c, null si c est vide.
+func ancre(c: Vector2i):
+	return occupation().get(c)
+
+func dupliquer() -> Nid:
+	var n := Nid.new()
+	n.cases = cases.duplicate()
+	n.niveaux = niveaux.duplicate()
+	n.rotations = rotations.duplicate()
+	n.colonnes = colonnes.duplicate()
+	n.encombrement = encombrement
+	return n
+
+func placer(c: Vector2i, id: String, niv := 1, rot := 0) -> bool:
+	if not Data.RELIQUES.has(id):
 		return false
-	if cases.has(c) or not Data.RELIQUES.has(id):
-		return false
+	var occ := occupation()
+	for k in empreinte(c, id, rot):
+		if not ouverte(k) or occ.has(k):
+			return false
 	if Data.RELIQUES[id]["type"] == "arme" and arme() != null:
 		return false
 	cases[c] = id
 	if niv > 1:
 		niveaux[c] = niv
+	if rot % 4 != 0 and encombrement:
+		rotations[c] = rot % 4
 	return true
 
 # --- fusion ----------------------------------------------------------------
@@ -48,41 +100,89 @@ func fusionner(c: Vector2i) -> bool:
 		fusion = true
 	return fusion
 
-# Poser id en c : case vide, ou case qui porte deja la meme relique au niveau 1
-# si cette pose complete un trio (utile quand le Nid est plein).
-func peut_ajouter(c: Vector2i, id: String) -> bool:
-	if not cases.has(c):
-		return accepte(c, id, null) and c.x >= 0 and c.y >= 0 and c.x < Data.NID_L and c.y < Data.NID_H
-	return cases[c] == id and niveau(c) == 1 and peut_fusionner(id, 1) and copies(id, 1).size() >= 2
+# Poser id en c (tourne de rot) : sur des cases libres, ou sur une case d'une
+# copie de niveau 1 si cette pose complete un trio (utile quand le sac est plein).
+func peut_ajouter(c: Vector2i, id: String, rot := 0) -> bool:
+	var a = ancre(c)
+	if a != null:
+		return _complete_trio(a, id) or remplace_arme(c, id, rot)
+	return dupliquer().placer(c, id, 1, rot)
 
-func ajouter(c: Vector2i, id: String) -> bool:
-	if not peut_ajouter(c, id):
+func _complete_trio(a: Vector2i, id: String) -> bool:
+	return cases[a] == id and niveau(a) == 1 and peut_fusionner(id, 1) and copies(id, 1).size() >= 2
+
+# Une arme lachee sur l'arme en place (n'importe laquelle de ses cases) la
+# remplace, si elle tient a sa place.
+func remplace_arme(c: Vector2i, id: String, rot := 0) -> bool:
+	var a = ancre(c)
+	if a == null or cases[a] == id or Data.RELIQUES[id]["type"] != "arme" or Data.RELIQUES[cases[a]]["type"] != "arme":
 		return false
-	if not cases.has(c):
-		placer(c, id)
+	var n := dupliquer()
+	n.retirer(a)
+	return n.placer(a, id, 1, rot)
+
+func ajouter(c: Vector2i, id: String, rot := 0) -> bool:
+	if not peut_ajouter(c, id, rot):
+		return false
+	var a = ancre(c)
+	if a == null:
+		placer(c, id, 1, rot)
 		fusionner(c)
 		return true
+	if not _complete_trio(a, id):
+		retirer(a)
+		placer(a, id, 1, rot)
+		return true
 	# la pose sur une copie compte comme la troisieme : on en retire une autre
-	retirer(copies(id, 1).filter(func(a): return a != c)[0])
-	niveaux[c] = 2
-	fusionner(c)
+	retirer(copies(id, 1).filter(func(k): return k != a)[0])
+	niveaux[a] = 2
+	fusionner(a)
 	return true
 
-# Echange deux cases (ou deplace si b est vide), niveaux compris.
-func deplacer(a: Vector2i, b: Vector2i) -> void:
-	var ida = cases.get(a)
-	var idb = cases.get(b)
+# Deplace la relique d'ancre a vers l'ancre b (tournee de rot, -1 : sans la
+# tourner). Si la place est prise par une seule autre relique, les deux
+# s'echangent quand l'autre tient a la place laissee. Renvoie false sinon,
+# sans rien changer.
+func deplacer(a: Vector2i, b: Vector2i, rot := -1) -> bool:
+	if not cases.has(a):
+		return false
+	var id: String = cases[a]
 	var na := niveau(a)
-	var nb := niveau(b)
+	var ra := rotation(a) if rot < 0 else rot
+	var occ := occupation()
+	var autres := {}
+	for k in empreinte(b, id, ra):
+		if not ouverte(k):
+			return false
+		if occ.has(k) and occ[k] != a:
+			autres[occ[k]] = true
+	if autres.size() > 1:
+		return false
+	var avant := dupliquer()
 	retirer(a)
-	retirer(b)
-	if ida != null:
-		placer(b, ida, na)
-	if idb != null:
-		placer(a, idb, nb)
+	if autres.is_empty():
+		if placer(b, id, na, ra):
+			return true
+	else:
+		var o: Vector2i = autres.keys()[0]
+		var ido: String = cases[o]
+		var no := niveau(o)
+		var ro := rotation(o)
+		retirer(o)
+		if placer(b, id, na, ra) and placer(a, ido, no, ro):
+			return true
+	cases = avant.cases
+	niveaux = avant.niveaux
+	rotations = avant.rotations
+	return false
+
+func peut_deplacer(a: Vector2i, b: Vector2i, rot := -1) -> bool:
+	return dupliquer().deplacer(a, b, rot)
 
 # Deposer id en c, venant de depuis (ou du reliquaire si null), est-il permis ?
 func accepte(c: Vector2i, id: String, depuis) -> bool:
+	if not ouverte(c):
+		return false
 	if Data.RELIQUES[id]["type"] != "arme":
 		return true
 	for a in cases:
@@ -100,12 +200,17 @@ func arme():
 func retirer(c: Vector2i) -> void:
 	cases.erase(c)
 	niveaux.erase(c)
+	rotations.erase(c)
 
+# Ancres des reliques qui touchent celle d'ancre c (ou la case vide c) par un cote.
 func voisins(c: Vector2i) -> Array:
+	var occ := occupation()
 	var v := []
-	for d in VOISINAGE:
-		if cases.has(c + d):
-			v.append(c + d)
+	for k in (cases_de(c) if cases.has(c) else [c]):
+		for d in VOISINAGE:
+			var o = occ.get(k + d)
+			if o != null and o != c and not o in v:
+				v.append(o)
 	return v
 
 func affinites() -> Dictionary:
@@ -287,6 +392,9 @@ func eclore() -> Dictionary:
 	# pour l'arene : le Nid tel qu'il etait, et ses niveaux
 	cr["cases"] = cases.duplicate()
 	cr["niveaux"] = niveaux.duplicate()
+	cr["colonnes"] = colonnes.duplicate()
+	cr["rotations"] = rotations.duplicate()
+	cr["encombrement"] = encombrement
 	return cr
 
 # Un sort lit ses catalyseurs voisins au moment de l'eclosion.

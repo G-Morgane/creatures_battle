@@ -62,6 +62,35 @@ Génération (`scripts/carte.gd`) : le premier étage est fait de Duels, l'étag
 Feux de camp. Ailleurs, tirage pondéré : Duel 50, Rencontre 22, Élite 12, Marché 8, Feu 8. Pas
 d'Élite avant le 5e étage du premier acte, pas de Feu avant le 5e étage.
 
+### Le sac
+
+Le Nid est un **tapis de 8 colonnes sur 4 rangées**. Une run commence sur les **4 colonnes du
+centre** (16 cases) et s'agrandit d'une colonne à la fois, en alternant les côtés :
+- en boutique, bouton « Agrandir » : 8, 12, 16 puis 20 or (comme l'expérience de TFT) ;
+- gratuitement, une colonne après chaque boss battu (actes 1 et 2).
+
+À l'écran, le tapis est assemblé en tuiles (`images/tapis`, découpées de `damier_items.png`) :
+chaque case prend la tuile dont les bords en cuir correspondent à sa place, et une case sur deux
+est assombrie.
+
+### Formes des reliques
+
+Chaque relique occupe une **forme** dans le sac (`Data.empreinte`) :
+- **armes, selon leur famille** : Hast, Faux et Bâton en 1 x 3, Tir et Lame en 1 x 2, Hache en 2 x 2 ;
+- **les autres, selon leur rareté** : commun 1 case, rare 2 cases en ligne, épique 3 cases en L,
+  légendaire 2 x 2 ;
+- des exceptions à la main dans `FORMES_OBJETS`, pour coller à une image.
+
+Plus une relique est rare, plus elle prend de place : son pouvoir se paie en cases, ce qui donne
+son sens à l'agrandissement du sac. On **tourne** une relique tenue avec R ou la molette ; un
+aperçu vert ou rouge montre où elle tomberait. Un catalyseur renforce toutes les reliques qui
+touchent **n'importe laquelle** de ses cases : une grande relique a plus de voisines.
+Déplacer une relique sur une autre les échange si l'autre tient à la place laissée.
+
+Les Nids d'exemple et les tests de mécanique gardent une case par relique (`encombrement`
+désactivé) ; la partie l'active. Simulation (100 runs) : joueur simple 30 % de runs gagnées,
+inchangé.
+
 ### Boutique entre chaque nœud
 
 Comme dans TFT : **après chaque nœud, la boutique est ouverte mais facultative**. On achète,
@@ -206,31 +235,34 @@ Chaque relique donne des points d'**affinité** dans un élément.
 
 - **Élément dominant** : fixe la forme de base, son identité de jeu et un passif.
 
-### Les sept Cours
+### Les huit Cours
 
-| Cour | Monture | Identité | Ce qui la rend unique |
-|---|---|---|---|
-| Printemps | Cerf | Épines, poison | Punit qui le frappe (épines), poison qui s'accumule |
-| Été | Raie | Illusion, mer | Crée des **leurres** qui absorbent des coups. À concevoir |
-| Automne | Phénix | Brûlure, combustion, hâte | Dégâts sur la durée, attaque de plus en plus vite |
-| Hiver | Loup | Givre, gel, bouclier qui se brise | Le gel **bloque les recharges** adverses |
-| Jour | Papillon | Transfert | **Vole les bonus** adverses et **renvoie ses malus** ; projectile d'arcane sinon |
-| Nuit | Chauve-souris | Vol de vie, malédictions | Se soigne en frappant, affaiblit l'adversaire |
-| Aube | Lion | Soin, Éclat | Le soin se stocke en Éclat, qui frappe |
+Quatre saisons et quatre moments du jour.
 
-Dans le code, les éléments gardent leurs anciens noms pour l'instant
-(nature, lumiere, feu, glace, crepuscule, nuit, aube). **Vent (Cheval) et Terre (Tortue) sont
-retirés** de la conception ; leurs objets restent dans le code jusqu'à la refonte.
+| Cour | Monture | Élément (code) | Identité | Ce qui la rend unique |
+|---|---|---|---|---|
+| Printemps | Cerf | nature | Épines, poison | Punit qui le frappe (épines), poison qui s'accumule |
+| Été | Phénix | feu | Brûlure, combustion, hâte | Dégâts sur la durée, attaque de plus en plus vite, renaît une fois |
+| Automne | Renard | automne | À concevoir | Monture prête, set à concevoir |
+| Hiver | Ours | glace | Givre, gel, bouclier qui se brise | Le gel **bloque les recharges** adverses |
+| Aube | Lion | aube | Soin, Éclat | Le soin se stocke en Éclat, qui frappe |
+| Jour | Paon | jour | À concevoir | Monture prête, set à concevoir |
+| Crépuscule | Papillon | crepuscule | Transfert | **Vole les bonus** adverses et **renvoie ses malus** ; projectile d'arcane sinon |
+| Nuit | Chauve-souris | nuit | Vol de vie, malédictions | Se soigne en frappant, affaiblit l'adversaire |
+
+L'Ours a remplacé le Loup (même set). La Raie et la Lumière sont abandonnées. **Vent (Cheval)
+et Terre (Tortue) sont retirés** de la conception ; leurs objets restent dans le code jusqu'à
+la refonte. À l'écran, les affinités portent le nom de la Cour (« Été 7 »).
 
 Paires à garder distinctes :
-- **Hiver / Jour** : l'Hiver ralentit la machine adverse, le Jour retourne ses effets contre elle.
+- **Hiver / Crépuscule** : l'Hiver ralentit la machine adverse, le Crépuscule retourne ses effets contre elle.
 - **Aube / Printemps** : l'Aube soigne, le Printemps punit.
 
-Le Jour n'a de sens que face à un build qui a des bonus ou des malus à voler :
+Le Crépuscule n'a de sens que face à un build qui a des bonus ou des malus à voler :
 contre un build d'attaques brutes, il reste correct grâce au projectile d'arcane.
 
 - **Hybride** (plus tard) : deux éléments au-dessus d'un seuil donnent une forme mixte
-  (Feu + Nuit : Wyverne cendrée, Glace + Nature : Ours de toundra...).
+  (Feu + Nuit : Wyverne cendrée, Glace + Nature : Cerf de givre...).
   Plus de variété de sorts, passif plus faible. Pur = spécialisé et fort.
 - **Aucune affinité** : créature informe, sans passif.
 
@@ -327,17 +359,17 @@ croisés, objets neutres utiles sans être universels, style lisible quel que so
 |---|---|---|
 | Tir | Rapide, plusieurs petits coups | armes du Cerf, armes du Papillon |
 | Lame | Rapide, riposte, **coups critiques** | Dague d'épine, Serpe de ronces, armes de la Nuit |
-| Hast | Allonge, perce l'esquive | Lance du guet (neutre), armes du Loup, armes du Papillon |
-| Hache | Lent, gros coup | armes du Loup, du Lion |
+| Hast | Allonge, perce l'esquive | Lance du guet (neutre), armes de l'Ours, armes du Papillon |
+| Hache | Lent, gros coup | armes de l'Ours, du Lion |
 | Bâton | Magie, grandit avec l'affinité | armes du Phénix, du Lion |
 | Faux | Achève les cibles affaiblies | Faux de tison, Faux des cendres, armes de la Nuit |
 
-Familles par Cour : **Printemps (Cerf) : Tir et Lame. Hiver (Loup) : Hast et Hache. Automne (Phénix) : Bâton et Faux.
-Nuit : Faux et Lame. Aube (Lion) : Bâton et Hache. Jour (Papillon) : Tir et Hast.**
+Familles par Cour : **Printemps (Cerf) : Tir et Lame. Hiver (Ours) : Hast et Hache. Été (Phénix) : Bâton et Faux.
+Nuit : Faux et Lame. Aube (Lion) : Bâton et Hache. Crépuscule (Papillon) : Tir et Hast.**
 
-Sans Vent ni Terre, 7 Cours à 2 familles donnent 14 places pour 6 familles. Il reste deux
-familles pour l'Été (la Raie). Avec Tir et Faux, ces deux familles passent à 3 Cours et les
-autres restent à 2.
+Huit Cours à 2 familles donnent 16 places pour 6 familles. Les six Cours actuelles en prennent
+12, chaque famille à 2 Cours. Restent 4 places pour l'Automne (Renard) et le Jour (Paon) :
+quatre familles passeront à 3 Cours.
 
 **Coups critiques** : identité de la famille Lame. Un crit fait **x1,75** de dégâts ; les chances
 viennent des armes Lame et de certains objets (aucune chance de base). Les Lames du Cerf
@@ -347,18 +379,18 @@ viennent des armes Lame et de certains objets (aucune chance de base). Les Lames
 lequel jouera un futur objet neutre. Chaque élément y ajoute sa saveur : le feu pour le Phénix,
 le drain et les malédictions pour la Nuit.
 
-### Hiver (Loup) : givre et bouclier qui se brise
+### Hiver (Ours) : givre et bouclier qui se brise
 
-**Fait** (images de `images/`). Chiffres de départ : passif du Loup, 1 charge de givre par attaque
-et **+50 % de dégâts contre une cible gelée** (le gel est une fenêtre d'attaque, sinon le Loup
+**Fait** (images de `images/`). Chiffres de départ : passif de l'Ours, 1 charge de givre par attaque
+et **+50 % de dégâts contre une cible gelée** (le gel est une fenêtre d'attaque, sinon l'Ours
 jouait comme une seconde Tortue : combats de 24 à 40 s, trop peu de dégâts) ; Armure de givre
 6 + 1 par point de Glace ; Éclat de givre 20 ; Javelot 8 ; Écorce 20 de bouclier 3 s après un bris ;
 Cœur de banquise 25 ; Noyau 20 ; Rose des neiges 3 charges de moins.
 
-Là où la Tortue veut que son bouclier tienne, **le Loup veut qu'il se brise** : chaque bris
+Là où la Tortue veut que son bouclier tienne, **l'Ours veut qu'il se brise** : chaque bris
 déclenche des effets. C'est le même bouclier que la Terre (plus simple à lire) : les hybrides
 Terre et Glace sont à surveiller en simulation. Le poison du Cerf passe à travers le bouclier
-sans le briser : le Loup souffre contre la Nature, c'est voulu.
+sans le briser : l'Ours souffre contre la Nature, c'est voulu.
 
 Règles du givre :
 - Chaque **charge de givre** ralentit les attaques **et** les recharges de sorts de la cible
@@ -393,7 +425,7 @@ Règles du givre :
 
 ---
 
-### Automne (Phénix) : brûlure, combustion, Braise
+### Été (Phénix) : brûlure, combustion, Braise
 
 **Fait** (images de `images/`). Chiffres de départ : brûlure 1,5 dégât par charge et par seconde,
 4 s par charge, 50 charges au plus ; combustion 4 par charge consumée (x1,5 si totale) ; Braise
@@ -415,7 +447,7 @@ Règles :
 - **Combustion** : consume les brûlures de la cible pour des dégâts immédiats.
   *Partielle* : la moitié des charges. *Totale* : toutes, avec un bonus.
 - **Braise = hâte** : +1 Braise à chaque combustion déclenchée (jusqu'à 10), chaque point
-  accélère attaques et recharges de sorts. C'est l'inverse du givre du Loup, les deux se
+  accélère attaques et recharges de sorts. C'est l'inverse du givre de l'Ours, les deux se
   compensent. (Le crit reste à concevoir, pour une autre famille ou un autre élément.)
 - **Renaissance** (passif) : une fois, à 25 % de PV.
 
@@ -470,7 +502,7 @@ Lune creuse). Passif de la Chauve-souris inchangé : vol de vie sur les attaques
 Règles des malédictions :
 - **Faiblesse** : la cible inflige moins de dégâts.
 - **Langueur** : la cible attaque moins vite (attaques seulement, pas les sorts ; pourcentage fixe
-  et durée limitée, là où le givre du Loup s'accumule, touche aussi les sorts et finit en gel).
+  et durée limitée, là où le givre de l'Ours s'accumule, touche aussi les sorts et finit en gel).
 - **Flétrissure** : la cible reçoit moins de soins (réduction, là où la Belladone du Cerf bloque
   tout soin, mais seulement sur une cible empoisonnée).
 - **Durée : 6 s**, renouvelée si on la réapplique. Sans le Chapelet, une malédiction ne compte
@@ -555,7 +587,7 @@ Règles :
 Points à surveiller : la **Vasque** crée un pont avec la Terre et la Glace (bouclier, effets de bris) ;
 le Lion est contré par la Nature (Belladone) et la Nuit (Flétrissure), adouci par la règle ci-dessus.
 
-### Jour (Papillon) : Transfert
+### Crépuscule (Papillon) : Transfert
 
 **Fait** (images de `images/`). Chaque source de Transfert a une **puissance** : quantité volée,
 et dégâts du projectile d'arcane quand il n'y a rien à déplacer. Battement d'ailes 10 + 0,5 par
@@ -572,7 +604,7 @@ Règles :
 - **Malus qu'on renvoie** : poison, brûlure, givre, malédictions.
 - **Bonus qu'on vole** : bouclier, Braise (hâte), jauge d'Éclat, bonus d'épines.
 - **Transfert** : déplacer un malus vers l'adversaire, ou lui prendre un bonus. C'est le
-  déclencheur commun du set (« à chaque Transfert »), comme le bris de bouclier pour le Loup.
+  déclencheur commun du set (« à chaque Transfert »), comme le bris de bouclier pour l'Ours.
 - **Passif du Papillon** : *un Transfert sans rien à voler ni à renvoyer lance un projectile
   d'arcane* (une petite comète violet et orangé). Le Papillon n'est jamais à vide : contre un
   build chargé d'effets il vole et renvoie, contre un build brut il tire de l'arcane.
@@ -609,8 +641,7 @@ gagné. À tester avec prudence en simulation.
 | Légendaire | Lance de l'entre-deux | Hast | Chaque coup échange un bonus de la cible contre un de tes malus |
 
 Pistes d'apparence : poussière d'écailles irisées, violets et orangés du soleil couchant, cocons,
-antennes, ailes de phalène, lune basse. **Pas de miroirs ni de reflets**, gardés pour la Lumière
-(la Raie, l'illusion).
+antennes, ailes de phalène, lune basse.
 
 ## 6. Pas d'avantage élémentaire
 
@@ -639,12 +670,12 @@ On adapte son Nid à ce qu'on affronte, pas à une couleur.
 
 ## 8. Prototype (périmètre actuel)
 
-- 6 Cours au format 15 objets : Printemps, Hiver, Automne, Nuit, Aube, Jour ; 1 arme neutre
-  (Lance du guet). Reste l'Été (Raie). Vent et Terre sont encore dans le code, à retirer.
+- 6 Cours au format 15 objets : Printemps, Été, Hiver, Aube, Crépuscule, Nuit ; 1 arme neutre
+  (Lance du guet). Restent l'Automne (Renard) et le Jour (Paon), montures prêtes. Vent et Terre sont encore dans le code, à retirer.
 - Run sur carte : 3 actes de 10 étages, PV de run, boutique facultative entre les nœuds,
   trois rencontres. Élites et boss sont encore des fantômes en avance.
 - Arène : vitesse x1, x2 ou x3.
-- Nid 4 x 4, reliques d'une case. **Les formes de reliques (2 x 1, L...) viendront après.**
+- Sac de 4 à 8 colonnes sur 4 rangées, reliques à formes (1 à 4 cases), rotation.
 - Pas d'hybride, pas de réseau. Rareté en place.
 - Boutique, manches, combat animé contre un adversaire généré, fin de partie.
 
@@ -655,7 +686,7 @@ donne envie de refaire un Nid ? Si non, rien d'autre ne compte.
 
 ## 9. Plus tard
 
-- Formes de reliques et rotation.
+- Formes à la main pour les objets dont l'image le demande (`FORMES_OBJETS`).
 - Une image pour la Serpe de ronces (le Fouet a été remplacé).
 - Objets neutres qui visent une famille d'armes.
 - Glace, les quatre moments du jour, et les hybrides.

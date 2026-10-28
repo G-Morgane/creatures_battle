@@ -204,11 +204,20 @@ const MASQUES := {
 }
 
 # image de la bete (fond transparent) -> element
-const MONTURES := {"cerf": "nature", "loup": "glace", "phenix": "feu", "chauvesouris": "nuit", "lion": "aube", "papillon": "crepuscule", "cheval": "vent", "tortue": "terre"}
+# (l'Ours a remplace le Loup ; Renard et Paon attendent leur set)
+const MONTURES := {"cerf": "nature", "ours_hiver": "glace", "phenix": "feu", "chauvesouris": "nuit", "lion": "aube", "papillon": "crepuscule",
+	"renad_automne": "automne", "paon_jour": "jour", "cheval": "vent", "tortue": "terre"}
 
 # Icones de la carte : planche a fond transparent, coupee en trois tiers egaux.
 const CARTE := ["duel", "rencontre", "elite"]
 const TAILLE_CARTE := 160
+
+# Tapis du sac : 16 tuiles (4 x 4), une par combinaison de bords en cuir.
+# Chaque tuile est reperee (boite opaque), ses bords lus (cuir sombre ou toile
+# claire au milieu de chaque cote), puis rognee pour ote le liseré et mise au carre.
+const TAPIS_RANGEES := [0, 310, 595, 875, 1215]
+const TAPIS_ROGNE := 4
+const TAILLE_TAPIS := 240
 
 # Poussieres : ilots opaques isoles plus petits que cette aire (en pixels, avant reduction).
 const POUSSIERE_ICONE := 40
@@ -257,9 +266,47 @@ func _initialize() -> void:
 		_reduire(ic, TAILLE_CARTE)
 		ic.save_png("res://images/carte/%s.png" % CARTE[k])
 		betes.append(ic)
+	_tapis()
 	_controle(icones, betes)
 	print("icones : ", icones.size())
 	quit()
+
+# Une tuile par combinaison : images/tapis/<bords>.png, bords parmi H, D, B, G
+# dans cet ordre ("" pour aucun bord : images/tapis/toile.png).
+func _tapis() -> void:
+	DirAccess.make_dir_recursive_absolute("res://images/tapis")
+	var img := Image.load_from_file("res://images/damier_items.png")
+	img.convert(Image.FORMAT_RGBA8)
+	var w := img.get_width() / 4
+	var vus := {}
+	for r in 4:
+		var h: int = TAPIS_RANGEES[r + 1] - TAPIS_RANGEES[r]
+		for c in 4:
+			var zone := img.get_region(Rect2i(c * w, TAPIS_RANGEES[r], w, h))
+			var x0 := w
+			var y0 := h
+			var x1 := 0
+			var y1 := 0
+			for y in h:
+				for x in w:
+					var p := zone.get_pixel(x, y)
+					if p.a > 0.9 and p.get_luminance() > 0.2:
+						x0 = mini(x0, x)
+						y0 = mini(y0, y)
+						x1 = maxi(x1, x)
+						y1 = maxi(y1, y)
+			var cx := (x0 + x1) / 2
+			var cy := (y0 + y1) / 2
+			var bords := ""
+			for k in [["H", Vector2i(cx, y0 + 12)], ["D", Vector2i(x1 - 12, cy)], ["B", Vector2i(cx, y1 - 12)], ["G", Vector2i(x0 + 12, cy)]]:
+				if zone.get_pixelv(k[1]).get_luminance() < 0.5:
+					bords += k[0]
+			var t := zone.get_region(Rect2i(x0 + TAPIS_ROGNE, y0 + TAPIS_ROGNE, x1 - x0 - 2 * TAPIS_ROGNE, y1 - y0 - 2 * TAPIS_ROGNE))
+			t.resize(TAILLE_TAPIS, TAILLE_TAPIS, Image.INTERPOLATE_LANCZOS)
+			t.save_png("res://images/tapis/%s.png" % (bords if bords != "" else "toile"))
+			vus[bords] = true
+	if vus.size() != 16:
+		push_error("tapis : %d combinaisons de bords au lieu de 16" % vus.size())
 
 # Fond creme -> transparent, avec un bord adouci pour eviter le liseré.
 # Remplissage depuis les bords : le creme a l'interieur d'un objet (taches de

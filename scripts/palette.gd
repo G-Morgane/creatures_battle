@@ -39,5 +39,7 @@ const ELEMENTS := {
 	"aube":  {"fond": Color("#3a2b22"), "vif": Color("#f2b26b"), "clair": Color("#fff1d6")},
 	"crepuscule": {"fond": Color("#2e1d33"), "vif": Color("#f0645a"), "clair": Color("#f6c48c")},
 	"nature":{"fond": Color("#1d3027"), "vif": Color("#3f9e7a"), "clair": Color("#e8d5b0")},
+	"automne": {"fond": Color("#3d2216"), "vif": Color("#d9622b"), "clair": Color("#f2c27a")},
+	"jour":  {"fond": Color("#1c3236"), "vif": Color("#4fb3b0"), "clair": Color("#f3e3a6")},
 	"":      {"fond": Color("#2a2d33"), "vif": Color("#8a8f99"), "clair": Color("#c9ccd2")},
 }

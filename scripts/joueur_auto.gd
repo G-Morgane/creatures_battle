@@ -27,17 +27,21 @@ func _aleatoire(p: Partie) -> void:
 	for i in p.offres.size():
 		var ok := _cases_ok(p, p.offres[i])
 		if not ok.is_empty():
-			p.acheter(i, ok[rng.randi() % ok.size()])
+			var pose: Array = ok[rng.randi() % ok.size()]
+			p.acheter(i, pose[0], pose[1])
 
 func _simple(p: Partie) -> void:
 	if element == "":
 		element = _choisir_element(p)
+	# sac plein : on l'agrandit si l'on peut, avant d'acheter
+	if p.nid.occupation().size() >= p.nid.places() - 1 and p.prix_agrandir() >= 0 and p.bourse >= p.prix_agrandir() + 3:
+		p.agrandir()
 	# Achete tout ce qui sert, puis relance tant qu'il reste de quoi acheter.
 	for relances in RELANCES_MAX + 1:
 		for i in _ordre(p):
-			var c = _case_pour(p, p.offres[i])
-			if c != null:
-				p.acheter(i, c)
+			var pose = _case_pour(p, p.offres[i])
+			if pose != null:
+				p.acheter(i, pose[0], pose[1])
 		if relances == RELANCES_MAX or p.bourse < 3 + p.prix_relance():
 			return
 		p.relancer()
@@ -93,19 +97,21 @@ func _case_pour(p: Partie, id: String):
 	if ok.is_empty():
 		return null
 	if Data.RELIQUES[id]["type"] == "catalyseur":
-		for c in ok:
-			for v in p.nid.voisins(c):
+		for pose in ok:
+			for v in p.nid.voisins(pose[0]):
 				if Data.RELIQUES[p.nid.cases[v]]["type"] in ["sort", "arme"]:
-					return c
+					return pose
 	return ok[0]
 
-# Cases ou l'on peut poser id : vides, ou copie qui complete un trio.
+# Poses [ancre, rotation] ou l'on peut mettre id : cases libres (droit ou
+# couche), ou copie qui complete un trio.
 func _cases_ok(p: Partie, id: String) -> Array:
 	var l := []
 	if id == "":
 		return l
-	for y in Data.NID_H:
-		for x in Data.NID_L:
-			if p.nid.peut_ajouter(Vector2i(x, y), id):
-				l.append(Vector2i(x, y))
+	for rot in [0, 1]:
+		for y in Data.NID_H:
+			for x in Data.NID_L:
+				if p.nid.peut_ajouter(Vector2i(x, y), id, rot):
+					l.append([Vector2i(x, y), rot])
 	return l

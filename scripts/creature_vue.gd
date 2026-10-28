@@ -12,6 +12,8 @@ var arme = null   # id de relique ou null
 var fond := true
 var miroir := false
 var elan := 0.0
+# Taille d'affichage : 1 en arene, plus petit dans un panneau etroit.
+var zoom := 1.0
 var t := 0.0
 var pulse := 1.0
 
@@ -28,9 +30,9 @@ func montrer(f: String, a: int, ar = null) -> void:
 # Position (dans le repere de la vue) d'ou partent les sorts.
 func source(cavalier: bool) -> Vector2:
 	var sens := -1.0 if miroir else 1.0
-	var echelle := minf(0.75 + 0.04 * affinite, 1.25)
+	var echelle := minf(0.75 + 0.04 * affinite, 1.25) * zoom
 	var p := Vector2(20, -150) if cavalier else Vector2(70, -30)
-	return size / 2 + Vector2(0, 45) + Vector2(p.x * sens, p.y) * echelle
+	return size / 2 + Vector2(0, 45 * zoom) + Vector2(p.x * sens, p.y) * echelle
 
 func _process(delta: float) -> void:
 	t += delta
@@ -40,13 +42,13 @@ func _draw() -> void:
 	if fond:
 		draw_rect(Rect2(Vector2.ZERO, size), Palette.PANNEAU)
 	var c: Dictionary = Palette.ELEMENTS[forme]
-	var echelle := minf(0.75 + 0.04 * affinite, 1.25) * pulse
+	var echelle := minf(0.75 + 0.04 * affinite, 1.25) * pulse * zoom
 	# seules les montures ailees flottent
 	var flotte := sin(t * 2.0) * 6.0 if forme in ["feu", "nuit", "crepuscule"] else 0.0
 	var sens := -1.0 if miroir else 1.0
-	var centre := size / 2 + Vector2(elan * sens, 45 + flotte)
+	var centre := size / 2 + Vector2(elan * sens, (45 + flotte) * zoom)
 	# ombre au sol, qui ne flotte pas
-	draw_set_transform(size / 2 + Vector2(0, 130), 0.0, Vector2(echelle, echelle * 0.25))
+	draw_set_transform(size / 2 + Vector2(0, 130 * zoom), 0.0, Vector2(echelle, echelle * 0.25))
 	draw_circle(Vector2.ZERO, 80, Color(0, 0, 0, 0.35))
 	draw_set_transform(centre, 0.0, Vector2(echelle * sens, echelle))
 	match forme:
@@ -66,6 +68,10 @@ func _draw() -> void:
 			_sprite("aube")
 		"crepuscule":
 			_sprite("crepuscule")
+		"automne":
+			_sprite("automne")
+		"jour":
+			_sprite("jour")
 		_:
 			_informe(c)
 	_cavalier(c)
@@ -103,16 +109,22 @@ func _cavalier(c: Dictionary) -> void:
 			dos = Vector2(15, -10)
 		"terre":
 			dos = Vector2(-20, -75)
-		"nature", "glace":
+		"nature":
 			dos = Vector2(-22, -38)
+		"glace":
+			dos = Vector2(-25, -30)
 		"aube":
 			dos = Vector2(-30, -40)
 		"crepuscule":
 			dos = Vector2(40, -40)
+		"jour":
+			dos = Vector2(25, -12)
 		"vent":
 			dos = Vector2(-20, -45)
 		"feu":
 			dos = Vector2(20, -20)
+		"automne":
+			dos = Vector2(0, -5)
 	var vent := sin(t * 3.0) * 6.0
 	draw_colored_polygon(PackedVector2Array([dos + Vector2(-6, -40), dos + Vector2(-50 + vent, 20), dos + Vector2(-20, 24), dos + Vector2(10, -30)]), c["vif"].darkened(0.1))
 	draw_colored_polygon(PackedVector2Array([dos + Vector2(-16, -36), dos + Vector2(16, -36), dos + Vector2(20, 14), dos + Vector2(-20, 14)]), c["vif"])
