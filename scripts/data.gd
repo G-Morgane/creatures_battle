@@ -15,7 +15,7 @@ const INTERVALLE_BASE := 1.0   # secondes entre deux attaques de base
 # forme : ce qui eclot quand l'element domine
 # Pas d'avantage elementaire : aucun element ne bat un autre (CONCEPTION.md §5).
 const FORMES := {
-	"feu":   {"nom": "Phénix",        "passif": "Renaît une fois à 25 % de PV, plus vite à chaque combustion (Braise)"},
+	"feu":   {"nom": "Phénix",        "passif": "Renaît une fois à 50 % de PV, plus vite à chaque combustion (Braise)"},
 	"nuit":  {"nom": "Chauve-souris", "passif": "Vol de vie sur les attaques, +20 % de dégâts par malédiction sur la cible"},
 	"glace": {"nom": "Ours",          "passif": "Ses attaques posent du givre, +100 % de dégâts contre une cible gelée"},
 	"aube":  {"nom": "Lion",          "passif": "Régénère, et ses soins chargent l'Éclat (un coup de lumière)"},
@@ -27,7 +27,7 @@ const FORMES := {
 	"":      {"nom": "Informe",       "passif": "Aucun"},
 }
 
-const RENAISSANCE_PV := 0.25
+const RENAISSANCE_PV := 0.5
 const VOL_DE_VIE_NUIT := 0.15
 const NUIT_PAR_MALEDICTION := 0.20  # degats de la Chauve-souris par malediction differente
 # Malediction : un etat de 6 s sur l'adversaire, renouvele si on le reapplique.
@@ -100,8 +100,8 @@ const DUREE_MAX := 90.0
 # Brulure : des charges qui s'empilent, chacune s'eteint au bout de BRULURE_DUREE.
 # Combustion : consume des charges (la moitie, ou toutes) pour des degats immediats.
 # Braise : +1 par combustion declenchee, chaque point accelere attaques et recharges.
-const BRULURE_DPS_CHARGE := 1.5
-const BRULURE_DUREE := 4.0
+const BRULURE_DPS_CHARGE := 2.0
+const BRULURE_DUREE := 5.0
 const BRULURE_MAX := 50
 const COMBUSTION_PAR_CHARGE := 4.0
 const COMBUSTION_TOTALE_BONUS := 1.5
@@ -143,7 +143,7 @@ const RELIQUES := {
 		"oeuf": true},
 	# portee "rangee" : le catalyseur agit sur toute sa rangee, pas seulement ses voisins
 	"trainee":        {"nom": "Traînée de cendres", "element": "feu", "affinite": 1, "type": "catalyseur", "rarete": "rare",
-		"effet": "brulure", "valeur": 0.3, "portee": "rangee"},
+		"effet": "brulure", "valeur": 0.5, "portee": "rangee"},
 	# nuit : vol de vie et maledictions. Le Chapelet permet de les empiler.
 	"ruban":          {"nom": "Ruban sanguin",  "element": "nuit",  "affinite": 2, "type": "essence",
 		"vol_de_vie": 0.08, "attaque": 4.0},

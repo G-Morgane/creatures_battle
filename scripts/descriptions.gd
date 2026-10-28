@@ -16,7 +16,7 @@ const TEXTES := {
 	"reflet": "Copie 75 % de l'essence voisine la plus forte (stats et effets).",
 	"stalagmite": "Seule, sans aucun objet qui la touche : bouclier de 40 et +3 d'attaque.",
 	"terreau": "À chaque victoire où il est dans le sac, ses voisins gagnent +4 % de puissance (jusqu'à 10 victoires).",
-	"trainee": "Catalyseur de rangée : renforce de 30 % la brûlure de tous les objets de sa rangée.",
+	"trainee": "Catalyseur de rangée : renforce de 50 % la brûlure de tous les objets de sa rangée.",
 	"arc_crepuscule": "Flèches qui volent un peu de bouclier.",
 	"arc_jardin": "Flèche-graine : se plante dans la cible ; chaque dose de poison qu'elle reçoit ensuite la blesse aussi d'épines.",
 	"arc_lunes": "Plus fort pour chaque Transfert fait pendant le combat.",

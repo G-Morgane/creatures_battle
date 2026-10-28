@@ -90,7 +90,7 @@ func _placement() -> bool:
 	n = Nid.new()
 	n.placer(Vector2i(0, 0), "charbon")
 	n.placer(Vector2i(5, 0), "trainee")
-	ok = _verifier(is_equal_approx(n.eclore()["brulure_attaque"], 1.3), "trainee : toute sa rangee") and ok
+	ok = _verifier(is_equal_approx(n.eclore()["brulure_attaque"], 1.0 + Data.RELIQUES["trainee"]["valeur"]), "trainee : toute sa rangee") and ok
 	n.deplacer(Vector2i(5, 0), Vector2i(5, 1))
 	ok = _verifier(is_equal_approx(n.eclore()["brulure_attaque"], 1.0), "trainee : pas les autres rangees") and ok
 	n = Nid.new()

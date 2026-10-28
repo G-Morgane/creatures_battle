@@ -14,3 +14,4 @@ _Ajout seulement. Une ligne par ingestion, question, discussion ou passe de nett
 | 2026-10-28 | maj | Signature de dynastie sur sorts et armes → Reliques, discussion Reliques de placement |
 | 2026-10-28 | maj | Signature des essences sur l attaque de base (un cinquième) → Reliques |
 | 2026-10-28 | maj | Rééquilibrage de la Nuit, stats par relique dans la simulation → Équilibrage, Nuit (Chauve-souris), CONCEPTION.md |
+| 2026-10-28 | maj | Rééquilibrage de l Été (renaissance 50 %, brûlure 2/s sur 5 s, Traînée +50 %) → Équilibrage, Été (Phénix), CONCEPTION.md |

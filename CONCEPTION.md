@@ -516,8 +516,8 @@ Règles du givre :
 
 ### Été (Phénix) : brûlure, combustion, Braise
 
-**Fait** (images de `images/`). Chiffres de départ : brûlure 1,5 dégât par charge et par seconde,
-4 s par charge, 50 charges au plus ; combustion 4 par charge consumée (x1,5 si totale) ; Braise
+**Fait** (images de `images/`). Chiffres de départ : brûlure 2 dégâts par charge et par seconde,
+5 s par charge, 50 charges au plus ; combustion 4 par charge consumée (x1,5 si totale) ; Braise
 +4 % de vitesse par point, 10 au plus ; Charbon 1 brûlure par attaque ; Embrasement toutes les 5 s ;
 Cendre tiède 4 PV par combustion, Fleur 1 PV par charge consumée ; Éclat d'obsidienne +4 ;
 Résine : brûlure doublée sous 50 % de PV ; Cœur de fournaise : +5 Braise pendant 6 s.
@@ -531,14 +531,14 @@ Ce set remplace les anciens objets du Feu (Braise, Plume de cendre, Souffle arde
 Le Bâton de braise garde son nom avec sa nouvelle version.
 
 Règles :
-- **Brûlure** : s'empile, mais **chaque charge s'éteint au bout de 4 s**, il faut l'entretenir.
+- **Brûlure** : s'empile, mais **chaque charge s'éteint au bout de 5 s**, il faut l'entretenir.
   Le poison, lui, s'empile et dure tout le combat sans jamais être consommé.
 - **Combustion** : consume les brûlures de la cible pour des dégâts immédiats.
   *Partielle* : la moitié des charges. *Totale* : toutes, avec un bonus.
 - **Braise = hâte** : +1 Braise à chaque combustion déclenchée (jusqu'à 10), chaque point
   accélère attaques et recharges de sorts. C'est l'inverse du givre de l'Ours, les deux se
   compensent. (Le crit reste à concevoir, pour une autre famille ou un autre élément.)
-- **Renaissance** (passif) : une fois, à 25 % de PV.
+- **Renaissance** (passif) : une fois, à 50 % de PV.
 
 #### Monture (10)
 

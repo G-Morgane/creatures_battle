@@ -21,6 +21,15 @@
 **Résultat :** Nuit 48 %, 444 dégâts par combat. Comme les fantômes jouent aussi la Nuit, les autres baissent : Été 14 %, Hiver 27 %, Crépuscule 29 %, Aube 58 %, Printemps 64 %.
 **À suivre :** l'Été devient le plus faible ; la Traînée de cendres et les reliques de l'Été ferment le classement.
 
+## Rééquilibrage de l'Été (2026-10-28)
+
+**Constat (200 runs) :** Été 14 % ; il fait peu de dégâts (368 par combat) mais surtout il en subit le plus (470) : il meurt avant que la brûlure ne travaille.
+**Essai écarté seul :** brûlure plus forte (2 dégâts par charge et par seconde au lieu de 1,5, 5 s au lieu de 4) : dégâts 368 → 385 seulement.
+**Décision :** renaissance à 50 % des PV (au lieu de 25 %), en plus de la brûlure renforcée et de la Traînée de cendres à +50 % (au lieu de 30).
+**Résultat (200 runs) :** Été 25 %, 422 dégâts par combat. Écart entre dynasties ramené à 20–52 % (il était de 14 à 61 %) : Printemps 52 %, Aube 43 %, Nuit 43 %, Été 25 %, Crépuscule 24 %, Hiver 20 %.
+**À suivre :** l'Hiver est le plus faible ; Fourrure, Galet, Écorce, Croc du blizzard et Lance du Grand Hiver ferment le classement. Le Reflet d'aile reste presque jamais acheté (13 combats).
+**Leçon :** à 100 runs, un élément ne compte que 12 à 23 parties : un écart de 15 points peut être du bruit. Confirmer sur 200 runs (environ 12 minutes).
+
 ## Derniers chiffres (100 runs, ~26 nœuds par run)
 
 | Joueur | Runs gagnées | Acte 3 atteint | Duels | Élites | Boss |
