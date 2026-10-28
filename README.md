@@ -56,6 +56,7 @@ godot --headless --path . -s res://outils/decouper_icones.gd
 - `scripts/data.gd` : constantes, formes, reliques
 - `scripts/nid.gd` : grille, affinités, éclosion de la créature
 - `scripts/combat.gd` : simulation déterministe par pas fixe
+- `scripts/descriptions.gd` : ce que fait chaque relique, pour les infobulles (à tenir à jour avec CONCEPTION.md)
 - `scripts/carte.gd` : carte d'une run (3 actes, étages, types de nœuds)
 - `scripts/carte_screen.gd` : écran de la carte et des rencontres
 - `scripts/partie.gd` : run (PV de run, nœuds, récompenses, rencontres), bourse, boutique, rareté, adversaire fantôme

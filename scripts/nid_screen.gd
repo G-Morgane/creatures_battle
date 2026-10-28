@@ -437,6 +437,45 @@ static func info(id: String) -> String:
 		genre = "arme (%s)" % Data.FAMILLES[r["famille"]]
 	return "%s\n%s, %s" % [r["nom"], Data.NOMS_RARETE[Data.rarete(id)], genre]
 
+# Infobulle d'une relique : nom a la couleur de sa rarete, genre, Cour,
+# affinite, puis ce qu'elle fait.
+const TROP_CHER := Color("#e5604f")
+
+static func bulle(id: String, niv := 1, manque := 0) -> Control:
+	var r: Dictionary = Data.RELIQUES[id]
+	var rarete := Data.rarete(id)
+	var pile := VBoxContainer.new()
+	pile.add_theme_constant_override("separation", 6)
+	var nom := Label.new()
+	nom.text = r["nom"] + ("  " + "★".repeat(niv - 1) if niv > 1 else "")
+	nom.add_theme_font_size_override("font_size", 18)
+	nom.add_theme_color_override("font_color", Palette.RARETES[rarete] if rarete != "commun" else Palette.TEXTE)
+	pile.add_child(nom)
+	var genre: String = r["type"].capitalize()
+	if r.has("famille"):
+		genre = "Arme (%s)" % Data.FAMILLES[r["famille"]]
+	var cour: String = Data.COURS.get(r["element"], _NOMS_ELEMENTS.get(r["element"], "Neutre"))
+	var ligne := "%s, %s" % [Data.NOMS_RARETE[rarete], genre.to_lower()]
+	var sous := Label.new()
+	sous.text = ligne + "\n" + cour + ("" if r["affinite"] == 0 else ", affinité +%d" % r["affinite"])
+	sous.add_theme_color_override("font_color", Palette.ELEMENTS[r["element"]]["clair"])
+	pile.add_child(sous)
+	var texte := Label.new()
+	texte.text = Descriptions.TEXTES.get(id, "")
+	if niv > 1:
+		var mult: float = Data.NIVEAU_MULT[niv]
+		texte.text += "\nNiveau %d : effets x%s." % [niv, ("%d" % mult) if mult == int(mult) else str(mult).replace(".", ",")]
+	texte.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	texte.custom_minimum_size.x = 300
+	texte.add_theme_color_override("font_color", Palette.TEXTE)
+	pile.add_child(texte)
+	if manque > 0:
+		var prix := Label.new()
+		prix.text = "Pas assez d'or : il manque %d or." % manque
+		prix.add_theme_color_override("font_color", TROP_CHER)
+		pile.add_child(prix)
+	return pile
+
 static func apercu(id: String) -> Control:
 	var a := Apercu.new()
 	a.id = id
@@ -459,6 +498,8 @@ class Offre extends Control:
 		tooltip_text = " "
 	func _get_tooltip(_p: Vector2) -> String:
 		return "" if _id() == "" else NidScreen.info(_id())
+	func _make_custom_tooltip(_t: String) -> Object:
+		return NidScreen.bulle(_id(), 1, _manque())
 	func _id() -> String:
 		return ecran.partie.offres[index]
 	func _draw() -> void:
@@ -468,12 +509,23 @@ class Offre extends Control:
 			draw_string(ThemeDB.fallback_font, Vector2(0, rect.size.y / 2 + 5), "Acheté",
 				HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 13, Palette.TEXTE_DOUX)
 			return
+		# trop chere : tuile assombrie avec un cadenas, prix en rouge et ce qui manque
 		var prix := ecran.partie.prix_offre(index)
-		var abordable := ecran.partie.bourse >= prix
-		modulate.a = 1.0 if abordable else 0.4
+		var manque := _manque()
 		NidScreen.dessiner_relique(self, rect, _id())
-		draw_string(ThemeDB.fallback_font, Vector2(0, rect.size.y + 15), "Offert" if index == ecran.partie.gratuite else "%d or" % prix,
-			HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 14, Color("#f2c94c") if abordable else Palette.TEXTE_DOUX)
+		var texte := "Offert" if index == ecran.partie.gratuite else "%d or" % prix
+		if manque > 0:
+			draw_rect(rect.grow(-3), Color(0, 0, 0, 0.6))
+			_cadenas(Vector2(rect.size.y / 2 + 2, rect.size.y / 2 + 2))
+			texte = "%d or, il manque %d" % [prix, manque]
+		draw_string(ThemeDB.fallback_font, Vector2(0, rect.size.y + 15), texte,
+			HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 14, NidScreen.TROP_CHER if manque > 0 else Color("#f2c94c"))
+	func _manque() -> int:
+		return maxi(0, ecran.partie.prix_offre(index) - ecran.partie.bourse)
+	func _cadenas(c: Vector2) -> void:
+		draw_arc(c + Vector2(0, -6), 8, PI, TAU, 12, NidScreen.TROP_CHER, 3.0, true)
+		draw_rect(Rect2(c + Vector2(-11, -6), Vector2(22, 17)), NidScreen.TROP_CHER)
+		draw_circle(c + Vector2(0, 2), 2.5, Color(0, 0, 0, 0.8))
 	func _get_drag_data(_p: Vector2) -> Variant:
 		if _id() == "" or ecran.partie.bourse < ecran.partie.prix_offre(index):
 			return null
@@ -510,6 +562,8 @@ class CaseNid extends Control:
 		return ecran.nid.cases.get(position_nid)
 	func _get_tooltip(_p: Vector2) -> String:
 		return "" if _id() == null else NidScreen.info(_id())
+	func _make_custom_tooltip(_t: String) -> Object:
+		return NidScreen.bulle(_id(), ecran.nid.niveau(position_nid))
 	func _draw() -> void:
 		var rect := Rect2(Vector2.ZERO, size)
 		draw_rect(rect, Palette.SURVOL if survol else Palette.CASE)
