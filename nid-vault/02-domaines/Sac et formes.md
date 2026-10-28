@@ -1,6 +1,6 @@
 # Sac et formes
 
-**Résumé :** Le Nid est un tapis de 8 x 4 qui commence à 4 colonnes ; chaque relique y occupe une forme qui grandit avec sa rareté.
+**Résumé :** Le Nid est un tapis de 8 x 4 qui commence à 4 colonnes et grandit case par case ; chaque relique y occupe une forme qui grandit avec sa rareté.
 **Tags :** #sac, #inventaire, #ui
 **Mis à jour :** 2026-10-28
 **Liens :** [[Boutique et économie]], [[Reliques]], [[Cavaliers et armes]], [[Run et carte]]
@@ -9,8 +9,8 @@
 
 ## Tapis
 
-- 8 colonnes sur 4 rangées. Départ : les 4 colonnes du centre (16 cases), 5 colonnes avec le talent Croissance ([[Cavaliers et armes#Talents des cavaliers]]).
-- On agrandit d'une colonne à la fois, en alternant les côtés : bouton « Agrandir » en boutique (8, 12, 16 puis 20 or, comme l'expérience de TFT), ou gratuitement après les boss des actes 1 et 2.
+- 8 colonnes sur 4 rangées. Départ : les 4 colonnes du centre (16 cases), plus 4 cases offertes à placer avec le talent Croissance ([[Cavaliers et armes#Talents des cavaliers]]).
+- On agrandit d'**une case à la fois, au choix**, forcément collée au sac : « Agrandir » en boutique (2 or, puis +1 à chaque case achetée), ou une case offerte après les boss des actes 1 et 2. Le sac peut prendre n'importe quelle forme dans le damier. **Pourquoi :** décidé le 2026-10-28 ([[2026-10-28 Refonte de la boutique]]), pour que la forme du sac devienne un choix de construction.
 - Rendu : tuiles de `images/tapis`, découpées de `damier_items.png` ; chaque case prend la tuile dont les bords en cuir correspondent à sa place, une case sur deux est assombrie.
 
 ## Formes (`Data.empreinte`)

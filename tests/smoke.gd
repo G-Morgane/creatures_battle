@@ -7,6 +7,7 @@ func _ready() -> void:
 	var ok := true
 	ok = _formes() and ok
 	ok = _catalyseurs() and ok
+	ok = _placement() and ok
 	ok = _deterministe() and ok
 	ok = _renaissance() and ok
 	ok = _ecran() and ok
@@ -66,6 +67,56 @@ func _catalyseurs() -> bool:
 	var etincelle: Dictionary = b.eclore()["sorts"].filter(func(s): return s["nom"] == "Étincelle")[0]
 	return _verifier(is_equal_approx(etincelle["degats"], 4.0 + 0.8 * 7) and etincelle["brulure"] == 1.0, "le bonus d'affinite va a la valeur principale") and ok
 
+# Reliques qui lisent leur placement (une case chacune hors partie).
+func _placement() -> bool:
+	var n := Nid.new()
+	n.placer(Vector2i(0, 0), "sceau")
+	n.placer(Vector2i(1, 0), "calice")
+	n.placer(Vector2i(0, 1), "cadran")
+	var sceau: Dictionary = n.eclore()["sorts"][0]
+	var ok := _verifier(is_equal_approx(sceau["vol_de_vie"], 0.10), "calice : vol de vie au sort voisin")
+	ok = _verifier(is_equal_approx(sceau["recharge"], 6.0 / 1.25), "cadran : recharge plus rapide") and ok
+	n = Nid.new()
+	n.placer(Vector2i(0, 0), "mousse")
+	n.placer(Vector2i(1, 0), "epine_ronce")
+	n.placer(Vector2i(0, 1), "baie")
+	n.placer(Vector2i(0, 2), "ruban")
+	ok = _verifier(is_equal_approx(n.eclore()["pv_max"], Data.PV_BASE + 10 + 15 * 2 + 40), "mousse : +15 PV par voisine du Printemps") and ok
+	n = Nid.new()
+	n.placer(Vector2i(0, 0), "stalagmite")
+	ok = _verifier(is_equal_approx(n.eclore()["bouclier"], 40.0), "stalagmite seule : bouclier") and ok
+	n.placer(Vector2i(1, 0), "flocon")
+	ok = _verifier(is_equal_approx(n.eclore()["bouclier"], 0.0), "stalagmite touchee : rien") and ok
+	n = Nid.new()
+	n.placer(Vector2i(0, 0), "charbon")
+	n.placer(Vector2i(5, 0), "trainee")
+	ok = _verifier(is_equal_approx(n.eclore()["brulure_attaque"], 1.3), "trainee : toute sa rangee") and ok
+	n.deplacer(Vector2i(5, 0), Vector2i(5, 1))
+	ok = _verifier(is_equal_approx(n.eclore()["brulure_attaque"], 1.0), "trainee : pas les autres rangees") and ok
+	n = Nid.new()
+	n.placer(Vector2i(0, 0), "ruban")
+	n.placer(Vector2i(1, 0), "reflet")
+	ok = _verifier(is_equal_approx(n.eclore()["attaque"], Data.ATTAQUE_BASE + 2.0 * 1.75), "reflet : copie 75 % du ruban") and ok
+	n = Nid.new()
+	n.placer(Vector2i(0, 0), "ruban")
+	n.placer(Vector2i(1, 0), "terreau")
+	n.saisons = 5
+	ok = _verifier(is_equal_approx(n.eclore()["attaque"], Data.ATTAQUE_BASE + 2.0 * 1.2), "terreau : +4 % par saison aux voisines") and ok
+	# signature : un sort de l'Ete pose 1 brulure de plus a chaque activation
+	n = Nid.new()
+	n.placer(Vector2i(0, 0), "graine_brasier")
+	var cr := n.eclore()
+	ok = _verifier(is_equal_approx(cr["sorts"][0]["signature"], 1.0), "signature de l'Ete sur le sort") and ok
+	var c := Combat.new(cr, Nid.new().eclore())
+	c._signature(c.cotes[0], c.cotes[1], "feu", cr["sorts"][0]["signature"])
+	ok = _verifier(is_equal_approx(c._brulure(c.cotes[1]), 1.0), "signature : 1 brulure posee") and ok
+	# essences : un cinquieme de la signature a chaque attaque
+	n = Nid.new()
+	n.placer(Vector2i(0, 0), "cendre")
+	n.placer(Vector2i(1, 0), "resine")
+	cr = n.eclore()
+	return _verifier(is_equal_approx(cr["signatures"].get("feu", 0.0), 2 * Data.SIGNATURE_ESSENCE), "signature des essences sur l'attaque") and ok
+
 func _deterministe() -> bool:
 	var r := []
 	for i in 2:
@@ -87,10 +138,10 @@ func _ecran() -> bool:
 	var e := NidScreen.new()
 	add_child(e)
 	e.deposer(Vector2i(2, 0), "charbon", null)
-	var ok := _verifier(e.nid.forme() == "feu" and e.vue.forme == "feu", "poser une braise -> phenix")
+	var ok := _verifier(e.nid.forme() == "feu", "poser une braise -> phenix")
 	e.deposer(Vector2i(3, 0), "ruban", null)
 	e.deposer(Vector2i(4, 0), "sceau", null)
-	ok = _verifier(e.vue.forme == "nuit", "plus de nuit -> chauve-souris") and ok
+	ok = _verifier(e.nid.forme() == "nuit", "plus de nuit -> chauve-souris") and ok
 	e.deposer(Vector2i(5, 3), "ruban", Vector2i(3, 0))
 	ok = _verifier(e.nid.cases.get(Vector2i(5, 3)) == "ruban" and not e.nid.cases.has(Vector2i(3, 0)), "deplacer une relique") and ok
 	e.deposer(Vector2i(2, 0), "ruban", Vector2i(5, 3))
@@ -99,7 +150,10 @@ func _ecran() -> bool:
 	ok = _verifier(not e.nid.cases.has(Vector2i(0, 0)), "case fermee : on ne pose pas") and ok
 	ok = _verifier(e.vente._can_drop_data(Vector2.ZERO, {"id": "charbon", "depuis": Vector2i(5, 3)}), "le comptoir accepte une relique du sac") and ok
 	e.vente._drop_data(Vector2.ZERO, {"id": "charbon", "depuis": Vector2i(5, 3)})
-	ok = _verifier(e.vue.forme == "nuit" and e.nid.cases.size() == 2, "revendre une case") and ok
+	ok = _verifier(e.nid.forme() == "nuit" and e.nid.cases.size() == 2, "revendre une case") and ok
+	e.choix_case = true
+	e.ouvrir(Vector2i(1, 2))
+	ok = _verifier(e.nid.ouverte(Vector2i(1, 2)) and not e.choix_case and e.cases_ui[Vector2i(1, 2)].visible, "agrandir : un clic ouvre la case choisie") and ok
 	e.queue_free()
 	return ok
 
@@ -126,7 +180,7 @@ func _armes() -> bool:
 	m.cotes[1]["pv"] = 30.0
 	m.cotes[0]["sorts"][0]["prochain"] = 0.0
 	m._agir(m.cotes[0], m.cotes[1])
-	var attendu: float = 30.0 - 2.0 * faux.eclore()["sorts"][0]["degats"]
+	var attendu: float = 30.0 - 2.0 * faux.eclore()["sorts"][0]["degats"] - Data.SIGNATURES["nuit"]
 	return _verifier(is_equal_approx(m.cotes[1]["pv"], attendu), "sentence double sous 40 %% (pv %s, attendu %s)" % [m.cotes[1]["pv"], attendu]) and ok
 
 # L'ecran rejoue le combat jusqu'au bout sans rien recalculer.
@@ -148,7 +202,7 @@ func _combat_anime() -> bool:
 func _partie() -> bool:
 	var p := Partie.new(42)
 	var ok := _verifier(Partie.new(42).offres == p.offres, "meme graine, meme boutique")
-	ok = _verifier(p.offres.size() == Partie.TAILLE_BOUTIQUE and p.bourse == Partie.OR_PAR_MANCHE, "depart : 5 offres, 10 or") and ok
+	ok = _verifier(p.offres.size() == Partie.TAILLE_BOUTIQUE and p.bourse == Partie.OR_PAR_MANCHE, "depart : 9 offres, 10 or") and ok
 	p.offres[0] = "charbon"
 	p.offres[1] = "baton_braise"
 	ok = _verifier(p.acheter(0, Vector2i(2, 0)) and p.bourse == 7 and p.offres[0] == "", "acheter : -3 or, offre vendue") and ok
@@ -171,15 +225,16 @@ func _sac() -> bool:
 	var p := Partie.new(3)
 	var ok := _verifier(p.nid.places() == 16 and not p.nid.ouverte(Vector2i(0, 0)) and p.nid.ouverte(Vector2i(2, 0)), "sac de depart : 4 colonnes au centre")
 	p.offres[0] = "charbon"
-	ok = _verifier(not p.acheter(0, Vector2i(0, 0)), "colonne fermee : pas d'achat") and ok
+	ok = _verifier(not p.acheter(0, Vector2i(0, 0)), "case fermee : pas d'achat") and ok
 	p.bourse = 30
-	ok = _verifier(p.prix_agrandir() == 8 and p.agrandir() and p.bourse == 22 and p.nid.ouverte(Vector2i(1, 3)), "agrandir : 8 or, colonne 1") and ok
-	ok = _verifier(p.prix_agrandir() == 12 and p.agrandir() and p.nid.ouverte(Vector2i(6, 0)), "puis colonne 6, plus chere") and ok
-	p.bourse = 100
-	p.agrandir()
-	p.agrandir()
-	ok = _verifier(p.nid.places() == 32 and p.prix_agrandir() == -1 and not p.agrandir(), "damier entier : plus d'agrandissement") and ok
-	ok = _verifier(p.nid.eclore()["colonnes"].size() == 8, "la creature garde les colonnes ouvertes") and ok
+	ok = _verifier(not p.agrandir(Vector2i(0, 0)) and p.bourse == 30, "agrandir : seulement une case collee au sac") and ok
+	ok = _verifier(p.prix_agrandir() == 2 and p.agrandir(Vector2i(1, 3)) and p.bourse == 28 and p.nid.ouverte(Vector2i(1, 3)), "agrandir : 2 or, la case choisie") and ok
+	ok = _verifier(p.prix_agrandir() == 3 and p.agrandir(Vector2i(0, 3)) and p.bourse == 25, "puis +1 or par case, collee a la nouvelle") and ok
+	p.bourse = 1000
+	while not p.nid.bordure().is_empty():
+		p.agrandir(p.nid.bordure()[0])
+	ok = _verifier(p.nid.places() == 32 and p.prix_agrandir() == -1 and not p.agrandir(Vector2i(0, 0)), "damier entier : plus d'agrandissement") and ok
+	ok = _verifier(p.nid.eclore()["ouvertes"].size() == 32, "la creature garde les cases ouvertes") and ok
 	return ok
 
 func _premier(rarete: String, type := "") -> String:
@@ -357,7 +412,7 @@ func _elites() -> bool:
 func _cavaliers() -> bool:
 	var p := Partie.new(41)
 	p.choisir_cavalier("pousse")
-	var ok := _verifier(p.nid.colonnes.size() == 5, "Croissance : 5 colonnes")
+	var ok := _verifier(p.cases_offertes == Partie.CROISSANCE_CASES and p.prix_agrandir() == 0 and p.agrandir(Vector2i(1, 0)) and p.bourse == Partie.OR_PAR_MANCHE, "Croissance : cases offertes a placer")
 	var q := Partie.new(42)
 	q.choisir_cavalier("capuchon")
 	var b := q.bourse
@@ -414,11 +469,6 @@ func _run() -> bool:
 	p.relancer()
 	ok = _verifier(p.offres[0] == offerte and p.prix_offre(0) == 0, "l'offre offerte survit a la relance") and ok
 	ok = _verifier(p.acheter(0, Vector2i(2, 0)) and p.gratuite == -1, "acheter l'offre offerte ne coute rien") and ok
-	# marche : relance gratuite jusqu'au noeud suivant
-	p.noeud()["type"] = "marche"
-	p.conclure()
-	var bourse := p.bourse
-	ok = _verifier(p.prix_relance() == 0 and p.relancer() and p.bourse == bourse, "marche : relance gratuite") and ok
 	# rencontre
 	p.position = -1
 	p.entrer(p.accessibles()[0])
@@ -431,7 +481,7 @@ func _run() -> bool:
 	p.noeud()["type"] = "boss"
 	p.conclure_combat(0)
 	ok = _verifier(p.acte == 1 and p.position == -1 and p.chemin.is_empty() and not p.terminee(), "boss battu : acte suivant") and ok
-	ok = _verifier(p.nid.colonnes.size() == 5 and p.nid.ouverte(Vector2i(1, 0)), "boss battu : une colonne offerte") and ok
+	ok = _verifier(p.cases_offertes == 1 and p.agrandir(Vector2i(1, 0)) and p.nid.places() == 17, "boss battu : une case offerte") and ok
 	p.acte = Carte.ACTES - 1
 	p.entrer(p.accessibles()[0])
 	p.noeud()["type"] = "boss"
@@ -482,8 +532,8 @@ func _fusion() -> bool:
 func _nature() -> bool:
 	var cr := Exemples.nid_nature().eclore()
 	var ok := _verifier(cr["nom"] == "Cerf", "nature -> cerf")
-	# epines : 2 (passif) + 2 x 1,5 (ortie voisine) ; poison par attaque : 0,5 x 1,5 (amanite voisine)
-	ok = _verifier(is_equal_approx(cr["epines"], 2.0 + 3.0) and is_equal_approx(cr["poison_attaque"], 0.75), "ortie et amanite renforcent leurs voisines") and ok
+	# epines : 3 (passif) + 2 x 1,5 (ortie voisine) ; poison par attaque : 0,5 x 1,5 (amanite voisine)
+	ok = _verifier(is_equal_approx(cr["epines"], Data.EPINES_CERF + 3.0) and is_equal_approx(cr["poison_attaque"], 0.75), "ortie et amanite renforcent leurs voisines") and ok
 	var spore: Dictionary = cr["sorts"][0]
 	# spore : (2 + 0,2 x nature 7) x 1,5 amanite
 	ok = _verifier(is_equal_approx(spore["poison"], (2.0 + 0.2 * 7) * 1.5), "nuage de spores : poison selon affinite") and ok
@@ -538,6 +588,15 @@ func _nature() -> bool:
 	# rarete : manche 1 que des communs ; prix
 	var p := Partie.new(5)
 	ok = _verifier(p.offres.all(func(id): return Data.rarete(id) == "commun"), "manche 1 : que des communs") and ok
+	var c8 := Partie.chances(8)
+	ok = _verifier(Partie.chances(3)[3] == 0.0 and c8[3] > 0.1 and c8[3] < 0.3 and is_equal_approx(c8.reduce(func(a, b): return a + b), 100.0), "chances interpolees entre deux manches reperes") and ok
+	p.manche = 30
+	p.bourse = 1000
+	var plafond := true
+	for i in 200:
+		p.relancer()
+		plafond = plafond and p.offres.filter(func(id): return Data.rarete(id) == "legendaire").size() <= 1
+	ok = _verifier(plafond, "au plus un legendaire par boutique") and ok
 	ok = _verifier(Partie.prix("graine_jardin") == 3 + 7 and Partie.prix("arc_saule") == 5 + 2, "prix selon type et rarete") and ok
 	return ok
 
@@ -555,8 +614,8 @@ func _glace() -> bool:
 	var ok := _verifier(cr["nom"] == "Ours", "glace -> ours")
 	# givre par attaque : 1 (passif) + 1 x 1,5 (flocon a cote du croc)
 	ok = _verifier(is_equal_approx(cr["givre_attaque"], 2.5), "croc du blizzard renforce le flocon voisin") and ok
-	# armure de givre : (6 + 1 x glace 7) x 1,5 (fourrure voisine)
-	ok = _verifier(is_equal_approx(cr["sorts"][0]["bouclier"], (6.0 + 1.0 * 7) * 1.5), "armure de givre et fourrure") and ok
+	# armure de givre : (5 + 0,5 x glace 7) x 1,5 (fourrure voisine)
+	ok = _verifier(is_equal_approx(cr["sorts"][0]["bouclier"], (5.0 + 0.5 * 7) * 1.5), "armure de givre et fourrure") and ok
 	# givre : ralentit, puis gele au seuil
 	var c := Combat.new(cr, Nid.new().eclore())
 	c._givrer(c.cotes[0], c.cotes[1], 5.0)
@@ -678,6 +737,7 @@ func _phenix() -> bool:
 	k._mort(k.cotes[0], k.cotes[1])
 	ok = _verifier(k.evenements.filter(func(ev): return ev["type"] == "sort").size() == n_sorts + 1, "tir a la renaissance") and ok
 	# faux de tison : x1,5 sous la moitie ; faux des cendres : combustion contre une cible affaiblie
+	# (la signature de l'Ete repose ensuite 1 brulure)
 	var t := Nid.new()
 	t.placer(Vector2i(0, 0), "faux_tison")
 	var m := Combat.new(t.eclore(), vide)
@@ -690,7 +750,7 @@ func _phenix() -> bool:
 	q._bruler(q.cotes[0], q.cotes[1], 5.0)
 	q.cotes[1]["pv"] = 100.0
 	q._lancer(q.cotes[0], q.cotes[1], q.cotes[0]["sorts"][0])
-	return _verifier(q._brulure(q.cotes[1]) == 0.0, "faux des cendres : combustion contre une cible affaiblie") and ok
+	return _verifier(q._brulure(q.cotes[1]) == Data.SIGNATURES["feu"], "faux des cendres : combustion contre une cible affaiblie") and ok
 
 func _nuit() -> bool:
 	var vide := Nid.new().eclore()
@@ -782,7 +842,7 @@ func _nuit() -> bool:
 	pv = k.cotes[1]["pv"]
 	k._lancer(k.cotes[0], k.cotes[1], k.cotes[0]["sorts"][0])
 	# +35 % par malediction (faux) et +12 % par malediction (passif de la Chauve-souris)
-	ok = _verifier(is_equal_approx(pv - k.cotes[1]["pv"], 14.0 * 1.7 * (1.0 + 2 * Data.NUIT_PAR_MALEDICTION)), "hache du bourreau") and ok
+	ok = _verifier(is_equal_approx(pv - k.cotes[1]["pv"], 14.0 * 1.7 * (1.0 + 2 * Data.NUIT_PAR_MALEDICTION) + Data.SIGNATURES["nuit"]), "hache du bourreau") and ok
 	# stigmate : +10 % de degats recus ; l'arc de l'echo le pose, la lame de la veuve aussi sur crit
 	var st := Combat.new(Nid.new().eclore(), Nid.new().eclore())
 	st.cotes[1]["maledictions"]["stigmate"] = {"n": 1, "fin": 99.0}
@@ -800,14 +860,14 @@ func _nuit() -> bool:
 	n.cotes[1]["maledictions"]["faiblesse"] = {"n": 2, "fin": 99.0}
 	pv = n.cotes[1]["pv"]
 	n._lancer(n.cotes[0], n.cotes[1], n.cotes[0]["sorts"][0])
-	return _verifier(n._nb_maledictions(n.cotes[1]) == 0 and is_equal_approx(pv - n.cotes[1]["pv"], 10.0 + 2 * Data.FESTIN_DEGATS), "faux de la nuit profonde : consume") and ok
+	return _verifier(n._nb_maledictions(n.cotes[1]) == 0 and is_equal_approx(pv - n.cotes[1]["pv"], 10.0 + 2 * Data.FESTIN_DEGATS + Data.SIGNATURES["nuit"]), "faux de la nuit profonde : consume") and ok
 
 func _aube() -> bool:
 	var vide := Nid.new().eclore()
 	var cr := Exemples.nid_aube().eclore()
 	var ok := _verifier(cr["nom"] == "Lion" and cr["eclat"] and cr["regen"] == Data.REGEN_LION, "aube -> lion")
-	# meche : (8 + 1 x aube 7) x 1,5 (huile voisine)
-	ok = _verifier(is_equal_approx(cr["sorts"][0]["soin"], (8.0 + 7.0) * 1.5), "meche et huile voisine") and ok
+	# meche : (6 + 0,75 x aube 7) x 1,5 (huile voisine)
+	ok = _verifier(is_equal_approx(cr["sorts"][0]["soin"], (6.0 + 0.75 * 7.0) * 1.5), "meche et huile voisine") and ok
 	# charge : soin a moitie, excedent double
 	var c := Combat.new(cr, vide)
 	c.cotes[0]["pv"] = c.cotes[0]["cr"]["pv_max"] - 10.0
@@ -966,7 +1026,7 @@ func _crepuscule() -> bool:
 	q.cotes[0]["transferts"] = 4
 	pv = q.cotes[1]["pv"]
 	q._lancer(q.cotes[0], q.cotes[1], q.cotes[0]["sorts"][0])
-	ok = _verifier(is_equal_approx(pv - q.cotes[1]["pv"], 6.0 + 4 * 1.5), "arc des deux lunes") and ok
+	ok = _verifier(is_equal_approx(pv - q.cotes[1]["pv"], 6.0 + 4 * 1.5 + Data.SIGNATURES["crepuscule"]), "arc des deux lunes") and ok
 	var fl := Exemples.nid_crepuscule()
 	fl.placer(Vector2i(3, 3), "flechettes")
 	var r := Combat.new(fl.eclore(), vide)

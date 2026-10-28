@@ -14,12 +14,18 @@ var cavalier := "capuchon"  # images/cavaliers/<id>.png
 var oeil := 0.0
 var phase := ""
 # En arene : pas de panneau, la monture de droite regarde a gauche,
-# et elan la pousse vers l'adversaire quand elle frappe.
+# et elan la pousse vers l'adversaire quand elle frappe. Le cavalier, au sol,
+# a son propre elan, pour ses coups d'arme.
 var fond := true
 var miroir := false
 var elan := 0.0
+var elan_cavalier := 0.0
 # Taille d'affichage : 1 en arene, plus petit dans un panneau etroit.
 var zoom := 1.0
+# En arene : le cavalier se tient au sol devant sa monture, pas sur son dos.
+var a_terre := false
+const SOL_CAVALIER := Vector2(130, 95)   # ses pieds, dans le repere des formes
+const TAILLE_A_TERRE := 0.85
 var t := 0.0
 var pulse := 1.0
 
@@ -42,7 +48,16 @@ func source(cavalier: bool) -> Vector2:
 	var sens := -1.0 if miroir else 1.0
 	var echelle := minf(0.75 + 0.04 * affinite, 1.25) * zoom
 	var p := Vector2(20, -150) if cavalier else Vector2(70, -30)
-	return size / 2 + Vector2(0, 45 * zoom) + Vector2(p.x * sens, p.y) * echelle
+	if cavalier and a_terre:
+		p = SOL_CAVALIER + Vector2(0, -50 * TAILLE_A_TERRE)
+	var vol := 0.0 if cavalier and a_terre else _vol()
+	return size / 2 + Vector2(0, (45 - vol) * zoom) + Vector2(p.x * sens, p.y) * echelle
+
+# Au sol (a_terre), le phenix, la chauve-souris et le papillon volent au-dessus de leur ombre.
+const VOL := {"feu": 40.0, "nuit": 50.0, "crepuscule": 70.0}
+
+func _vol() -> float:
+	return VOL.get(forme, 0.0) if a_terre and hybride == "" and elite == "" else 0.0
 
 func _process(delta: float) -> void:
 	t += delta
@@ -59,7 +74,7 @@ func _draw() -> void:
 	# seules les montures ailees flottent
 	var flotte := sin(t * 2.0) * 6.0 if forme in ["feu", "nuit", "crepuscule"] else 0.0
 	var sens := -1.0 if miroir else 1.0
-	var centre := size / 2 + Vector2(elan * sens, (45 + flotte) * zoom)
+	var centre := size / 2 + Vector2(elan * sens, (45 + flotte - _vol()) * zoom)
 	# ombre au sol, qui ne flotte pas
 	draw_set_transform(size / 2 + Vector2(0, 130 * zoom), 0.0, Vector2(echelle, echelle * 0.25))
 	draw_circle(Vector2.ZERO, 80, Color(0, 0, 0, 0.35))
@@ -109,14 +124,16 @@ func _draw() -> void:
 
 # Monture dessinee par un artiste : centree sur le meme repere que les formes.
 const SPRITE_LARGEUR := 260.0
-const LARGEUR_FORME := {}
+# En arene, le phenix (fin et ajoure) est elargi pour peser autant que les autres.
+const LARGEUR_FORME := {"feu": 320.0}
 
 func _sprite(nom: String) -> void:
 	var tex := Palette.image("res://images/montures/%s.png" % nom)
 	if tex == null:
 		_informe(Palette.ELEMENTS[forme])
 		return
-	var largeur: float = LARGEUR_FORME.get(nom, SPRITE_LARGEUR)
+	# en arene seulement : au Nid, le cavalier est assis sur le dos regle a la main
+	var largeur: float = LARGEUR_FORME.get(nom, SPRITE_LARGEUR) if a_terre else SPRITE_LARGEUR
 	var taille := Vector2(largeur, largeur * tex.get_height() / tex.get_width())
 	draw_texture_rect(tex, Rect2(Vector2(-taille.x / 2, 95 - taille.y), taille), false)
 
@@ -191,6 +208,16 @@ func _cavalier(c: Dictionary) -> void:
 			dos = Vector2(20, -20)
 		"automne":
 			dos = Vector2(0, -5)
+	# au sol : ni flottement ni pulsation de la monture
+	if a_terre:
+		var sens := -1.0 if miroir else 1.0
+		var echelle := minf(0.75 + 0.04 * affinite, 1.25) * zoom
+		# repere pose sur ses pieds, devant la monture. Les images regardent a
+		# droite : telles quelles cote allie, en miroir cote ennemi.
+		var pieds := size / 2 + Vector2(elan_cavalier * sens, 45 * zoom) + Vector2(SOL_CAVALIER.x * sens, SOL_CAVALIER.y) * echelle
+		var k := echelle * TAILLE_A_TERRE
+		draw_set_transform(pieds, 0.0, Vector2(k * sens, k))
+		dos = Vector2(0, -22)
 	# la seconde arme est dans l'autre main, derriere le cavalier
 	if armes.size() > 1:
 		_arme(dos, armes[1], Vector2(-26, 6))
@@ -199,7 +226,7 @@ func _cavalier(c: Dictionary) -> void:
 	if peint != null:
 		var h := 96.0
 		var taille := Vector2(h * peint.get_width() / peint.get_height(), h)
-		var balance := sin(t * 2.4) * 2.0
+		var balance := 0.0 if a_terre else sin(t * 2.4) * 2.0
 		draw_texture_rect(peint, Rect2(dos + Vector2(-taille.x / 2, 22 - taille.y + balance), taille), false)
 		if not armes.is_empty():
 			_arme(dos, armes[0], Vector2(18, -14))

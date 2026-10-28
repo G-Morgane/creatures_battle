@@ -19,6 +19,8 @@ Piste :
 
 ## Objets neutres (pistes)
 
+**État :** plus aucun neutre n'est tiré en partie (2026-10-28, [[2026-10-28 Reliques de placement]]). La Lance du guet reste dans les données pour les tests.
+
 **Décision :** un neutre vise une **famille d'armes** ([[Cavaliers et armes#Familles d'armes]]), ex. « Carquois : les arcs tirent une flèche de plus ».
 **Pourquoi :** des builds croisés entre Dynasties, des neutres utiles sans être universels.
 

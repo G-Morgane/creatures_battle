@@ -18,6 +18,8 @@ func _init(s: String, graine: int) -> void:
 	rng.seed = graine
 
 func jouer_manche(p: Partie) -> void:
+	while p.cases_offertes > 0 and p.agrandir(JoueurAuto.case_agrandir(p)):
+		pass
 	if style == "aleatoire":
 		_aleatoire(p)
 	else:
@@ -35,7 +37,7 @@ func _simple(p: Partie) -> void:
 		element = _choisir_element(p)
 	# sac plein : on l'agrandit si l'on peut, avant d'acheter
 	if p.nid.occupation().size() >= p.nid.places() - 1 and p.prix_agrandir() >= 0 and p.bourse >= p.prix_agrandir() + 3:
-		p.agrandir()
+		p.agrandir(JoueurAuto.case_agrandir(p))
 	# Achete tout ce qui sert, puis relance tant qu'il reste de quoi acheter.
 	for relances in RELANCES_MAX + 1:
 		for i in _ordre(p):
@@ -115,3 +117,18 @@ func _cases_ok(p: Partie, id: String) -> Array:
 				if p.nid.peut_ajouter(Vector2i(x, y), id, rot):
 					l.append([Vector2i(x, y), rot])
 	return l
+
+# Case du sac a ouvrir : celle qui touche le plus de cases ouvertes, pour
+# garder le sac compact.
+static func case_agrandir(p: Partie) -> Vector2i:
+	var meilleure := Vector2i(-1, -1)
+	var score := -1
+	for c in p.nid.bordure():
+		var n := 0
+		for d in Nid.VOISINAGE:
+			if p.nid.ouverte(c + d):
+				n += 1
+		if n > score:
+			meilleure = c
+			score = n
+	return meilleure

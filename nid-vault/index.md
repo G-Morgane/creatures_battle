@@ -14,7 +14,7 @@ _Catalogue des pages. Mis à jour à chaque nouvelle page._
 - [[Univers et histoire]] : Sylvaën, hommages, le Rêveur et les gardiens.
 - [[Run et carte]] : 3 actes, nœuds, PV de run, début de partie.
 - [[Sac et formes]] : tapis 8 x 4, formes selon famille et rareté.
-- [[Boutique et économie]] : prix, rareté, gel, fusion.
+- [[Boutique et économie]] : prix, courbe de rareté, gel, fusion.
 - [[Combat]] : simulation déterministe, pas d'avantage élémentaire, états.
 - [[Reliques]] : essence, sort, catalyseur, arme.
 - [[Cavaliers et armes]] : talents des cavaliers, familles d'armes, crit.
@@ -55,3 +55,6 @@ _Catalogue des pages. Mis à jour à chaque nouvelle page._
 ## Discussions
 
 - [[2026-10-28 Mise en place du vault]]
+- [[2026-10-28 Chances de rareté]] : courbe de rareté continue, légendaires rares en acte 1, plafond par boutique.
+- [[2026-10-28 Refonte de la boutique]] : 9 offres en 3 x 3, sac qui grandit case par case, plus d'aperçu de la monture
+- [[2026-10-28 Reliques de placement]] : six mécaniques de placement, plus de neutres, arène agrandie

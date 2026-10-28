@@ -18,7 +18,7 @@ Choisi en début de partie (`images/cavaliers`), peint sur la monture en boutiqu
 | Cavalier | Talent | Effet |
 |---|---|---|
 | L'Ombre | Embuscade | Au début du combat, les armes lancent leur sort tout de suite |
-| La Pousse | Croissance | Le sac commence à 5 colonnes au lieu de 4 |
+| La Pousse | Croissance | 4 cases de sac offertes, à placer où l'on veut |
 | La Coquille | Éclosion | La monture commence chaque combat avec 40 de bouclier |
 | Le Capuchon | Érudit | Première relance de chaque boutique gratuite |
 

@@ -9,22 +9,26 @@ extends RefCounted
 const OR_PAR_MANCHE := 10   # une manche = un noeud franchi
 const PRIX := {"essence": 3, "sort": 4, "catalyseur": 4, "arme": 5}
 const BONUS_RARETE := {"commun": 0, "rare": 2, "epique": 4, "legendaire": 7}
-# Chances de tirage par rarete (commun, rare, epique, legendaire) a partir
-# d'une manche donnee : on ne voit d'abord que des communs.
+# Chances de tirage par rarete (commun, rare, epique, legendaire), en % par
+# offre, a quelques manches reperes ; entre deux, on interpole. On ne voit
+# d'abord que des communs, et un legendaire reste un evenement en acte 1 (le
+# boss en offre deja un a la fin de l'acte). Au plus un legendaire par boutique.
 const CHANCES_RARETE := [
-	[1, [100, 0, 0, 0]],
-	[2, [75, 25, 0, 0]],
-	[4, [55, 30, 15, 0]],
-	[6, [40, 30, 20, 10]],
+	[1, [100.0, 0.0, 0.0, 0.0]],
+	[3, [80.0, 20.0, 0.0, 0.0]],
+	[6, [64.9, 28.0, 7.0, 0.1]],
+	[10, [55.7, 30.0, 14.0, 0.3]],
+	[20, [38.0, 33.0, 25.0, 4.0]],
+	[30, [25.0, 33.0, 32.0, 10.0]],
 ]
 const PRIX_RELANCE := 1
 # Le sac commence sur les 4 colonnes du centre du damier et s'agrandit d'une
-# colonne a la fois, en alternant les cotes : en boutique (prix croissant, comme
-# l'experience de TFT) ou gratuitement apres un boss battu.
+# case a la fois, au choix du joueur, collee au sac : en boutique (2 or, puis
+# +1 a chaque case achetee) ou gratuitement (boss battu, Croissance).
 const COLONNES_DEPART := [2, 3, 4, 5]
-const ORDRE_AGRANDIR := [1, 6, 0, 7]
-const PRIX_AGRANDIR := [8, 12, 16, 20]
-const TAILLE_BOUTIQUE := 5
+const PRIX_CASE := 2
+const CROISSANCE_CASES := 4
+const TAILLE_BOUTIQUE := 9   # un carre de 3 x 3 sur le comptoir
 
 const PV_RUN := 60
 # Une defaite coute selon le noeud, plus ce qui reste de vie a l'adversaire (comme TFT).
@@ -34,8 +38,6 @@ const SOIN_FEU := 20
 # Elites et boss : un fantome qui a joue quelques manches de plus.
 # Les elites ont deja leur regle : pas de manche d'avance.
 const AVANCE := {"duel": 0, "elite": 0, "boss": 4}
-# Marche : raretes en avance et relances gratuites jusqu'au noeud suivant.
-const AVANCE_MARCHE := 3
 # Recompense d'une victoire : une relique offerte de cette rarete.
 const RECOMPENSE := {"elite": "epique", "boss": "legendaire"}
 const CHAUDRON_PV := 15
@@ -51,7 +53,8 @@ var victoires := 0
 var nid := Nid.new()
 var offres: Array = []   # ids, "" pour une offre deja achetee
 var gratuite := -1       # index de l'offre offerte, -1 sans
-var marche := false
+var cases_achetees := 0   # fixe le prix de la prochaine case du sac
+var cases_offertes := 0   # cases du sac gratuites, encore a placer
 # Boutique gelee : ses offres restent au noeud suivant (les achetees restent vides).
 # Une relance la degele.
 var gelee := false
@@ -72,7 +75,7 @@ var message := ""        # resultat du dernier noeud, affiche au Nid
 var rencontre := {}      # rencontre en cours : {id, titre, texte, choix, ...}
 
 # Dynasties de la partie : la boutique, les recompenses et le Heaume ne
-# tirent que dans celles-ci (et les objets neutres).
+# tirent que dans celles-ci (jamais d'objet neutre).
 var dynasties: Array = []
 var cavalier := ""          # choisi a l ecran de depart ; vide : pas de talent
 # Erudit : la premiere relance de la boutique en cours est encore gratuite.
@@ -83,7 +86,7 @@ func _init(g := 0, dyn := []) -> void:
 	graine = g if g != 0 else randi()
 	rng.seed = graine
 	carte = Carte.new(graine)
-	nid.colonnes = COLONNES_DEPART.duplicate()
+	nid.ouvertes = Nid.toutes().filter(func(c): return c.x in COLONNES_DEPART)
 	nid.encombrement = true
 	for k in TAILLE_RESERVE:
 		reserve.append({})
@@ -96,21 +99,32 @@ func prix_offre(i: int) -> int:
 	return 0 if i == gratuite else prix(offres[i])
 
 static func chances(m: int) -> Array:
-	var c: Array = CHANCES_RARETE[0][1]
+	var avant: Array = CHANCES_RARETE[0]
 	for palier in CHANCES_RARETE:
-		if m >= palier[0]:
-			c = palier[1]
-	return c
+		if m <= palier[0]:
+			var t: float = 0.0 if palier[0] == avant[0] else float(m - avant[0]) / (palier[0] - avant[0])
+			var c := []
+			for k in 4:
+				c.append(lerpf(avant[1][k], palier[1][k], t))
+			return c
+		avant = palier
+	return avant[1]
 
 # Tire une rarete selon la manche, puis une relique de cette rarete parmi ids.
 # Si aucune relique de cette rarete n'est dans ids, on descend d'un cran.
-static func tirer_id(r: RandomNumberGenerator, ids: Array, m: int) -> String:
+# sans_legendaire : la boutique en a deja un, on tire un epique a la place.
+static func tirer_id(r: RandomNumberGenerator, ids: Array, m: int, sans_legendaire := false) -> String:
 	var c := chances(m)
-	var x := r.randi() % 100
+	var x := r.randf() * 100.0
 	var k := 0
 	while k < c.size() - 1 and x >= c[k]:
 		x -= c[k]
 		k += 1
+	# arrondis : jamais une rarete a 0 %
+	while k > 0 and c[k] <= 0.0:
+		k -= 1
+	if sans_legendaire and k == 3:
+		k = 2
 	while k >= 0:
 		var lot := ids.filter(func(id): return Data.rarete(id) == Data.RARETES[k])
 		if not lot.is_empty():
@@ -129,27 +143,30 @@ func tirer() -> void:
 	var ids := pool()
 	offres.clear()
 	for i in TAILLE_BOUTIQUE:
-		offres.append(tirer_id(rng, ids, manche + (AVANCE_MARCHE if marche else 0)))
+		offres.append(tirer_id(rng, ids, manche, _a_legendaire()))
 	if garde != "":
 		offres[gratuite] = garde
 	else:
 		gratuite = -1
 
-# Reliques que la partie peut tirer : celles des dynasties choisies, et les neutres.
+func _a_legendaire() -> bool:
+	return offres.any(func(id): return id != "" and Data.rarete(id) == "legendaire")
+
+# Reliques que la partie peut tirer : celles des dynasties choisies, sans neutres.
 func pool() -> Array:
-	return Data.RELIQUES.keys().filter(func(id): return Data.RELIQUES[id]["element"] in dynasties or Data.RELIQUES[id]["element"] == "")
+	return Data.RELIQUES.keys().filter(func(id): return Data.RELIQUES[id]["element"] in dynasties)
 
 func prix_relance() -> int:
-	if marche or (cavalier == "capuchon" and relance_offerte):
+	if cavalier == "capuchon" and relance_offerte:
 		return 0
 	return PRIX_RELANCE
 
-# Le cavalier se choisit une fois, en debut de partie. Croissance : une
-# colonne de plus, offerte (la suivante coute comme la deuxieme).
+# Le cavalier se choisit une fois, en debut de partie. Croissance : des cases
+# de sac offertes, a placer (les suivantes coutent comme si de rien n'etait).
 func choisir_cavalier(c: String) -> void:
 	cavalier = c
-	if c == "pousse" and nid.colonnes.size() == COLONNES_DEPART.size():
-		agrandir(true)
+	if c == "pousse":
+		cases_offertes += CROISSANCE_CASES
 
 # Le talent du cavalier qui joue en combat, ajoute a la creature eclose.
 static func avec_cavalier(cr: Dictionary, c: String) -> Dictionary:
@@ -192,18 +209,23 @@ func acheter(i: int, c: Vector2i, rot := 0) -> bool:
 		gratuite = -1
 	return true
 
-# Prix de la prochaine colonne, -1 quand le damier est entier.
+# Prix de la prochaine case du sac (0 si offerte), -1 quand le damier est entier.
 func prix_agrandir() -> int:
-	var n := nid.colonnes.size() - COLONNES_DEPART.size()
-	return PRIX_AGRANDIR[n] if n < PRIX_AGRANDIR.size() else -1
+	if nid.bordure().is_empty():
+		return -1
+	return 0 if cases_offertes > 0 else PRIX_CASE + cases_achetees
 
-func agrandir(gratuit := false) -> bool:
+# Ouvre la case c, qui doit toucher le sac.
+func agrandir(c: Vector2i) -> bool:
 	var prix := prix_agrandir()
-	if prix < 0 or (not gratuit and bourse < prix):
+	if prix < 0 or bourse < prix or not c in nid.bordure():
 		return false
-	if not gratuit:
+	if cases_offertes > 0:
+		cases_offertes -= 1
+	else:
 		bourse -= prix
-	nid.colonnes.append(ORDRE_AGRANDIR[nid.colonnes.size() - COLONNES_DEPART.size()])
+		cases_achetees += 1
+	nid.ouvertes.append(c)
 	return true
 
 # --- glisser-deposer : sources et destinations --------------------------------
@@ -401,6 +423,7 @@ func conclure_combat(vainqueur: int, reste := 0.0) -> void:
 	var recompense := ""
 	if vainqueur == 0:
 		victoires += 1
+		nid.saisons += 1 if nid.cases.values().has("terreau") else 0
 		recompense = RECOMPENSE.get(type, "")
 		message = "Victoire." if recompense == "" else "Victoire : relique %s offerte." % Data.NOMS_RARETE[recompense].to_lower()
 	elif vainqueur == 1:
@@ -412,11 +435,12 @@ func conclure_combat(vainqueur: int, reste := 0.0) -> void:
 	if type == "boss" and acte == Carte.ACTES - 1:
 		finie = true
 		gagnee = vainqueur == 0
-	elif type == "boss" and vainqueur == 0 and agrandir(true):
-		message += " Le sac s'agrandit."
+	elif type == "boss" and vainqueur == 0 and not nid.bordure().is_empty():
+		cases_offertes += 1
+		message += " Une case de sac offerte."
 	_suivant(recompense)
 
-# Feu de camp et marche : rien a choisir.
+# Feu de camp : rien a choisir.
 func conclure() -> void:
 	match noeud()["type"]:
 		"feu":
@@ -424,14 +448,6 @@ func conclure() -> void:
 			pv_run = mini(PV_RUN, pv_run + SOIN_FEU)
 			message = "Feu de camp : +%d PV de run." % (pv_run - avant)
 			_suivant()
-		"marche":
-			_suivant()
-			marche = true
-			if not gelee:
-				tirer()
-			else:
-				_completer()
-			message = "Marché : raretés en avance, relances gratuites."
 
 func _suivant(recompense := "", element := "") -> void:
 	if pv_run <= 0:
@@ -442,7 +458,6 @@ func _suivant(recompense := "", element := "") -> void:
 		chemin.clear()
 	manche += 1
 	bourse += OR_PAR_MANCHE
-	marche = false
 	relance_offerte = true
 	if not gelee:
 		tirer()
@@ -457,7 +472,7 @@ func _completer() -> void:
 	var ids := pool()
 	for i in offres.size():
 		if offres[i] == "":
-			offres[i] = tirer_id(rng, ids, manche + (AVANCE_MARCHE if marche else 0))
+			offres[i] = tirer_id(rng, ids, manche, _a_legendaire())
 
 # Met une relique de cette rarete en premiere offre, gratuite. Element du Nid
 # de preference, sinon n'importe lequel.
@@ -544,6 +559,8 @@ func adversaire(avance := 0) -> Nid:
 	var fantome: Partie = f["partie"]
 	while f["joues"] < total:
 		if f["joues"] > 0:
+			# le fantome ne se bat pas : chaque manche compte comme une victoire pour le Terreau
+			fantome.nid.saisons += 1 if fantome.nid.cases.values().has("terreau") else 0
 			fantome.manche += 1
 			fantome.bourse += OR_PAR_MANCHE
 			fantome.tirer()

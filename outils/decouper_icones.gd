@@ -377,6 +377,8 @@ func _blasons() -> void:
 # flotte au-dessus d'elle : la coupe horizontale passe a 625 px).
 const CAVALIERS := [["ombre", "pousse"], ["coquille", "capuchon"]]
 const CAVALIERS_COUPE := 625
+# Tous les cavaliers regardent a droite ; ceux peints vers la gauche sont retournes.
+const CAVALIERS_A_RETOURNER := ["capuchon"]
 
 func _cavaliers() -> void:
 	DirAccess.make_dir_recursive_absolute("res://images/cavaliers")
@@ -395,6 +397,8 @@ func _cavaliers() -> void:
 			_poussiere(img, POUSSIERE_ICONE)
 			img = img.get_region(img.get_used_rect())
 			_reduire(img, 256)
+			if CAVALIERS[r][c] in CAVALIERS_A_RETOURNER:
+				img.flip_x()
 			img.save_png("res://images/cavaliers/%s.png" % CAVALIERS[r][c])
 
 # Fond de bouton : le cadre du milieu de images/boutons.png, sans la lueur

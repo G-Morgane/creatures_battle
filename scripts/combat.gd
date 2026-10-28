@@ -197,6 +197,10 @@ func _agir(moi: Dictionary, cible: Dictionary) -> void:
 				_empoisonner(cible, moi["cr"]["poison_attaque"])
 			if moi["cr"]["givre_attaque"] > 0.0:
 				_givrer(moi, cible, moi["cr"]["givre_attaque"])
+			# signatures des essences
+			var sig: Dictionary = moi["cr"].get("signatures", {})
+			for e in sig:
+				_signature(moi, cible, e, sig[e])
 	for s in moi["sorts"]:
 		if h < s["prochain"]:
 			continue
@@ -282,6 +286,28 @@ func _lancer(moi: Dictionary, cible: Dictionary, s: Dictionary, renfort := 1.0) 
 		s["tirs"] = s.get("tirs", 0) + 1
 		if s["tirs"] % s["combustion_tous"] == 0:
 			_combustion(moi, cible, 1.0, true, 1.0)
+	_signature(moi, cible, s["element"], s.get("signature", 0.0))
+
+# Signature de dynastie : le petit effet de l'element e (un sort qui part, ou
+# les essences a chaque attaque).
+func _signature(moi: Dictionary, cible: Dictionary, e: String, v: float) -> void:
+	if v <= 0.0:
+		return
+	match e:
+		"feu":
+			_bruler(moi, cible, v)
+		"nature":
+			_empoisonner(cible, v)
+		"glace":
+			_givrer(moi, cible, v)
+		"nuit":
+			_infliger(cible, v)
+			_soigner(moi, cible, v)
+		"aube":
+			_soigner(moi, cible, v)
+		"crepuscule":
+			_evenement(cible, {"type": "arcane", "valeur": v})
+			_blesser(cible, v, moi)
 
 # Brulure : n charges qui s'eteignent seules ; la Resine les double quand on va mal.
 func _bruler(moi: Dictionary, cible: Dictionary, n: float) -> void:

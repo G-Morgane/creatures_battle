@@ -51,7 +51,9 @@ func _ready() -> void:
 		var v := CreatureVue.new()
 		v.fond = false
 		v.miroir = i == 1
-		v.size = Vector2(440, 380)
+		v.size = Vector2(660, 570)
+		v.zoom = 1.725
+		v.a_terre = true
 		v.cavalier = cr.get("cavalier", "capuchon")
 		v.montrer(cr["forme"], cr["affinite"], cr["armes"], cr.get("hybride", ""), cr.get("elite", ""))
 		vues.append(v)
@@ -106,8 +108,8 @@ func _bouton(texte: String, f: Callable) -> Button:
 
 func _placer() -> void:
 	var milieu := size.y * 0.52
-	vues[0].position = Vector2(size.x * 0.27 - 220, milieu - 190)
-	vues[1].position = Vector2(size.x * 0.73 - 220, milieu - 190)
+	vues[0].position = Vector2(size.x * 0.27 - 330, milieu - 285)
+	vues[1].position = Vector2(size.x * 0.73 - 330, milieu - 285)
 	nids[0].position = Vector2(24, size.y - nids[0].size.y - 38)
 	nids[1].position = Vector2(size.x - nids[1].size.x - 24, size.y - nids[1].size.y - 38)
 	recap.position = (size - recap.size) / 2 - Vector2(0, 30)
@@ -150,8 +152,10 @@ func _jouer(e: Dictionary) -> void:
 	var nom: String = combat.cotes[e["cote"]]["cr"]["nom"]
 	match e["type"]:
 		"attaque":
-			_elan(moi)
+			_elan(moi, "elan")
 		"sort":
+			# le cavalier frappe avec ses armes, la monture avec tout le reste
+			_elan(moi, "elan_cavalier" if e["cavalier"] else "elan")
 			var couleurs: Dictionary = Palette.ELEMENTS[e["element"]]
 			var de: Vector2 = moi.position + moi.source(e["cavalier"])
 			var a: Vector2 = cible.position + cible.size / 2 + Vector2(0, 20)
@@ -245,10 +249,10 @@ func _jouer(e: Dictionary) -> void:
 			moi.modulate = Color(2.2, 1.8, 1.2)
 			create_tween().tween_property(moi, "modulate", Color.WHITE, 0.8)
 
-func _elan(v: CreatureVue) -> void:
+func _elan(v: CreatureVue, qui: String) -> void:
 	var tw := create_tween()
-	tw.tween_property(v, "elan", 24.0, 0.08 / vitesse)
-	tw.tween_property(v, "elan", 0.0, 0.14 / vitesse)
+	tw.tween_property(v, qui, 24.0, 0.08 / vitesse)
+	tw.tween_property(v, qui, 0.0, 0.14 / vitesse)
 
 # Textes sur trois lignes fixes au-dessus de la monture, pour ne pas la cacher :
 # 0 cavalier, 1 monture, 2 reactions (bouclier, renaissance).
@@ -404,7 +408,8 @@ class MiniNid extends Control:
 	var cote: int
 	var cr: Dictionary
 	var sort_de := {}   # case -> index du sort
-	var colonnes: Array  # colonnes ouvertes du sac, dans l'ordre du damier
+	var ouvertes: Array  # cases ouvertes du sac
+	var boite: Rect2i    # le rectangle du damier qu'elles occupent
 	var CASE := 44.0
 	func _init(e: CombatScreen, i: int) -> void:
 		ecran = e
@@ -412,11 +417,11 @@ class MiniNid extends Control:
 		cr = e.combat.cotes[i]["cr"]
 		for k in cr["sorts"].size():
 			sort_de[cr["sorts"][k]["case"]] = k
-		colonnes = cr.get("colonnes", range(Data.NID_L)).duplicate()
-		colonnes.sort()
+		ouvertes = cr.get("ouvertes", Nid.toutes())
+		boite = NidScreen.boite(ouvertes)
 		# un grand sac prend des cases plus petites
-		CASE = 48.0 if colonnes.size() <= 4 else 36.0
-		size = Vector2(colonnes.size() * (CASE + ECART) - ECART, Data.NID_H * (CASE + ECART) - ECART)
+		CASE = 48.0 if boite.size.x <= 4 else 36.0
+		size = Vector2(boite.size) * (CASE + ECART) - Vector2(ECART, ECART)
 		tooltip_text = " "
 	# Cases de la relique d'ancre a (sa forme si le sac en a).
 	func _cases(a: Vector2i) -> Array:
@@ -424,10 +429,9 @@ class MiniNid extends Control:
 			return [a]
 		return Data.empreinte(cr["cases"][a], cr["rotations"].get(a, 0)).map(func(d): return a + d)
 	func _ancre_sous(p: Vector2):
-		var i := int(p.x / (CASE + ECART))
-		if p.y < 0 or i < 0 or i >= colonnes.size():
+		if p.x < 0 or p.y < 0:
 			return null
-		var c := Vector2i(colonnes[i], int(p.y / (CASE + ECART)))
+		var c := boite.position + Vector2i(p / (CASE + ECART))
 		for a in cr["cases"]:
 			if c in _cases(a):
 				return a
@@ -444,10 +448,10 @@ class MiniNid extends Control:
 	# que les cases d'une meme relique se touchent.
 	func _rect(c: Vector2i) -> Rect2:
 		var pas := CASE + ECART
-		return Rect2(Vector2(colonnes.find(c.x), c.y) * pas, Vector2(CASE, CASE)).grow(ECART / 2)
+		return Rect2(Vector2(c - boite.position) * pas, Vector2(CASE, CASE)).grow(ECART / 2)
 	func _draw() -> void:
 		var police := ThemeDB.fallback_font
-		NidScreen.dessiner_tapis(self, colonnes, CASE, Vector2.ZERO)
+		NidScreen.dessiner_tapis(self, ouvertes, CASE, Vector2.ZERO, boite.position)
 		var prog := ecran.recharges(cote)
 		for a in cr["cases"]:
 			var id: String = cr["cases"][a]

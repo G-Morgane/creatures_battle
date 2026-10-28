@@ -246,14 +246,20 @@ Ils visent une famille d'armes (voir Familles d'armes). Pistes :
 ### Rareté
 
 Commun, rare, épique, légendaire. Les chances de tirage en boutique dépendent de la manche
-(sur la carte : du nombre de nœuds franchis) :
+(sur la carte : du nombre de nœuds franchis). Elles sont données par offre à quelques manches
+repères et interpolées entre deux :
 
-| À partir de la manche | Commun | Rare | Épique | Légendaire |
+| Manche | Commun | Rare | Épique | Légendaire |
 |---|---|---|---|---|
 | 1 | 100 % | | | |
-| 2 | 75 % | 25 % | | |
-| 4 | 55 % | 30 % | 15 % | |
-| 6 | 40 % | 30 % | 20 % | 10 % |
+| 3 | 80 % | 20 % | | |
+| 6 | 64,9 % | 28 % | 7 % | 0,1 % |
+| 10 (boss 1) | 55,7 % | 30 % | 14 % | 0,3 % |
+| 20 (boss 2) | 38 % | 33 % | 25 % | 4 % |
+| 30 (boss 3) | 25 % | 33 % | 32 % | 10 % |
+
+**Au plus un légendaire par boutique** : au-delà, le tirage donne un épique. Un légendaire en
+boutique reste un événement en acte 1 ; le boss de chaque acte en offre déjà un.
 
 Toutes les raretés fusionnent, légendaires compris (voir Fusion). Une tuile non commune porte une bande de couleur
 (bleu rare, violet épique, or légendaire).

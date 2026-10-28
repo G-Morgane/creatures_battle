@@ -17,10 +17,10 @@ const INTERVALLE_BASE := 1.0   # secondes entre deux attaques de base
 const FORMES := {
 	"feu":   {"nom": "Phénix",        "passif": "Renaît une fois à 25 % de PV, plus vite à chaque combustion (Braise)"},
 	"nuit":  {"nom": "Chauve-souris", "passif": "Vol de vie sur les attaques, +12 % de dégâts par malédiction sur la cible"},
-	"glace": {"nom": "Ours",          "passif": "Ses attaques posent du givre, +50 % de dégâts contre une cible gelée"},
+	"glace": {"nom": "Ours",          "passif": "Ses attaques posent du givre, +100 % de dégâts contre une cible gelée"},
 	"aube":  {"nom": "Lion",          "passif": "Régénère, et ses soins chargent l'Éclat (un coup de lumière)"},
 	"crepuscule": {"nom": "Papillon", "passif": "Un Transfert sans rien à voler ni à renvoyer lance un projectile d'arcane"},
-	"nature":{"nom": "Cerf",          "passif": "Épines : blesse qui le frappe (2 dégâts par coup reçu)"},
+	"nature":{"nom": "Cerf",          "passif": "Épines : blesse qui le frappe (3 dégâts par coup reçu)"},
 	# Dynasties sans objets pour l'instant : la monture est prete, le set reste a concevoir.
 	"automne": {"nom": "Renard",      "passif": "À concevoir"},
 	"jour":  {"nom": "Paon",          "passif": "À concevoir"},
@@ -50,10 +50,10 @@ const FESTIN_DEGATS := 15.0        # Faux de la Nuit profonde : par charge consu
 # Lion : on stocke du soin pour frapper. Tous les soins chargent l'Eclat (aux trois quarts),
 # les soins excedentaires (au-dela des PV max) comptent double. La charge se fait
 # sur le soin prevu : un soin bloque (Belladone) ou reduit (Fletrissure) charge quand meme.
-const REGEN_LION := 1.5            # PV par seconde
+const REGEN_LION := 0.5            # PV par seconde
 const ECLAT_SEUIL := 60.0
 const ECLAT_SEUIL_MIN := 20.0
-const ECLAT_DEGATS := 40.0
+const ECLAT_DEGATS := 60.0
 const ECLAT_PAR_SOIN := 0.75
 const ECLAT_PAR_EXCES := 2.0
 const BANDE_SEUIL := 0.5           # Bande de lin : regeneration renforcee sous ce seuil
@@ -71,8 +71,8 @@ const CHRYSALIDE_SEUIL := 0.5
 const INVERSION_T := 12.0
 # Cerf : epines (riposte a chaque coup recu) et poison (doses qui s'empilent,
 # ne s'effacent pas, passent a travers le bouclier).
-const EPINES_CERF := 2.0
-const POISON_DPS_PAR_DOSE := 0.2
+const EPINES_CERF := 3.0
+const POISON_DPS_PAR_DOSE := 0.5
 const POISON_MAX := 100
 const EPINES_BONUS_MAX := 2.0      # Coeur de roncier et Graine : epines x2 au plus
 const COEUR_PAR_RIPOSTE := 0.1
@@ -82,9 +82,9 @@ const GOUSSE_COUPS := 5            # Gousse eclatante : une salve tous les 5 cou
 # Loup : chaque charge de givre ralentit attaques et recharges de sorts ;
 # au seuil, la cible gele (plus rien ne part) et ses charges retombent a zero.
 const LOUP_GIVRE := 1.0
-const LOUP_BONUS_GEL := 1.5        # degats du Loup contre une cible gelee
+const LOUP_BONUS_GEL := 2.0        # degats du Loup contre une cible gelee
 const GIVRE_RALENTI := 0.03        # par charge
-const RALENTI_MAX := 0.6
+const RALENTI_MAX := 0.4
 const GEL_SEUIL := 10.0
 const GEL_SEUIL_MIN := 4.0
 const GEL_DUREE := 1.5
@@ -141,6 +141,9 @@ const RELIQUES := {
 		"soin_par_charge": 1.0},
 	"oeuf_brasier":   {"nom": "Œuf du Premier Brasier", "element": "feu", "affinite": 2, "type": "essence", "rarete": "legendaire",
 		"oeuf": true},
+	# portee "rangee" : le catalyseur agit sur toute sa rangee, pas seulement ses voisins
+	"trainee":        {"nom": "Traînée de cendres", "element": "feu", "affinite": 1, "type": "catalyseur", "rarete": "rare",
+		"effet": "brulure", "valeur": 0.3, "portee": "rangee"},
 	# nuit : vol de vie et maledictions. Le Chapelet permet de les empiler.
 	"ruban":          {"nom": "Ruban sanguin",  "element": "nuit",  "affinite": 2, "type": "essence",
 		"vol_de_vie": 0.08, "attaque": 2.0},
@@ -162,9 +165,11 @@ const RELIQUES := {
 		"grimoire": 40.0},
 	"pacte":          {"nom": "Pacte de la Nuit profonde","element": "nuit", "affinite": 2, "type": "essence", "rarete": "legendaire",
 		"pacte": 5.0},
+	"calice":         {"nom": "Calice de sang", "element": "nuit",  "affinite": 1, "type": "catalyseur",
+		"effet": "vol_de_vie", "valeur": 0.10},
 	# nature : epines et poison. Ortie et Amanite renforcent leurs voisins.
 	"epine_ronce":    {"nom": "Épine de ronce", "element": "nature", "affinite": 2, "type": "essence",
-		"epines": 2.0},
+		"epines": 2.0, "pv": 40.0},
 	"baie":           {"nom": "Baie vénéneuse", "element": "nature", "affinite": 2, "type": "essence",
 		"poison_attaque": 0.5},
 	"ortie":          {"nom": "Feuille d'ortie","element": "nature", "affinite": 1, "type": "catalyseur",
@@ -183,14 +188,20 @@ const RELIQUES := {
 		"coeur": true, "epines": 2.0},
 	"graine_jardin":  {"nom": "Graine du Jardin interdit","element": "nature", "affinite": 2, "type": "essence", "rarete": "legendaire",
 		"graine": true, "epines": 3.0},
+	# grappe : stats par relique voisine de la meme dynastie
+	"mousse":         {"nom": "Mousse des sous-bois","element": "nature", "affinite": 1, "type": "essence",
+		"pv": 10.0, "grappe": {"pv": 15.0}},
+	# Terreau : ses voisines grandissent a chaque victoire ou il est dans le sac
+	"terreau":        {"nom": "Terreau fertile","element": "nature", "affinite": 1, "type": "essence", "rarete": "rare",
+		"terreau": true},
 	# glace : givre jusqu'au gel, et un bouclier fait pour se briser.
 	# Croc du blizzard : les voisins posent plus de givre. Fourrure : plus de bouclier.
 	"flocon":         {"nom": "Flocon intact",  "element": "glace", "affinite": 2, "type": "essence",
-		"givre_attaque": 1.0},
+		"givre_attaque": 1.0, "attaque": 1.0},
 	"galet":          {"nom": "Galet gelé",     "element": "glace", "affinite": 1, "type": "sort",
-		"sort": "Armure de givre", "recharge": 6.0, "bouclier": 6.0, "par_affinite": 1.0},
+		"sort": "Armure de givre", "recharge": 6.0, "bouclier": 5.0, "par_affinite": 0.5},
 	"eclat_givre":    {"nom": "Éclat de givre", "element": "glace", "affinite": 2, "type": "essence",
-		"bris_degats": 20.0},
+		"bris_degats": 30.0},
 	"fourrure":       {"nom": "Fourrure hivernale","element": "glace", "affinite": 1, "type": "catalyseur",
 		"effet": "bouclier", "valeur": 0.5},
 	"croc_blizzard":  {"nom": "Croc du blizzard","element": "glace", "affinite": 1, "type": "catalyseur", "rarete": "rare",
@@ -205,15 +216,18 @@ const RELIQUES := {
 		"rose": true},
 	"noyau_hiver":    {"nom": "Noyau de l'Hiver éternel","element": "glace", "affinite": 2, "type": "essence", "rarete": "legendaire",
 		"nova": 20.0},
+	# solitaire : ces stats seulement si aucune relique ne la touche
+	"stalagmite":     {"nom": "Stalagmite solitaire","element": "glace", "affinite": 1, "type": "essence", "rarete": "rare",
+		"solitaire": {"bouclier": 40.0, "attaque": 3.0}},
 	# aube : soin et Eclat. Huile de premiere lumiere renforce les soins voisins.
 	"meche":          {"nom": "Mèche de veille","element": "aube",  "affinite": 1, "type": "sort",
-		"sort": "Veille", "recharge": 4.0, "soin": 8.0, "par_affinite": 1.0},
+		"sort": "Veille", "recharge": 4.0, "soin": 6.0, "par_affinite": 0.75},
 	"huile":          {"nom": "Huile de première lumière", "element": "aube", "affinite": 1, "type": "catalyseur",
 		"effet": "soin", "valeur": 0.5},
 	"miroir":         {"nom": "Miroir de poche","element": "aube",  "affinite": 2, "type": "essence",
 		"miroir": 10.0},
 	"bande":          {"nom": "Bande de lin",   "element": "aube",  "affinite": 2, "type": "essence",
-		"bande": 2.0},
+		"bande": 1.0},
 	"encensoir":      {"nom": "Encensoir du matin","element": "aube", "affinite": 1, "type": "essence", "rarete": "rare",
 		"encensoir": 3.0},
 	"vasque":         {"nom": "Vasque de rosée","element": "aube",  "affinite": 1, "type": "essence", "rarete": "rare",
@@ -226,6 +240,8 @@ const RELIQUES := {
 		"carillon": 40.0},
 	"lanterne":       {"nom": "Lanterne du Premier Matin","element": "aube", "affinite": 2, "type": "essence", "rarete": "legendaire",
 		"lanterne": 1.0},
+	"cadran":         {"nom": "Cadran solaire", "element": "aube",  "affinite": 1, "type": "catalyseur", "rarete": "rare",
+		"effet": "recharge", "valeur": 0.25},
 	# crepuscule : Transfert. Pollen dore renforce les Transferts voisins.
 	"battement":      {"nom": "Battement d'ailes","element": "crepuscule", "affinite": 1, "type": "sort",
 		"sort": "Battement d'ailes", "recharge": 5.0, "transfert": "renvoyer", "puissance": 10.0, "par_affinite": 0.5, "echelle": "puissance"},
@@ -247,6 +263,9 @@ const RELIQUES := {
 		"aile_lune": true},
 	"inversion":      {"nom": "Inversion",      "element": "crepuscule", "affinite": 2, "type": "essence", "rarete": "legendaire",
 		"inversion": true},
+	# copie : reprend cette part de l'essence voisine la plus forte
+	"reflet":         {"nom": "Reflet d'aile",  "element": "crepuscule", "affinite": 1, "type": "essence", "rarete": "epique",
+		"copie": 0.75},
 	# armes : le cavalier les tient toutes, chacune lance son propre sort.
 	# Les catalyseurs voisins s'appliquent aussi a ce sort.
 	# armes du Phenix : Baton et Faux
@@ -353,7 +372,7 @@ const IDENTITES := {
 const CAVALIERS := {"ombre": "L'Ombre", "pousse": "La Pousse", "coquille": "La Coquille", "capuchon": "Le Capuchon"}
 const TALENTS := {
 	"ombre": ["Embuscade", "Au début de chaque combat, tes armes lancent leur sort tout de suite."],
-	"pousse": ["Croissance", "Ton sac commence avec une colonne de plus (5 au lieu de 4)."],
+	"pousse": ["Croissance", "Tu commences avec 4 cases de sac offertes, à placer où tu veux."],
 	"coquille": ["Éclosion", "Ta monture commence chaque combat avec un bouclier de 40."],
 	"capuchon": ["Érudit", "La première relance de chaque boutique est gratuite."],
 }
@@ -453,6 +472,21 @@ static func rarete(id: String) -> String:
 # peu moins que trois copies (x2,5 contre x3) mais libere deux cases.
 const NIVEAU_MAX := 3
 const NIVEAU_MULT := [0.0, 1.0, 2.5, 6.0]
+
+# Signature de dynastie : a chaque activation, un sort ou une arme ajoute un
+# petit effet de son element (x niveau). Brulure, poison et givre en charges,
+# drain (passe le bouclier et soigne), soin, projectile d'arcane en degats.
+const SIGNATURES := {"feu": 1.0, "nature": 1.0, "glace": 1.0, "nuit": 2.0, "aube": 3.0, "crepuscule": 3.0}
+const NOMS_SIGNATURE := {"feu": "%s brûlure", "nature": "%s dose de poison", "glace": "%s givre",
+	"nuit": "draine %s PV", "aube": "soigne %s PV", "crepuscule": "projectile d'arcane de %s"}
+# Une essence n'a pas d'activation : elle donne cette part de sa signature a
+# chaque attaque de la monture (5 essences de l'Ete : 1 brulure par attaque).
+const SIGNATURE_ESSENCE := 0.2
+
+# Terreau fertile : +4 % aux voisines par saison (victoire avec le Terreau dans
+# le sac), saisons comptees jusqu'a 10.
+const TERREAU_PAR_SAISON := 0.04
+const TERREAU_SAISONS_MAX := 10
 
 # Moisson double ses degats sous ce seuil de PV.
 const SEUIL_EXECUTION := 0.4

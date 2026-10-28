@@ -1,7 +1,7 @@
 class_name NidScreen
 extends Control
 
-# Ecran du Nid : boutique a gauche, grille au centre, creature a droite.
+# Ecran du Nid : boutique (3 x 3 offres) a gauche, reserve et sac a droite.
 # Glisser une offre dans une case vide l'achete, glisser une case vers une
 # autre echange, la ramener sur le comptoir la revend.
 
@@ -15,8 +15,6 @@ var partie := Partie.new()
 var nid: Nid:
 	get: return partie.nid
 var cases_ui := {}   # Vector2i -> CaseNid
-var vue: CreatureVue
-var infos: RichTextLabel
 var barre: Label
 var compteurs := {}     # vie, victoires, or -> Label
 var message_ui: Label
@@ -28,7 +26,6 @@ var bouton_combat: Button
 var sac: Control
 var haut: Control
 var boutique_ui: Control
-var monture_ui: Control
 var aide_ui: Control
 var vente: Control
 var reserve_ui: Control
@@ -40,6 +37,7 @@ var rot_prise := 0
 var prise := Vector2i.ZERO
 var pose_vue := {}       # apercu de la pose en cours : {cases, ok}
 var case_survolee = null # case du sac sous la souris
+var choix_case := false  # Agrandir : on clique la case du sac a ouvrir
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -86,12 +84,15 @@ func _ready() -> void:
 	# les offres sont posees sur le comptoir peint, sans cadre
 	boutique_ui = _boutique()
 	add_child(boutique_ui)
-	monture_ui = _cadre(_panneau())
-	add_child(monture_ui)
+	bouton_combat = Button.new()
+	bouton_combat.custom_minimum_size = Vector2(360, 44)
+	bouton_combat.pressed.connect(_combattre)
+	add_child(bouton_combat)
 	reserve_ui = _cadre(_reserve())
 	add_child(reserve_ui)
 	var aide := Label.new()
-	aide.text = "Glisse pour acheter, R ou molette pour tourner. 3 copies : ★. Ramène un objet sur le comptoir pour le revendre. Sur un autre objet : il prend sa place, l'autre passe en main."
+	aide.text = "Glisse pour acheter, R ou molette pour tourner. 3 copies : ★.
+Ramène un objet sur le comptoir pour le revendre. Sur un autre objet : il prend sa place, l'autre passe en main."
 	aide.add_theme_font_size_override("font_size", 13)
 	aide.add_theme_color_override("font_color", Palette.TEXTE_DOUX)
 	aide_ui = _cadre(aide)
@@ -108,6 +109,8 @@ func _ready() -> void:
 	bandeau_vente.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bandeau_vente.visible = false
 	add_child(bandeau_vente)
+	# des cases offertes a placer : on propose tout de suite de les choisir
+	choix_case = partie.cases_offertes > 0
 	resized.connect(_placer)
 	_placer()
 	rafraichir()
@@ -116,34 +119,43 @@ func _placer() -> void:
 	var marge := 20.0
 	haut.position = Vector2(marge, 14)
 	haut.size = Vector2(size.x - 2 * marge, 0)
-	# la monture en bas a droite ; a gauche, le comptoir (offres) puis le tapis
-	monture_ui.reset_size()
-	monture_ui.position = Vector2(size.x - monture_ui.size.x - marge, size.y - monture_ui.size.y - marge)
-	var gauche := monture_ui.position.x - marge
-	boutique_ui.reset_size()
-	boutique_ui.position = Vector2((gauche - boutique_ui.size.x) / 2 + marge / 2, 80)
+	# a gauche le comptoir (offres) ; a droite la reserve, le sac, puis le bouton
+	var droite := size.x * 0.5
 	aide_ui.reset_size()
-	aide_ui.position = Vector2((gauche - aide_ui.size.x) / 2 + marge / 2, size.y - aide_ui.size.y - 6)
+	aide_ui.position = Vector2(marge, size.y - aide_ui.size.y - 6)
+	vente.position = Vector2(marge, 70)
+	vente.size = Vector2(droite - 2 * marge, aide_ui.position.y - 10 - 70)
+	boutique_ui.reset_size()
+	boutique_ui.position = vente.position + (vente.size - boutique_ui.size) / 2
 	reserve_ui.reset_size()
 	reserve_ui.position = Vector2(size.x - reserve_ui.size.x - marge, 80)
-	vente.position = Vector2(marge, 70)
-	vente.size = Vector2(gauche - marge, boutique_ui.position.y + boutique_ui.size.y + 6 - 70)
-	# le tapis prend la place libre sous le comptoir, en cases carrees
-	var dessus := boutique_ui.position.y + boutique_ui.size.y + 14
-	var dessous := aide_ui.position.y - 10
-	var cote := minf((dessous - dessus) / Data.NID_H, (gauche - marge) / Data.NID_L)
-	var cols := nid.colonnes.duplicate()
-	cols.sort()
-	sac.colonnes = cols
+	bouton_combat.reset_size()
+	var largeur := size.x - marge - droite
+	bouton_combat.position = Vector2(droite + (largeur - bouton_combat.size.x) / 2, size.y - bouton_combat.size.y - marge)
+	# le sac prend la place libre entre les deux, en cases carrees : tout le
+	# damier, pour qu'on voie ou il peut grandir
+	var dessus := reserve_ui.position.y + reserve_ui.size.y + 14
+	var dessous := bouton_combat.position.y - 14
+	var cote := minf((dessous - dessus) / Data.NID_H, largeur / Data.NID_L)
 	sac.cote = cote
-	sac.position = Vector2((gauche - cols.size() * cote) / 2 + marge / 2, dessus + (dessous - dessus - Data.NID_H * cote) / 2)
-	sac.size = Vector2(cols.size() * cote, Data.NID_H * cote)
+	sac.position = Vector2(droite + (largeur - Data.NID_L * cote) / 2, dessus + (dessous - dessus - Data.NID_H * cote) / 2)
+	sac.size = Vector2(Data.NID_L, Data.NID_H) * cote
 	for c in cases_ui:
-		var i := cols.find(c.x)
-		cases_ui[c].visible = i >= 0
-		cases_ui[c].position = Vector2(i, c.y) * cote
+		cases_ui[c].position = Vector2(c) * cote
 		cases_ui[c].size = Vector2(cote, cote)
+	_cases_visibles()
+
+# Les cases ouvertes, et pendant Agrandir celles qu'on peut ouvrir.
+func _cases_visibles() -> void:
+	var bord := nid.bordure() if choix_case else []
+	for c in cases_ui:
+		cases_ui[c].visible = nid.ouverte(c) or c in bord
 	sac.queue_redraw()
+
+func ouvrir(c: Vector2i) -> void:
+	if partie.agrandir(c):
+		choix_case = partie.cases_offertes > 0
+	rafraichir()
 
 # Cadre sombre sous une zone, pour lire le texte sur le fond peint.
 func _cadre(contenu: Control) -> PanelContainer:
@@ -167,9 +179,11 @@ func _titre(texte: String) -> Label:
 func _boutique() -> Control:
 	var col := Boutique.new(self)
 	col.add_theme_constant_override("separation", 6)
-	var g := HBoxContainer.new()
-	g.add_theme_constant_override("separation", 18)
-	g.alignment = BoxContainer.ALIGNMENT_CENTER
+	var g := GridContainer.new()
+	g.columns = 3
+	g.add_theme_constant_override("h_separation", 18)
+	g.add_theme_constant_override("v_separation", 6)
+	g.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	for i in Partie.TAILLE_BOUTIQUE:
 		var o := Offre.new(self, i)
 		offres_ui.append(o)
@@ -186,9 +200,9 @@ func _boutique() -> Control:
 	boutons.add_child(relance)
 	agrandir = Button.new()
 	agrandir.custom_minimum_size = Vector2(150, 34)
-	agrandir.tooltip_text = "Ouvre une colonne de plus sur le damier."
+	agrandir.tooltip_text = "Puis clique une case collée au sac pour l'ouvrir."
 	agrandir.pressed.connect(func():
-		partie.agrandir()
+		choix_case = not choix_case
 		rafraichir())
 	boutons.add_child(agrandir)
 	geler = Button.new()
@@ -218,41 +232,6 @@ func _reserve() -> Control:
 		g.add_child(c)
 	col.add_child(g)
 	return col
-
-func _panneau() -> Control:
-	var ligne := VBoxContainer.new()
-	ligne.add_theme_constant_override("separation", 8)
-	vue = CreatureVue.new()
-	vue.custom_minimum_size = Vector2(360, 200)
-	vue.zoom = 0.62
-	vue.clip_contents = true
-	ligne.add_child(vue)
-	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 8)
-	var defile := ScrollContainer.new()
-	defile.custom_minimum_size = Vector2(360, 250)
-	defile.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	infos = _texte()
-	infos.fit_content = true
-	infos.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	defile.add_child(infos)
-	col.add_child(defile)
-	bouton_combat = Button.new()
-	bouton_combat.custom_minimum_size.y = 40
-	bouton_combat.pressed.connect(_combattre)
-	col.add_child(bouton_combat)
-	ligne.add_child(col)
-	return ligne
-
-func _texte() -> RichTextLabel:
-	var t := RichTextLabel.new()
-	t.bbcode_enabled = true
-	t.add_theme_color_override("default_color", Palette.TEXTE)
-	t.add_theme_font_size_override("normal_font_size", 16)
-	t.add_theme_font_size_override("bold_font_size", 16)
-	t.add_theme_constant_override("table_h_separation", 6)
-	t.add_theme_constant_override("line_separation", 2)
-	return t
 
 # --- actions ---------------------------------------------------------------
 
@@ -333,22 +312,26 @@ func vendre(c: Vector2i) -> void:
 	rafraichir()
 
 func rafraichir() -> void:
-	if sac.colonnes.size() != nid.colonnes.size():
-		_placer()
+	var prix_sac := partie.prix_agrandir()
+	if prix_sac < 0 or partie.bourse < prix_sac or partie.terminee():
+		choix_case = false
+	_cases_visibles()
 	for c in cases_ui:
 		cases_ui[c].queue_redraw()
 	for c in reserve_cases:
 		c.queue_redraw()
-	var cr := nid.eclore()
-	vue.cavalier = partie.cavalier
-	vue.montrer(cr["forme"], _affinite_totale(), cr["armes"], cr["hybride"])
-	infos.text = _decrire(cr)
 	for o in offres_ui:
 		o.queue_redraw()
 	relance.text = "Relancer (%s)" % ("gratuit" if partie.prix_relance() == 0 else "%d or" % partie.prix_relance())
 	relance.disabled = partie.bourse < partie.prix_relance() or partie.terminee()
-	var prix_sac := partie.prix_agrandir()
-	agrandir.text = "Sac complet" if prix_sac < 0 else "Agrandir (%d or)" % prix_sac
+	if prix_sac < 0:
+		agrandir.text = "Sac complet"
+	elif choix_case:
+		agrandir.text = "Choisis une case"
+	elif partie.cases_offertes > 0:
+		agrandir.text = "Agrandir (offert x%d)" % partie.cases_offertes
+	else:
+		agrandir.text = "Agrandir (%d or)" % prix_sac
 	agrandir.disabled = prix_sac < 0 or partie.bourse < prix_sac or partie.terminee()
 	geler.text = "Dégeler" if partie.gelee else "Geler"
 	geler.disabled = partie.terminee()
@@ -361,209 +344,6 @@ func rafraichir() -> void:
 		bouton_combat.text = ("Run gagnée !" if partie.gagnee else "Run perdue.") + " Nouvelle partie"
 	else:
 		bouton_combat.text = "Vers la carte"
-
-func _affinite_totale() -> int:
-	var total := 0
-	for v in nid.affinites().values():
-		total += v
-	return total
-
-func _decrire(cr: Dictionary) -> String:
-	var aff := nid.affinites()
-	var doux := Palette.TEXTE_DOUX.to_html(false)
-	var lignes := [
-		"[font=%s][font_size=24]%s[/font_size][/font]" % [Palette.TITRE_POLICE, cr["nom"]],
-		_affinites(aff),
-		"[color=#%s][i]%s[/i][/color]" % [doux, Data.FORMES[cr["forme"]]["passif"]],
-		"",
-	]
-	# les chiffres en tableau : un intitule discret, la valeur dessous
-	var stats := [["PV", "%d" % cr["pv_max"]], ["Attaque", "%.0f" % cr["attaque"]],
-		["Attaques/s", "%.2f" % (1.0 / cr["intervalle"])], ["Vol de vie", "%d %%" % roundi(cr["vol_de_vie"] * 100)]]
-	if cr["bouclier"] > 0.0:
-		stats.append(["Bouclier", "%d" % cr["bouclier"]])
-	if cr["crit"] > 0.0:
-		stats.append(["Critique", "%d %%" % roundi(cr["crit"] * 100)])
-	if cr["epines"] > 0.0:
-		stats.append(["Épines", "%.1f" % cr["epines"]])
-	if cr["poison_attaque"] > 0.0:
-		stats.append(["Poison/coup", "%.1f" % cr["poison_attaque"]])
-	if cr["epines_poison"] > 0.0:
-		stats.append(["Épines toxiques", "%.1f" % cr["epines_poison"]])
-	var table := "[table=4]"
-	for k in range(0, stats.size(), 4):
-		var rang: Array = stats.slice(k, k + 4)
-		while rang.size() < 4:
-			rang.append(["", ""])
-		for st in rang:
-			table += "[cell][color=#%s][font_size=13]%s[/font_size][/color][/cell]" % [doux, st[0]]
-		for st in rang:
-			table += "[cell][b]%s[/b]   [/cell]" % st[1]
-	lignes.append(table + "[/table]")
-	var effets := []
-	if cr["gousse"] > 0.0:
-		effets.append("salve d'épines tous les %d coups reçus" % Data.GOUSSE_COUPS)
-	if cr["belladone"]:
-		effets.append("empoisonné, l'adversaire ne peut plus se soigner")
-	if cr["coeur"]:
-		effets.append("les épines se renforcent à chaque riposte")
-	if cr["graine"]:
-		effets.append("épines et poison se nourrissent l'un l'autre")
-	if cr["brulure_attaque"] > 0.0:
-		effets.append("%.1f brûlure par attaque" % cr["brulure_attaque"])
-	if cr["degats_en_feu"] > 0.0:
-		effets.append("+%d dégâts contre une cible en feu" % cr["degats_en_feu"])
-	if cr["combustion_soin"] + cr["soin_par_charge"] > 0.0:
-		effets.append("les combustions soignent")
-	if cr["resine"]:
-		effets.append("brûlure doublée vie basse")
-	if cr["fournaise"]:
-		effets.append("sous la moitié de sa vie : combustion totale et Braise")
-	if cr["renaissances"] > 1:
-		effets.append("%d renaissances" % cr["renaissances"])
-	if cr["givre_attaque"] > 0.0:
-		effets.append("%.1f givre par attaque" % cr["givre_attaque"])
-	if cr["arcane"]:
-		effets.append("un Transfert à vide tire un projectile d'arcane")
-	if cr["poudre"] > 0.0:
-		effets.append("ses attaques volent %.1f de bouclier" % cr["poudre"])
-	if cr["cocon"] > 0.0:
-		effets.append("+%d bouclier à chaque Transfert" % cr["cocon"])
-	for d in [["mue", "malus renvoyés renforcés"], ["brume", "voler soigne"], ["phalene", "chaque Transfert déclenche une attaque"],
-			["chrysalide", "sous la moitié de sa vie : tout renvoyer, tout voler"], ["aile_lune", "voler accélère"],
-			["inversion", "à %d s : échange des pourcentages de vie" % Data.INVERSION_T]]:
-		if cr[d[0]]:
-			effets.append(d[1])
-	if cr["eclat"]:
-		effets.append("Éclat de %d tous les %d de soin chargé" % [Data.ECLAT_DEGATS + cr["prisme"], maxf(Data.ECLAT_SEUIL - cr["miroir"], Data.ECLAT_SEUIL_MIN)])
-	if cr["regen"] + cr["bande"] > 0.0:
-		effets.append("régénère %.1f PV/s (%.1f sous la moitié de sa vie)" % [cr["regen"], cr["regen"] + cr["bande"]])
-	if cr["vasque"] > 0.0:
-		effets.append("l'excédent de soin devient bouclier")
-	if cr["lanterne"] > 0.0:
-		effets.append("l'Éclat ajoute l'excédent de soin accumulé")
-	if cr["carillon"] > 0.0:
-		effets.append("gros soin tous les %d Éclats" % Data.CARILLON_TOUS)
-	if cr["faiblesse_tous"] > 0:
-		effets.append("Faiblesse toutes les %d attaques" % cr["faiblesse_tous"])
-	if cr["sablier"] > 0.0:
-		effets.append("malédictions +%d s" % cr["sablier"])
-	if cr["chapelet"]:
-		effets.append("malédictions empilables (x%d)" % Data.CHAPELET_CHARGES)
-	if cr["renvoi"] > 0.0:
-		effets.append("renvoie %d %% des dégâts à un adversaire maudit" % roundi(cr["renvoi"] * 100))
-	if cr["crit_fletrissure"]:
-		effets.append("les crits posent Flétrissure")
-	if cr["crit_stigmate"]:
-		effets.append("les crits posent Stigmate")
-	if cr["crit_malediction"]:
-		effets.append("les crits posent une malédiction")
-	if cr["vol_par_malediction"] > 0.0:
-		effets.append("+%d %% de vol de vie par malédiction" % roundi(cr["vol_par_malediction"] * 100))
-	if cr["grimoire"] > 0.0:
-		effets.append("une malédiction tous les %d PV volés" % cr["grimoire"])
-	if cr["pacte"] > 0.0:
-		effets.append("draine %d par attaque sous trois malédictions" % cr["pacte"])
-	var bris := []
-	if cr["bris_degats"] + cr["nova"] > 0.0:
-		bris.append("%d dégâts" % (cr["bris_degats"] + cr["nova"]))
-	if cr["bris_givre"] > 0.0:
-		bris.append("%.1f givre" % cr["bris_givre"])
-	if cr["nova"] > 0.0:
-		bris.append("gèle une cible ralentie")
-	if not bris.is_empty():
-		effets.append("bouclier brisé : " + ", ".join(bris))
-	if cr["reforme"] > 0.0:
-		effets.append("bouclier de %d reformé %d s après un bris" % [cr["reforme"], Data.REFORME_DELAI])
-	if cr["gel_bouclier"] > 0.0:
-		effets.append("+%d bouclier à chaque gel" % cr["gel_bouclier"])
-	if cr["rose"]:
-		effets.append("un bris rapproche le prochain gel")
-	var titre := "\n[color=#f2c94c][b]%s[/b][/color]"
-	if not effets.is_empty():
-		lignes.append(titre % "Effets")
-		for x in effets:
-			lignes.append("• " + x[0].to_upper() + x.substr(1))
-	if not cr["sorts"].is_empty():
-		lignes.append(titre % "Sorts")
-	for s in cr["sorts"]:
-		var d := "[b]%s%s[/b] (toutes les %.1f s)" % ["Cavalier, " if s["cavalier"] else "", s["nom"], s["recharge"]]
-		if s["contre"] > 0:
-			d = "[b]Cavalier, %s[/b] (après %d coups reçus) : %.1f dégâts" % [s["nom"], s["contre"], s["degats"]]
-		elif s["coups"] > 0:
-			d += " : %d x %.1f dégâts" % [s["coups"], s["degats"]]
-		else:
-			d += " :"
-		if s["bouclier"] > 0.0:
-			d += " +%d bouclier" % roundi(s["bouclier"])
-		if s["poison"] > 0.0:
-			d += " +%.1f poison" % s["poison"]
-		if s["par_poison"] > 0.0:
-			d += ", +%.1f par dose de poison" % s["par_poison"]
-		if s["degats_epines"]:
-			d += ", plus les épines"
-		if s["graine"]:
-			d += ", plante une graine"
-		if s["givre"] > 0.0:
-			d += ", +%.1f givre" % s["givre"]
-		if s["double_ralenti"]:
-			d += ", double contre une cible ralentie"
-		if s["fracas"]:
-			d += ", brise ton bouclier et ajoute sa valeur"
-		if s["brise_gel"]:
-			d += ", x4 contre une cible gelée"
-		if s["perce"]:
-			d += ", ignore l'esquive"
-		if s["execution"]:
-			d += ", double sous %d %% de PV" % roundi(Data.SEUIL_EXECUTION * 100)
-		if s["brulure"] > 0.0:
-			d += ", +%.1f brûlure" % s["brulure"]
-		if s["combustion"] > 0.0:
-			d += " combustion de %d %% des brûlures" % roundi(s["combustion"] * 100)
-		if s["braise"] > 0.0:
-			d += ", +%.1f Braise" % s["braise"]
-		if s["achever_seuil"] > 0.0:
-			d += ", x%.1f sous %d %% de vie" % [s["achever_mult"], roundi(s["achever_seuil"] * 100)]
-		if s["combustion_affaiblie"]:
-			d += ", combustion totale contre une cible affaiblie"
-		if s["combustion_tous"] > 0:
-			d += ", combustion totale tous les %d tirs" % s["combustion_tous"]
-		if s["tir_renaissance"]:
-			d += ", tire à la renaissance"
-		if s["malediction"] != "":
-			d += " pose %s" % Data.NOMS_MALEDICTION[s["malediction"]]
-		if s["par_malediction"] > 0.0:
-			d += ", +%d %% par malédiction" % roundi(s["par_malediction"] * 100)
-		if s["consume_maledictions"]:
-			d += ", consume les malédictions"
-		if s["soin"] > 0.0:
-			d += " soigne %.1f" % s["soin"]
-		if s["charge_eclat"] > 0.0:
-			d += ", charge l'Éclat de %d" % s["charge_eclat"]
-		if s["apres_eclat"]:
-			d += ", double après un Éclat"
-		if s["eclat_tous"] > 0:
-			d += ", un Éclat tous les %d tirs" % s["eclat_tous"]
-		if s["transfert"] != "":
-			var verbes := {"renvoyer": "renvoie un malus", "voler": "vole un bonus", "bouclier": "vole du bouclier",
-				"echange": "vole un bonus et renvoie un malus"}
-			d += (" %s (%.1f)" % [verbes[s["transfert"]], s["puissance"]])
-			if s["transfert_tous"] > 0:
-				d += " tous les %d tirs" % s["transfert_tous"]
-		if s["par_transfert"] > 0.0:
-			d += ", +%.1f par Transfert" % s["par_transfert"]
-		if s["vol_de_vie"] > 0.0:
-			d += ", vole %d %%" % roundi(s["vol_de_vie"] * 100)
-		lignes.append("• " + d)
-	return "\n".join(lignes)
-
-# Seulement les elements presents, pour que la ligne tienne avec neuf elements.
-func _affinites(aff: Dictionary) -> String:
-	var l := []
-	for e in aff:
-		if aff[e] > 0:
-			l.append("[color=#%s]%s %d[/color]" % [Palette.ELEMENTS[e]["vif"].lightened(0.2).to_html(false), _NOMS_ELEMENTS.get(e, e), aff[e]])
-	return "   ".join(l) if not l.is_empty() else "[color=#8a8f99]Aucune affinité[/color]"
 
 # Les affinites portent le nom de la dynastie de leur element.
 const _NOMS_ELEMENTS := {"nature": "Printemps", "feu": "Été", "automne": "Automne", "glace": "Hiver",
@@ -705,7 +485,7 @@ static func bulle(id: String, niv := 1, manque := 0) -> Control:
 	var nom := Label.new()
 	nom.text = r["nom"] + ("  " + "★".repeat(niv - 1) if niv > 1 else "")
 	nom.add_theme_font_size_override("font_size", 18)
-	nom.add_theme_color_override("font_color", Palette.RARETES[rarete] if rarete != "commun" else Palette.TEXTE)
+	nom.add_theme_color_override("font_color", Palette.RARETES[rarete])
 	nom.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	tete.add_child(nom)
 	pile.add_child(tete)
@@ -721,6 +501,14 @@ static func bulle(id: String, niv := 1, manque := 0) -> Control:
 	pile.add_child(sous)
 	var texte := Label.new()
 	texte.text = Descriptions.TEXTES.get(id, "")
+	# signature de dynastie, commune a tous les sorts et armes d'un element
+	if r["type"] in ["sort", "arme", "essence"] and Data.SIGNATURES.has(r["element"]):
+		var v: float = Data.SIGNATURES[r["element"]]
+		var quand := "À chaque activation : "
+		if r["type"] == "essence":
+			v *= Data.SIGNATURE_ESSENCE
+			quand = "À chaque attaque de la monture : "
+		texte.text += "\n" + quand + Data.NOMS_SIGNATURE[r["element"]] % ("%d" % v if v == int(v) else str(v).replace(".", ","))
 	if niv > 1:
 		var mult: float = Data.NIVEAU_MULT[niv]
 		texte.text += "\nNiveau %d : effets x%s." % [niv, ("%d" % mult) if mult == int(mult) else str(mult).replace(".", ",")]
@@ -733,7 +521,17 @@ static func bulle(id: String, niv := 1, manque := 0) -> Control:
 		prix.text = "Pas assez d'or : il manque %d or." % manque
 		prix.add_theme_color_override("font_color", TROP_CHER)
 		pile.add_child(prix)
-	return pile
+	# fond plein a la couleur de la dynastie, liseré a la couleur de la rarete
+	var fond := StyleBoxFlat.new()
+	fond.bg_color = Palette.ELEMENTS[r["element"]]["fond"]
+	fond.border_color = Palette.RARETES[rarete]
+	fond.set_border_width_all(2)
+	fond.set_corner_radius_all(6)
+	fond.set_content_margin_all(12)
+	var cadre := PanelContainer.new()
+	cadre.add_theme_stylebox_override("panel", fond)
+	cadre.add_child(pile)
+	return cadre
 
 # Ce qu'on tient sous la souris : la forme de la relique, a la taille des
 # cases du sac, qui tourne avec R ou la molette.
@@ -774,7 +572,8 @@ class Offre extends Control:
 	func _get_tooltip(_p: Vector2) -> String:
 		return "" if _id() == "" else NidScreen.info(_id())
 	func _make_custom_tooltip(_t: String) -> Object:
-		return NidScreen.bulle(_id(), 1, _manque())
+		# offre vendue : pas d'infobulle
+		return null if _id() == "" else NidScreen.bulle(_id(), 1, _manque())
 	func _id() -> String:
 		return ecran.partie.offres[index]
 	# Posee sur le comptoir : une ombre sur le bois, l'icone, une pierre a la
@@ -941,6 +740,11 @@ class CaseNid extends Control:
 	# ancre de la relique qui couvre cette case, null si vide
 	func _ancre():
 		return ecran.nid.ancre(position_nid)
+	# Agrandir : un clic sur une case fermee l'ouvre.
+	func _gui_input(ev: InputEvent) -> void:
+		if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT and not ecran.nid.ouverte(position_nid):
+			ecran.ouvrir(position_nid)
+			accept_event()
 	func _get_tooltip(_p: Vector2) -> String:
 		var a = _ancre()
 		return "" if a == null else NidScreen.info(ecran.nid.cases[a])
@@ -977,46 +781,59 @@ class CaseNid extends Control:
 # Tapis du sac, en tuiles : chaque case prend la tuile dont les bords en cuir
 # correspondent a sa place (haut, droite, bas, gauche du tapis). Une case sur
 # deux est assombrie pour lire la grille.
-# Les tuiles du tapis pour ces colonnes ouvertes (dans l'ordre), cases de
-# cote pixels, a partir de origine. Sert au sac et au Nid en combat.
+# Les tuiles du tapis pour ces cases ouvertes, de cote pixels ; la case coin
+# est dessinee en origine. Sert au sac et au Nid en combat.
 const TAPIS_SOMBRE := Color(0.8, 0.75, 0.68)
 
-static func dessiner_tapis(ci: CanvasItem, colonnes: Array, cote: float, origine: Vector2) -> void:
-	var n := colonnes.size()
-	for i in n:
-		for y in Data.NID_H:
-			var bords := ""
-			if y == 0:
-				bords += "H"
-			if i == n - 1:
-				bords += "D"
-			if y == Data.NID_H - 1:
-				bords += "B"
-			if i == 0:
-				bords += "G"
-			var tex := Palette.image("res://images/tapis/%s.png" % (bords if bords != "" else "toile"))
-			var r := Rect2(origine + Vector2(i, y) * cote, Vector2(cote, cote))
-			var teinte := TAPIS_SOMBRE if (colonnes[i] + y) % 2 == 1 else Color.WHITE
-			if tex != null:
-				ci.draw_texture_rect(tex, r, false, teinte)
-			else:
-				ci.draw_rect(r, Color("#d9c9a6") * teinte)
+static func dessiner_tapis(ci: CanvasItem, ouvertes: Array, cote: float, origine: Vector2, coin := Vector2i.ZERO) -> void:
+	for c in ouvertes:
+		var bords := ""
+		for b in [["H", Vector2i(0, -1)], ["D", Vector2i(1, 0)], ["B", Vector2i(0, 1)], ["G", Vector2i(-1, 0)]]:
+			if not ouvertes.has(c + b[1]):
+				bords += b[0]
+		var tex := Palette.image("res://images/tapis/%s.png" % (bords if bords != "" else "toile"))
+		var r := Rect2(origine + Vector2(c - coin) * cote, Vector2(cote, cote))
+		var teinte := TAPIS_SOMBRE if (c.x + c.y) % 2 == 1 else Color.WHITE
+		if tex != null:
+			ci.draw_texture_rect(tex, r, false, teinte)
+		else:
+			ci.draw_rect(r, Color("#d9c9a6") * teinte)
+
+# Plus petit rectangle du damier qui contient ces cases.
+static func boite(cases: Array) -> Rect2i:
+	var r := Rect2i(cases[0], Vector2i.ONE)
+	for c in cases:
+		r = r.merge(Rect2i(c, Vector2i.ONE))
+	return r
 
 class Tapis extends Control:
 	var ecran: NidScreen
-	var colonnes: Array = []
 	var cote := 100.0
 	func _init(e: NidScreen) -> void:
 		ecran = e
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
 	func _draw() -> void:
-		NidScreen.dessiner_tapis(self, colonnes, cote, Vector2.ZERO)
 		var nid := ecran.nid
+		NidScreen.dessiner_tapis(self, nid.ouvertes, cote, Vector2.ZERO)
+		# Agrandir : les cases qu'on peut ouvrir, en pointille dore, avec un +
+		if ecran.choix_case:
+			var or_ := Color("#f2c94c")
+			for k in nid.bordure():
+				var r := _rect(k).grow(-cote * 0.08)
+				var survol: bool = ecran.case_survolee == k
+				draw_rect(r, Color(or_, 0.3 if survol else 0.12))
+				for bord in [[r.position, Vector2(r.end.x, r.position.y)], [Vector2(r.end.x, r.position.y), r.end],
+						[r.end, Vector2(r.position.x, r.end.y)], [Vector2(r.position.x, r.end.y), r.position]]:
+					draw_dashed_line(bord[0], bord[1], or_, 2.0, 8.0)
+				var c := r.get_center()
+				var l := cote * 0.14
+				draw_line(c - Vector2(l, 0), c + Vector2(l, 0), or_, 4.0)
+				draw_line(c - Vector2(0, l), c + Vector2(0, l), or_, 4.0)
 		var survolee = nid.ancre(ecran.case_survolee) if ecran.case_survolee != null else null
 		# survol d'un catalyseur : les reliques qu'il touche s'allument
 		var renforcees := []
 		if survolee != null and Data.RELIQUES[nid.cases[survolee]]["type"] == "catalyseur":
-			renforcees = nid.voisins(survolee)
+			renforcees = nid.cases.keys().filter(func(a): return survolee in nid.influents(a))
 		for a in nid.cases:
 			var cellules := []
 			for k in nid.cases_de(a):
@@ -1030,7 +847,7 @@ class Tapis extends Control:
 		if not ecran.pose_vue.is_empty():
 			var couleur := Color(0.4, 0.9, 0.4, 0.35) if ecran.pose_vue["ok"] else Color(0.95, 0.3, 0.25, 0.35)
 			for k in ecran.pose_vue["cases"]:
-				if colonnes.has(k.x) and k.y >= 0 and k.y < Data.NID_H:
+				if nid.ouverte(k):
 					draw_rect(_rect(k).grow(-cote * 0.06), couleur)
 	func _rect(k: Vector2i) -> Rect2:
-		return Rect2(Vector2(colonnes.find(k.x), k.y) * cote, Vector2(cote, cote))
+		return Rect2(Vector2(k) * cote, Vector2(cote, cote))

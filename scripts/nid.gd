@@ -12,15 +12,34 @@ var rotations := {} # ancre -> quarts de tour, absent = 0
 # true : chaque relique occupe sa forme (en partie). false : une case chacune,
 # pour les Nids d'exemple et les tests de mecanique.
 var encombrement := false
-# Colonnes du damier ou l'on peut poser. Toutes par defaut ; une partie
-# commence au centre et en ouvre d'autres.
-var colonnes: Array = range(Data.NID_L)
+# Cases du damier ou l'on peut poser. Toutes par defaut ; une partie
+# commence au centre et en ouvre d'autres, une a une.
+var ouvertes: Array = Nid.toutes()
+# Victoires remportees avec un Terreau fertile dans le sac.
+var saisons := 0
+
+static func toutes() -> Array:
+	var l := []
+	for y in Data.NID_H:
+		for x in Data.NID_L:
+			l.append(Vector2i(x, y))
+	return l
 
 func ouverte(c: Vector2i) -> bool:
-	return c.y >= 0 and c.y < Data.NID_H and c.x in colonnes
+	return c in ouvertes
 
 func places() -> int:
-	return colonnes.size() * Data.NID_H
+	return ouvertes.size()
+
+# Cases fermees du damier qui touchent le sac : celles qu'on peut ouvrir.
+func bordure() -> Array:
+	var b := []
+	for c in ouvertes:
+		for d in VOISINAGE:
+			var k: Vector2i = c + d
+			if k.x >= 0 and k.x < Data.NID_L and k.y >= 0 and k.y < Data.NID_H and not k in ouvertes and not k in b:
+				b.append(k)
+	return b
 
 func niveau(c: Vector2i) -> int:
 	return niveaux.get(c, 1)
@@ -56,8 +75,9 @@ func dupliquer() -> Nid:
 	n.cases = cases.duplicate()
 	n.niveaux = niveaux.duplicate()
 	n.rotations = rotations.duplicate()
-	n.colonnes = colonnes.duplicate()
+	n.ouvertes = ouvertes.duplicate()
 	n.encombrement = encombrement
+	n.saisons = saisons
 	return n
 
 func placer(c: Vector2i, id: String, niv := 1, rot := 0) -> bool:
@@ -196,6 +216,26 @@ func voisins(c: Vector2i) -> Array:
 				v.append(o)
 	return v
 
+# Catalyseurs qui agissent sur la relique d'ancre c : ses voisins, et ceux de
+# portee "rangee" qui partagent une rangee avec elle.
+func influents(c: Vector2i) -> Array:
+	var l := voisins(c).filter(func(v): return Data.RELIQUES[cases[v]]["type"] == "catalyseur")
+	var rangees := cases_de(c).map(func(k): return k.y)
+	for a in cases:
+		if a == c or a in l or Data.RELIQUES[cases[a]].get("portee", "") != "rangee":
+			continue
+		if cases_de(a).any(func(k): return k.y in rangees):
+			l.append(a)
+	return l
+
+# Multiplicateur d'une relique : son niveau, et les saisons des Terreaux voisins.
+func mult(c: Vector2i) -> float:
+	var m: float = Data.NIVEAU_MULT[niveau(c)]
+	for v in voisins(c):
+		if Data.RELIQUES[cases[v]].get("terreau", false):
+			m *= 1.0 + Data.TERREAU_PAR_SAISON * mini(saisons, Data.TERREAU_SAISONS_MAX) * Data.NIVEAU_MULT[niveau(v)]
+	return m
+
 func affinites() -> Dictionary:
 	var a := {}
 	for c in cases:
@@ -322,47 +362,23 @@ func eclore() -> Dictionary:
 		"armes": armes(),
 		"hybride": hybride(),
 		"sorts": [],
+		"signatures": {},   # element -> signature ajoutee a chaque attaque (essences)
 	}
 	var vitesse := 0.0
 	for c in cases:
 		var r: Dictionary = Data.RELIQUES[cases[c]]
-		var m: float = Data.NIVEAU_MULT[niveau(c)]
+		var m := mult(c)
 		match r["type"]:
 			"essence":
-				cr["attaque"] += r.get("attaque", 0.0) * m
-				cr["vol_de_vie"] += r.get("vol_de_vie", 0.0) * m
-				cr["pv_max"] += r.get("pv", 0.0) * m
-				cr["bouclier"] += r.get("bouclier", 0.0) * m
-				vitesse += r.get("vitesse", 0.0) * m
-				# Ortie et Amanite renforcent aussi les essences voisines
-				cr["epines"] += r.get("epines", 0.0) * m * _renfort(c, "epines")
-				cr["poison_attaque"] += r.get("poison_attaque", 0.0) * m * _renfort(c, "poison")
-				cr["epines_poison"] += r.get("epines_poison", 0.0) * m * _renfort(c, "poison")
-				cr["gousse"] += r.get("gousse", 0.0) * m
-				# Huile de premiere lumiere renforce aussi la regeneration voisine
-				cr["bande"] += r.get("bande", 0.0) * m * _renfort(c, "soin")
-				# Croc du blizzard renforce le givre pose par ses voisines
-				cr["givre_attaque"] += r.get("givre_attaque", 0.0) * m * _renfort(c, "givre")
-				cr["bris_givre"] += r.get("bris_givre", 0.0) * m * _renfort(c, "givre")
-				for champ in ["bris_degats", "reforme", "gel_bouclier", "nova", "combustion_soin", "soin_par_charge", "degats_en_feu"]:
-					cr[champ] += r.get(champ, 0.0) * m
-				# Plume incandescente renforce la brulure posee par ses voisines
-				cr["brulure_attaque"] += r.get("brulure_attaque", 0.0) * m * _renfort(c, "brulure")
-				for drapeau in ["resine", "fournaise", "oeuf"]:
-					cr[drapeau] = cr[drapeau] or r.get(drapeau, false)
-				for champ in ["crit", "sablier", "renvoi", "vol_par_malediction", "grimoire", "pacte",
-						"miroir", "encensoir", "vasque", "prisme", "voile_aube", "carillon", "lanterne"]:
-					cr[champ] += r.get(champ, 0.0) * m
-				if r.has("faiblesse_tous"):
-					cr["faiblesse_tous"] = r["faiblesse_tous"] if cr["faiblesse_tous"] == 0 else mini(cr["faiblesse_tous"], r["faiblesse_tous"])
-				cr["poudre"] += r.get("poudre", 0.0) * m * _renfort(c, "transfert")
-				cr["cocon"] += r.get("cocon", 0.0) * m
-				for drapeau in ["mue", "brume", "phalene", "chrysalide", "aile_lune", "inversion"]:
-					cr[drapeau] = cr[drapeau] or r.get(drapeau, false)
-				for drapeau in ["crit_fletrissure", "chapelet"]:
-					cr[drapeau] = cr[drapeau] or r.get(drapeau, false)
-				for drapeau in ["belladone", "coeur", "graine", "rose"]:
-					cr[drapeau] = cr[drapeau] or r.get(drapeau, false)
+				vitesse += _essence(cr, c, r, m)
+				# signature de dynastie, portee par l'attaque de base
+				if Data.SIGNATURES.has(r["element"]):
+					cr["signatures"][r["element"]] = cr["signatures"].get(r["element"], 0.0) + Data.SIGNATURES[r["element"]] * Data.SIGNATURE_ESSENCE * m
+				# Reflet : reprend une part de l'essence voisine la plus forte
+				if r.has("copie"):
+					var modele = _modele(c)
+					if modele != null:
+						vitesse += _essence(cr, modele, Data.RELIQUES[cases[modele]], m * r["copie"])
 			"sort", "arme":
 				cr["sorts"].append(_sort(c, r, aff))
 				# une Lame donne du crit a toute la monture
@@ -383,24 +399,80 @@ func eclore() -> Dictionary:
 		cr["nom"] = "%s-%s" % [Data.FORMES[deux[0]]["nom"], Data.FORMES[deux[1]]["nom"]]
 	cr["cases"] = cases.duplicate()
 	cr["niveaux"] = niveaux.duplicate()
-	cr["colonnes"] = colonnes.duplicate()
+	cr["ouvertes"] = ouvertes.duplicate()
 	cr["rotations"] = rotations.duplicate()
 	cr["encombrement"] = encombrement
 	return cr
 
-# Un sort lit ses catalyseurs voisins au moment de l'eclosion.
-# Multiplicateur apporte par les catalyseurs voisins d'un effet donne.
+# Ajoute a cr les stats d'une essence (ancre c, multiplicateur m). Renvoie sa vitesse.
+func _essence(cr: Dictionary, c: Vector2i, r: Dictionary, m: float) -> float:
+	var vitesse := _stats(cr, r, m)
+	# Ortie et Amanite renforcent aussi les essences voisines
+	cr["epines"] += r.get("epines", 0.0) * m * _renfort(c, "epines")
+	cr["poison_attaque"] += r.get("poison_attaque", 0.0) * m * _renfort(c, "poison")
+	cr["epines_poison"] += r.get("epines_poison", 0.0) * m * _renfort(c, "poison")
+	cr["gousse"] += r.get("gousse", 0.0) * m
+	# Huile de premiere lumiere renforce aussi la regeneration voisine
+	cr["bande"] += r.get("bande", 0.0) * m * _renfort(c, "soin")
+	# Croc du blizzard renforce le givre pose par ses voisines
+	cr["givre_attaque"] += r.get("givre_attaque", 0.0) * m * _renfort(c, "givre")
+	cr["bris_givre"] += r.get("bris_givre", 0.0) * m * _renfort(c, "givre")
+	for champ in ["bris_degats", "reforme", "gel_bouclier", "nova", "combustion_soin", "soin_par_charge", "degats_en_feu"]:
+		cr[champ] += r.get(champ, 0.0) * m
+	# Plume incandescente renforce la brulure posee par ses voisines
+	cr["brulure_attaque"] += r.get("brulure_attaque", 0.0) * m * _renfort(c, "brulure")
+	for drapeau in ["resine", "fournaise", "oeuf"]:
+		cr[drapeau] = cr[drapeau] or r.get(drapeau, false)
+	for champ in ["crit", "sablier", "renvoi", "vol_par_malediction", "grimoire", "pacte",
+			"miroir", "encensoir", "vasque", "prisme", "voile_aube", "carillon", "lanterne"]:
+		cr[champ] += r.get(champ, 0.0) * m
+	if r.has("faiblesse_tous"):
+		cr["faiblesse_tous"] = r["faiblesse_tous"] if cr["faiblesse_tous"] == 0 else mini(cr["faiblesse_tous"], r["faiblesse_tous"])
+	cr["poudre"] += r.get("poudre", 0.0) * m * _renfort(c, "transfert")
+	cr["cocon"] += r.get("cocon", 0.0) * m
+	for drapeau in ["mue", "brume", "phalene", "chrysalide", "aile_lune", "inversion"]:
+		cr[drapeau] = cr[drapeau] or r.get(drapeau, false)
+	for drapeau in ["crit_fletrissure", "chapelet"]:
+		cr[drapeau] = cr[drapeau] or r.get(drapeau, false)
+	for drapeau in ["belladone", "coeur", "graine", "rose"]:
+		cr[drapeau] = cr[drapeau] or r.get(drapeau, false)
+	# grappe : par voisine de la meme dynastie ; solitaire : si rien ne la touche
+	var proches := voisins(c)
+	var meme := proches.filter(func(v): return Data.RELIQUES[cases[v]]["element"] == r["element"]).size()
+	vitesse += _stats(cr, r.get("grappe", {}), m * meme)
+	if proches.is_empty():
+		vitesse += _stats(cr, r.get("solitaire", {}), m)
+	return vitesse
+
+# Stats simples (pv, attaque, bouclier, vol_de_vie, vitesse). Renvoie la vitesse.
+func _stats(cr: Dictionary, d: Dictionary, m: float) -> float:
+	cr["pv_max"] += d.get("pv", 0.0) * m
+	for champ in ["attaque", "bouclier", "vol_de_vie"]:
+		cr[champ] += d.get(champ, 0.0) * m
+	return d.get("vitesse", 0.0) * m
+
+# Essence voisine que copie un Reflet : la plus forte, hors autres Reflets.
+func _modele(c: Vector2i):
+	var meilleur = null
+	for v in voisins(c):
+		var r: Dictionary = Data.RELIQUES[cases[v]]
+		if r["type"] == "essence" and not r.has("copie") and (meilleur == null or mult(v) > mult(meilleur)):
+			meilleur = v
+	return meilleur
+
+# Un sort lit ses catalyseurs (voisins, ou de sa rangee) au moment de l'eclosion.
+# Multiplicateur apporte par les catalyseurs d'un effet donne.
 func _renfort(c: Vector2i, effet: String) -> float:
 	var k := 1.0
-	for v in voisins(c):
+	for v in influents(c):
 		var cat: Dictionary = Data.RELIQUES[cases[v]]
-		if cat["type"] == "catalyseur" and cat["effet"] == effet:
+		if cat["effet"] == effet:
 			k *= 1.0 + cat["valeur"] * Data.NIVEAU_MULT[niveau(v)]
 	return k
 
-# Le niveau multiplie les degats.
+# Le niveau (et le Terreau) multiplie les degats.
 func _sort(c: Vector2i, r: Dictionary, aff: Dictionary) -> Dictionary:
-	var m: float = Data.NIVEAU_MULT[niveau(c)]
+	var m := mult(c)
 	var s := {
 		"nom": r.get("sort", r["nom"]),
 		"id": cases[c],
@@ -443,11 +515,10 @@ func _sort(c: Vector2i, r: Dictionary, aff: Dictionary) -> Dictionary:
 		"bouclier": _puissance(r, "bouclier", aff) * m,
 		"coups": r.get("coups", 0),
 		"vol_de_vie": r.get("vol_de_vie", 0.0) * m,
+		"signature": Data.SIGNATURES.get(r["element"], 0.0) * m,
 	}
-	for v in voisins(c):
+	for v in influents(c):
 		var cat: Dictionary = Data.RELIQUES[cases[v]]
-		if cat["type"] != "catalyseur":
-			continue
 		match cat["effet"]:
 			"vol_de_vie":
 				s["vol_de_vie"] += cat["valeur"] * Data.NIVEAU_MULT[niveau(v)]
