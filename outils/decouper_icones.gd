@@ -185,6 +185,10 @@ const TAILLE_CARTE := 160
 const ANIMAUX := {"cerf": "nature", "phenix": "feu", "renard": "automne", "ours": "glace",
 	"lion": "aube", "paon": "jour", "papillon": "crepuscule", "chauve": "nuit"}
 
+# Ennemis (elites) : images/ennemis -> images/montures/ennemis/<id>.png,
+# retournes pour regarder a droite comme les montures.
+const ENNEMIS := {"sanglier.png": "sanglier", "phalène.png": "phalene", "wyverne.png": "vouivre"}
+
 # Tapis du sac : 16 tuiles (4 x 4), une par combinaison de bords en cuir.
 # Chaque tuile est reperee (boite opaque), ses bords lus (cuir sombre ou toile
 # claire au milieu de chaque cote), puis rognee pour ote le liseré et mise au carre.
@@ -241,6 +245,15 @@ func _initialize() -> void:
 		betes.append(ic)
 	_tapis()
 	_hybrides()
+	DirAccess.make_dir_recursive_absolute("res://images/montures/ennemis")
+	for f in ENNEMIS:
+		var m := Image.load_from_file("res://images/ennemis/" + f)
+		m.convert(Image.FORMAT_RGBA8)
+		_poussiere(m, POUSSIERE_MONTURE)
+		m = m.get_region(m.get_used_rect())
+		m.flip_x()
+		_reduire(m, TAILLE_MONTURE)
+		m.save_png("res://images/montures/ennemis/%s.png" % ENNEMIS[f])
 	_controle(icones, betes)
 	print("icones : ", icones.size())
 	quit()

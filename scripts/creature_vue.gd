@@ -8,6 +8,7 @@ var forme := ""
 var affinite := 0
 var armes: Array = []   # ids des armes du cavalier (0, 1 ou 2)
 var hybride := ""      # cle "a_b" quand la forme est un hybride
+var elite := ""        # id d'elite : sa propre image, sans cavalier
 # En arene : pas de panneau, la monture de droite regarde a gauche,
 # et elan la pousse vers l'adversaire quand elle frappe.
 var fond := true
@@ -19,7 +20,8 @@ var t := 0.0
 var pulse := 1.0
 
 # ar : liste d'armes (ou une seule arme, ou null).
-func montrer(f: String, a: int, ar = [], h := "") -> void:
+func montrer(f: String, a: int, ar = [], h := "", el := "") -> void:
+	elite = el
 	var l: Array = ar if ar is Array else ([] if ar == null else [ar])
 	var change: bool = f != forme or a != affinite or l != armes or h != hybride
 	forme = f
@@ -58,6 +60,12 @@ func _draw() -> void:
 	draw_set_transform(size / 2 + Vector2(0, 130 * zoom), 0.0, Vector2(echelle, echelle * 0.25))
 	draw_circle(Vector2.ZERO, 80, Color(0, 0, 0, 0.35))
 	draw_set_transform(centre, 0.0, Vector2(echelle * sens, echelle))
+	# une elite : la bete seule, plus grande
+	if elite != "":
+		draw_set_transform(centre, 0.0, Vector2(echelle * sens * 1.2, echelle * 1.2))
+		_sprite("ennemis/" + elite)
+		draw_set_transform(Vector2.ZERO)
+		return
 	# deux dynasties ou plus : l'hybride des deux premieres
 	if hybride != "":
 		_sprite("hybrides/" + hybride)

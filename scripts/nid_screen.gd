@@ -210,14 +210,14 @@ func _panneau() -> Control:
 	var ligne := VBoxContainer.new()
 	ligne.add_theme_constant_override("separation", 8)
 	vue = CreatureVue.new()
-	vue.custom_minimum_size = Vector2(340, 230)
-	vue.zoom = 0.7
+	vue.custom_minimum_size = Vector2(360, 200)
+	vue.zoom = 0.62
 	vue.clip_contents = true
 	ligne.add_child(vue)
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 8)
 	var defile := ScrollContainer.new()
-	defile.custom_minimum_size = Vector2(340, 150)
+	defile.custom_minimum_size = Vector2(360, 250)
 	defile.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	infos = _texte()
 	infos.fit_content = true
@@ -237,6 +237,8 @@ func _texte() -> RichTextLabel:
 	t.add_theme_color_override("default_color", Palette.TEXTE)
 	t.add_theme_font_size_override("normal_font_size", 16)
 	t.add_theme_font_size_override("bold_font_size", 16)
+	t.add_theme_constant_override("table_h_separation", 6)
+	t.add_theme_constant_override("line_separation", 2)
 	return t
 
 # --- actions ---------------------------------------------------------------
@@ -351,19 +353,38 @@ func _affinite_totale() -> int:
 
 func _decrire(cr: Dictionary) -> String:
 	var aff := nid.affinites()
+	var doux := Palette.TEXTE_DOUX.to_html(false)
 	var lignes := [
-		"[b]%s[/b]   [color=#%s]%s[/color]" % [cr["nom"], Palette.TEXTE_DOUX.to_html(false), Data.FORMES[cr["forme"]]["passif"]],
+		"[font_size=22][b]%s[/b][/font_size]" % cr["nom"],
 		_affinites(aff),
-		"PV %d   Attaque %.0f   Une attaque toutes les %.2f s   Vol de vie %d %%" % [
-			cr["pv_max"], cr["attaque"], cr["intervalle"], roundi(cr["vol_de_vie"] * 100)],
+		"[color=#%s][i]%s[/i][/color]" % [doux, Data.FORMES[cr["forme"]]["passif"]],
+		"",
 	]
-	if cr["bouclier"] > 0.0 or cr["esquive"] > 0.0:
-		lignes.append("Bouclier de départ %d   Esquive %d %%" % [cr["bouclier"], roundi(cr["esquive"] * 100)])
-	if cr["epines"] > 0.0 or cr["poison_attaque"] > 0.0:
-		var l := "Épines %.1f   Poison par attaque %.1f" % [cr["epines"], cr["poison_attaque"]]
-		if cr["epines_poison"] > 0.0:
-			l += "   Épines empoisonnées %.1f" % cr["epines_poison"]
-		lignes.append(l)
+	# les chiffres en tableau : un intitule discret, la valeur dessous
+	var stats := [["PV", "%d" % cr["pv_max"]], ["Attaque", "%.0f" % cr["attaque"]],
+		["Attaques/s", "%.2f" % (1.0 / cr["intervalle"])], ["Vol de vie", "%d %%" % roundi(cr["vol_de_vie"] * 100)]]
+	if cr["bouclier"] > 0.0:
+		stats.append(["Bouclier", "%d" % cr["bouclier"]])
+	if cr["esquive"] > 0.0:
+		stats.append(["Esquive", "%d %%" % roundi(cr["esquive"] * 100)])
+	if cr["crit"] > 0.0:
+		stats.append(["Critique", "%d %%" % roundi(cr["crit"] * 100)])
+	if cr["epines"] > 0.0:
+		stats.append(["Épines", "%.1f" % cr["epines"]])
+	if cr["poison_attaque"] > 0.0:
+		stats.append(["Poison/coup", "%.1f" % cr["poison_attaque"]])
+	if cr["epines_poison"] > 0.0:
+		stats.append(["Épines toxiques", "%.1f" % cr["epines_poison"]])
+	var table := "[table=4]"
+	for k in range(0, stats.size(), 4):
+		var rang: Array = stats.slice(k, k + 4)
+		while rang.size() < 4:
+			rang.append(["", ""])
+		for st in rang:
+			table += "[cell][color=#%s][font_size=13]%s[/font_size][/color][/cell]" % [doux, st[0]]
+		for st in rang:
+			table += "[cell][b]%s[/b]   [/cell]" % st[1]
+	lignes.append(table + "[/table]")
 	var effets := []
 	if cr["gousse"] > 0.0:
 		effets.append("salve d'épines tous les %d coups reçus" % Data.GOUSSE_COUPS)
@@ -426,8 +447,6 @@ func _decrire(cr: Dictionary) -> String:
 		effets.append("l'Éclat ajoute l'excédent de soin accumulé")
 	if cr["carillon"] > 0.0:
 		effets.append("gros soin tous les %d Éclats" % Data.CARILLON_TOUS)
-	if cr["crit"] > 0.0:
-		effets.append("%d %% de crit" % roundi(cr["crit"] * 100))
 	if cr["faiblesse_tous"] > 0:
 		effets.append("Faiblesse toutes les %d attaques" % cr["faiblesse_tous"])
 	if cr["sablier"] > 0.0:
@@ -461,8 +480,13 @@ func _decrire(cr: Dictionary) -> String:
 		effets.append("+%d bouclier à chaque gel" % cr["gel_bouclier"])
 	if cr["rose"]:
 		effets.append("un bris rapproche le prochain gel")
+	var titre := "\n[color=#f2c94c][b]%s[/b][/color]"
 	if not effets.is_empty():
-		lignes.append(", ".join(effets))
+		lignes.append(titre % "Effets")
+		for x in effets:
+			lignes.append("• " + x[0].to_upper() + x.substr(1))
+	if not cr["sorts"].is_empty():
+		lignes.append(titre % "Sorts")
 	for s in cr["sorts"]:
 		var d := "[b]%s%s[/b] (toutes les %.1f s)" % ["Cavalier, " if s["cavalier"] else "", s["nom"], s["recharge"]]
 		if s["contre"] > 0:
@@ -551,7 +575,7 @@ func _decrire(cr: Dictionary) -> String:
 			d += ", +%.1f par Transfert" % s["par_transfert"]
 		if s["vol_de_vie"] > 0.0 and not s["esquive"]:
 			d += ", vole %d %%" % roundi(s["vol_de_vie"] * 100)
-		lignes.append(d)
+		lignes.append("• " + d)
 	return "\n".join(lignes)
 
 # Seulement les elements presents, pour que la ligne tienne avec neuf elements.
@@ -559,8 +583,8 @@ func _affinites(aff: Dictionary) -> String:
 	var l := []
 	for e in aff:
 		if aff[e] > 0:
-			l.append("%s %d" % [_NOMS_ELEMENTS.get(e, e), aff[e]])
-	return "   ".join(l) if not l.is_empty() else "Aucune affinité"
+			l.append("[color=#%s]%s %d[/color]" % [Palette.ELEMENTS[e]["vif"].lightened(0.2).to_html(false), _NOMS_ELEMENTS.get(e, e), aff[e]])
+	return "   ".join(l) if not l.is_empty() else "[color=#8a8f99]Aucune affinité[/color]"
 
 # Les affinites portent le nom de la dynastie de leur element.
 const _NOMS_ELEMENTS := {"nature": "Printemps", "feu": "Été", "automne": "Automne", "glace": "Hiver",

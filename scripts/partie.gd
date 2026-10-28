@@ -32,7 +32,8 @@ const PERTE := {"duel": 3, "elite": 6, "boss": 10}
 const PERTE_RESTE := 8
 const SOIN_FEU := 20
 # Elites et boss : un fantome qui a joue quelques manches de plus.
-const AVANCE := {"duel": 0, "elite": 2, "boss": 4}
+# Les elites ont deja leur regle : pas de manche d'avance.
+const AVANCE := {"duel": 0, "elite": 0, "boss": 4}
 # Marche : raretes en avance et relances gratuites jusqu'au noeud suivant.
 const AVANCE_MARCHE := 3
 # Recompense d'une victoire : une relique offerte de cette rarete.
@@ -342,6 +343,23 @@ func combat() -> bool:
 func adversaire_noeud() -> Nid:
 	return adversaire(AVANCE[noeud()["type"]])
 
+# L'elite qui garde le noeud i de l'acte (fixe pour la carte).
+func elite_de(i: int) -> String:
+	var ids := Data.ELITES.keys()
+	return ids[(acte * 7 + i * 3 + graine) % ids.size()]
+
+# La creature affrontee au noeud courant : un fantome, et pour une elite, sa
+# regle, son nom et son image.
+func creature_adverse() -> Dictionary:
+	var cr := adversaire_noeud().eclore()
+	if noeud()["type"] == "elite":
+		var e := elite_de(position)
+		cr["elite"] = e
+		cr["elite_force"] = 1.0 + Data.ELITE_PAR_MANCHE * manche
+		cr["nom"] = Data.ELITES[e]["nom"]
+		cr["hybride"] = ""
+	return cr
+
 # vainqueur : 0 le joueur, 1 l'adversaire, -1 egalite (ne coute rien).
 # reste : part de vie (0 a 1) qu'il restait a l'adversaire.
 func conclure_combat(vainqueur: int, reste := 0.0) -> void:
@@ -377,6 +395,8 @@ func conclure() -> void:
 			marche = true
 			if not gelee:
 				tirer()
+			else:
+				_completer()
 			message = "Marché : raretés en avance, relances gratuites."
 
 func _suivant(recompense := "", element := "") -> void:
@@ -393,6 +413,16 @@ func _suivant(recompense := "", element := "") -> void:
 		tirer()
 	if recompense != "":
 		offrir(recompense, element)
+	if gelee:
+		_completer()
+
+# Boutique gelee : les offres gardees restent, les places vides (achetees) se
+# remplissent.
+func _completer() -> void:
+	var ids := pool()
+	for i in offres.size():
+		if offres[i] == "":
+			offres[i] = tirer_id(rng, ids, manche + (AVANCE_MARCHE if marche else 0))
 
 # Met une relique de cette rarete en premiere offre, gratuite. Element du Nid
 # de preference, sinon n'importe lequel.

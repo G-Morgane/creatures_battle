@@ -158,7 +158,20 @@ manche à la fois (sans cela, une run coûtait des secondes).
 - Serveur : une table de Nids (Supabase suffit). En attendant, l'adversaire est le
   **fantôme** (joueur automatique, ci-dessous).
 
-### Élites et boss (hommages)
+### Élites (faites)
+
+Trois élites, chacune le Nid d'un fantôme au même stade, avec sa règle et son image
+(`images/ennemis`). Ses chiffres grandissent de 5 % par manche. Le nom de l'élite s'affiche sur la carte.
+
+| Élite | Règle |
+|---|---|
+| Sanglier des Racines | +5 de bouclier par seconde ; toutes les 8 s, une charge qui le dépense (x1,5 en dégâts) |
+| Phalène de l'Ouest | Toutes les 6 s, dissipe ses malus ; toutes les 7 s, un trait de 25 qui traverse le bouclier |
+| Vouivre des Cendres | +3 % de dégâts par malus subi (plafond +90 %) ; à mi-vie, brise ses entraves : malus effacés, +40 % de dégâts et d'attaque |
+
+Le Marché a été retiré de la carte : la boutique est déjà ouverte entre chaque nœud.
+
+### Élites et boss (pistes)
 
 Créatures conçues à la main, chacune avec une règle qu'on voit et qu'on peut contrer en adaptant son Nid.
 Pistes :

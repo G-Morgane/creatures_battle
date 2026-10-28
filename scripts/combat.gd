@@ -86,6 +86,9 @@ func _etat(cr: Dictionary, i: int) -> Dictionary:
 		"poison": 0.0,             # doses
 		"epines_bonus": 1.0,       # Coeur de roncier, Graine
 		"coups_recus": 0,
+		"elite_t": 0.0,            # elites : minuterie de leur regle
+		"elite_t2": 0.0,
+		"furie": false,            # Vouivre : entraves brisees
 		"graine_plantee": false,   # Fleche-graine
 		"horloge": 0.0,            # temps propre : ralenti par le givre, arrete par le gel
 		"givre": 0.0,              # charges de givre subies
@@ -183,7 +186,7 @@ func _gele(moi: Dictionary) -> bool:
 func _agir(moi: Dictionary, cible: Dictionary) -> void:
 	var h: float = moi["horloge"]
 	if moi["horloge_attaque"] >= moi["prochaine_attaque"]:
-		moi["prochaine_attaque"] += moi["cr"]["intervalle"]
+		moi["prochaine_attaque"] += moi["cr"]["intervalle"] / (Data.VOUIVRE_FURIE if moi["furie"] else 1.0)
 		origine = "~attaque"
 		_compter(moi["cote"], "activations", 1.0)
 		_evenement(moi, {"type": "attaque"})
@@ -379,6 +382,10 @@ func _frapper(moi: Dictionary, cible: Dictionary, degats: float, vol: float, per
 	# Chauve-souris : plus fort contre une cible maudite.
 	degats *= maxf(0.0, 1.0 - Data.FAIBLESSE * _charges(moi, "faiblesse"))
 	degats *= 1.0 + moi["cr"]["par_malediction"] * _nb_maledictions(cible)
+	if moi["cr"].get("elite", "") == "vouivre":
+		degats *= 1.0 + minf(Data.VOUIVRE_PAR_MALUS * _malus_subis(moi), Data.VOUIVRE_MAX)
+		if moi["furie"]:
+			degats *= Data.VOUIVRE_FURIE
 	if moi["cr"]["crit"] > 0.0 and rng.randf() < moi["cr"]["crit"]:
 		degats *= Data.CRIT_MULT
 		_evenement(cible, {"type": "crit"})
@@ -739,7 +746,58 @@ func _geler(moi: Dictionary, cible: Dictionary) -> void:
 		_evenement(moi, {"type": "bouclier", "valeur": moi["cr"]["gel_bouclier"]})
 
 # Brulure, poison et fatigue passent a travers le bouclier.
+# --- elites -------------------------------------------------------------------
+
+# Charges de malus subis (Vouivre).
+func _malus_subis(moi: Dictionary) -> float:
+	var n := 0
+	for nom in moi["maledictions"]:
+		n += _charges(moi, nom)
+	return _brulure(moi) + moi["givre"] + moi["poison"] / 5.0 + n
+
+func _dissiper(moi: Dictionary) -> void:
+	moi["poison"] = 0.0
+	moi["brulures"].clear()
+	moi["givre"] = 0.0
+	moi["maledictions"].clear()
+
+# La regle propre a l'elite, a chaque pas.
+func _elite(moi: Dictionary, adverse: Dictionary) -> void:
+	var e: String = moi["cr"].get("elite", "")
+	if e == "":
+		return
+	var force: float = moi["cr"].get("elite_force", 1.0)
+	moi["elite_t"] += Data.PAS
+	moi["elite_t2"] += Data.PAS
+	match e:
+		"sanglier":
+			_proteger(moi, Data.SANGLIER_RACINES * force * Data.PAS, "~racines")
+			if moi["elite_t"] >= Data.SANGLIER_CHARGE_TOUS:
+				moi["elite_t"] = 0.0
+				var degats: float = moi["bouclier"] * Data.SANGLIER_CHARGE_MULT
+				moi["bouclier"] = 0.0
+				_evenement(adverse, {"type": "charge", "valeur": degats})
+				var avant := _depuis("~charge")
+				_blesser(adverse, degats, moi)
+				origine = avant
+		"phalene":
+			if moi["elite_t"] >= Data.PHALENE_DISSIPE_TOUS:
+				moi["elite_t"] = 0.0
+				_dissiper(moi)
+				_evenement(moi, {"type": "dissipe"})
+			if moi["elite_t2"] >= Data.PHALENE_TRAIT_TOUS:
+				moi["elite_t2"] = 0.0
+				var degats: float = Data.PHALENE_TRAIT * force
+				_evenement(adverse, {"type": "trait", "valeur": degats})
+				_infliger(adverse, degats, "~trait")
+		"vouivre":
+			if not moi["furie"] and moi["pv"] < moi["cr"]["pv_max"] * 0.5:
+				moi["furie"] = true
+				_dissiper(moi)
+				_evenement(moi, {"type": "entraves"})
+
 func _subir(moi: Dictionary, adverse: Dictionary) -> void:
+	_elite(moi, adverse)
 	# regeneration : Lion, Bande de lin sous la moitie de sa vie, Encensoir apres un Eclat
 	var regen: float = moi["cr"]["regen"]
 	if moi["pv"] < moi["cr"]["pv_max"] * Data.BANDE_SEUIL:

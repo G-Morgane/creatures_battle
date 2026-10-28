@@ -27,7 +27,7 @@ func _initialize() -> void:
 				var type: String = p.noeud()["type"]
 				noeuds += 1
 				if p.combat():
-					var c := Combat.new(p.nid.eclore(), p.adversaire_noeud().eclore())
+					var c := Combat.new(p.nid.eclore(), p.creature_adverse())
 					var v := c.simuler()
 					var m: Array = par_type.get(type, [0, 0])
 					m[0] += 1 if v == 0 else 0

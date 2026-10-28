@@ -46,7 +46,7 @@ func aller_carte() -> void:
 
 func _combattre() -> void:
 	_vider()
-	var c := CombatScreen.new(partie.nid.eclore(), partie.adversaire_noeud().eclore())
+	var c := CombatScreen.new(partie.nid.eclore(), partie.creature_adverse())
 	c.retour.connect(func():
 		var adverse: Dictionary = c.combat.cotes[1]
 		partie.conclure_combat(c.vainqueur, adverse["pv"] / adverse["cr"]["pv_max"])

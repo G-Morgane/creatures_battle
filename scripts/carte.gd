@@ -10,7 +10,8 @@ const ETAGES := 10        # par acte, boss compris
 const COLONNES := 4
 const CHEMINS := 4
 # Tirage des types hors premier etage, feu avant le boss et boss.
-const POIDS := {"duel": 50, "rencontre": 22, "elite": 12, "marche": 8, "feu": 8}
+# Pas de Marche : la boutique est deja ouverte entre chaque noeud.
+const POIDS := {"duel": 55, "rencontre": 25, "elite": 12, "feu": 8}
 # Pas d'elite trop tot dans le premier acte, pas de repos dans les premiers etages.
 const ELITE_DES := 4
 const FEU_DES := 4

@@ -52,7 +52,7 @@ func _ready() -> void:
 		v.fond = false
 		v.miroir = i == 1
 		v.size = Vector2(440, 380)
-		v.montrer(cr["forme"], cr["affinite"], cr["armes"], cr.get("hybride", ""))
+		v.montrer(cr["forme"], cr["affinite"], cr["armes"], cr.get("hybride", ""), cr.get("elite", ""))
 		vues.append(v)
 		add_child(v)
 	calque = Control.new()
@@ -236,6 +236,14 @@ func _jouer(e: Dictionary) -> void:
 			_texte(moi, 1, "Borne de l'Éternité !", Palette.ELEMENTS["terre"]["vif"])
 		"galop":
 			_texte(moi, 1, "Galop libre !", Palette.ELEMENTS["vent"]["vif"])
+		"charge":
+			_texte(moi, 1, "Charge ! %d" % roundi(e["valeur"]), Palette.ELEMENTS["nature"]["clair"])
+		"dissipe":
+			_texte(moi, 1, "Malus dissipés", Palette.ELEMENTS["crepuscule"]["clair"])
+		"trait":
+			_texte(moi, 2, "Trait de l'Ouest %d" % roundi(e["valeur"]), Color("#e8e4da"))
+		"entraves":
+			_texte(moi, 1, "Entraves brisées !", Palette.ELEMENTS["feu"]["vif"])
 		"esquive":
 			_texte(moi, 2, "Esquive !", Palette.TEXTE)
 		"renaissance":
@@ -489,7 +497,8 @@ class MiniNid extends Control:
 class Recap extends Control:
 	const MECANIQUES := {"~attaque": "Attaques", "~poison": "Poison", "~brulure": "Brûlure",
 		"~combustion": "Combustion", "~epines": "Épines", "~eclat": "Éclat", "~foudre": "Foudre",
-		"~regen": "Régénération", "~bris": "Bouclier brisé"}
+		"~regen": "Régénération", "~bris": "Bouclier brisé", "~racines": "Racines",
+		"~charge": "Charge", "~trait": "Trait de l'Ouest"}
 	const LIGNES := 10
 	const LARGEUR := 470.0
 	const HAUTEUR_LIGNE := 34.0

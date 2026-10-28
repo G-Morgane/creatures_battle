@@ -7,6 +7,7 @@ extends CanvasLayer
 
 var bouton: Button
 var panneau: PanelContainer
+var texte: RichTextLabel
 
 func _ready() -> void:
 	layer = 50
@@ -51,19 +52,43 @@ func _ready() -> void:
 	fermer.pressed.connect(basculer)
 	tete.add_child(fermer)
 	pile.add_child(tete)
+	# a gauche les signets (un par chapitre), a droite le chapitre ouvert
+	var corps := HBoxContainer.new()
+	corps.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	corps.add_theme_constant_override("separation", 18)
+	pile.add_child(corps)
+	var signets := VBoxContainer.new()
+	signets.custom_minimum_size.x = 220
+	signets.add_theme_constant_override("separation", 6)
+	corps.add_child(signets)
 	var defile := ScrollContainer.new()
-	defile.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	defile.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	defile.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	pile.add_child(defile)
-	var texte := RichTextLabel.new()
+	corps.add_child(defile)
+	texte = RichTextLabel.new()
 	texte.bbcode_enabled = true
 	texte.fit_content = true
 	texte.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	texte.add_theme_color_override("default_color", Palette.TEXTE)
-	texte.add_theme_font_size_override("normal_font_size", 16)
-	texte.add_theme_font_size_override("bold_font_size", 17)
-	texte.text = contenu()
+	texte.add_theme_font_size_override("normal_font_size", 17)
+	texte.add_theme_font_size_override("bold_font_size", 18)
 	defile.add_child(texte)
+	var groupe := ButtonGroup.new()
+	var liste := chapitres()
+	for k in liste.size():
+		var b := Button.new()
+		b.text = liste[k][0]
+		b.toggle_mode = true
+		b.button_group = groupe
+		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		b.custom_minimum_size.y = 40
+		b.pressed.connect(func():
+			texte.text = "[font_size=22][color=#f2c94c]%s[/color][/font_size]\n\n%s" % liste[k]
+			defile.scroll_vertical = 0)
+		signets.add_child(b)
+		if k == 0:
+			b.button_pressed = true
+			b.pressed.emit()
 
 func basculer() -> void:
 	panneau.visible = not panneau.visible
@@ -74,11 +99,22 @@ func _unhandled_input(ev: InputEvent) -> void:
 			basculer()
 			get_viewport().set_input_as_handled()
 
+# Debut d'un chapitre (un signet dans le glossaire).
+const CHAPITRE := "\u0001"
+
 static func _section(titre: String) -> String:
-	return "\n[font_size=21][color=#f2c94c]%s[/color][/font_size]\n" % titre
+	return CHAPITRE + titre + "\n"
+
+# [titre, texte] pour chaque chapitre.
+static func chapitres() -> Array:
+	var l := []
+	for bloc in contenu().split(CHAPITRE, false):
+		var i := bloc.find("\n")
+		l.append([bloc.substr(0, i), bloc.substr(i + 1).strip_edges()])
+	return l
 
 static func _terme(nom: String, texte: String) -> String:
-	return "[b]%s[/b] : %s\n" % [nom, texte]
+	return "[b]%s[/b] : %s\n\n" % [nom, texte]
 
 static func contenu() -> String:
 	var t := ""
@@ -94,7 +130,7 @@ static func contenu() -> String:
 	t += _terme("Armes", "pas de limite : chaque arme du sac lance son propre sort. Le cavalier en montre deux.")
 	t += _section("La run")
 	t += _terme("Carte", "3 actes à embranchements. On choisit son chemin ; le boss attend au bout de chaque acte.")
-	t += _terme("Nœuds", "Duel (contre un autre Nid au même stade), Élite (plus fort, relique épique offerte), Rencontre (un choix), Marché (raretés en avance, relances gratuites), Feu de camp (soigne des PV de run), Boss (relique légendaire offerte).")
+	t += _terme("Nœuds", "Duel (contre un autre Nid au même stade), Élite (plus fort, relique épique offerte), Rencontre (un choix), Feu de camp (soigne des PV de run), Boss (relique légendaire offerte).")
 	t += _terme("PV de run", "une défaite en coûte selon le nœud et la vie qui restait à l'adversaire. À 0, la run est perdue.")
 	t += _terme("Boutique", "ouverte après chaque nœud, sans obligation d'acheter. Relancer change les offres ; Geler les garde pour le prochain passage. Ramener un objet du sac sur le comptoir le revend pour la moitié de son prix.")
 	t += _terme("Rareté", "commun, rare, épique, légendaire. Les raretés hautes apparaissent au fil des nœuds.")
@@ -116,6 +152,9 @@ static func contenu() -> String:
 	t += _terme("Éclat", "les soins remplissent une jauge ; pleine (%d), elle frappe l'adversaire." % Data.ECLAT_SEUIL)
 	t += _terme("Transfert", "vole un bonus adverse (bouclier, Braise...) ou lui renvoie un malus (poison, brûlure, givre, malédiction). Rien à déplacer : un projectile d'arcane.")
 	t += _terme("Régénération", "des PV rendus chaque seconde.")
+	t += _section("Les élites")
+	for e in Data.ELITES:
+		t += _terme(Data.ELITES[e]["nom"], Data.ELITES[e]["texte"])
 	t += _section("Les dynasties")
 	for e in Data.DYNASTIES:
 		t += _terme("%s (%s)" % [Data.DYNASTIES[e], Data.FORMES[e]["nom"]], Data.IDENTITES[e])

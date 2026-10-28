@@ -377,6 +377,34 @@ const IDENTITES := {
 	"nuit": "Vol de vie, malédictions et coups critiques. Affaiblit l'adversaire et se soigne en frappant.",
 }
 
+# --- elites (PvE) ------------------------------------------------------------
+# Une elite est le Nid d'un fantome en avance, avec une regle qui lui est propre
+# (voir Combat._elite) et sa propre image (images/montures/ennemis).
+const ELITES := {
+	"sanglier": {"nom": "Sanglier des Racines", "element": "nature",
+		"texte": "Accumule de la protection, puis la dépense dans une charge puissante."},
+	"phalene": {"nom": "Phalène de l'Ouest", "element": "crepuscule",
+		"texte": "Dissipe ses malus et prépare une attaque qui traverse les boucliers."},
+	"vouivre": {"nom": "Vouivre des Cendres", "element": "feu",
+		"texte": "Se renforce grâce aux malus reçus, puis brise ses entraves à mi-vie."},
+}
+# Sanglier : bouclier par seconde, puis une charge qui le depense (x mult).
+const SANGLIER_RACINES := 5.0
+const SANGLIER_CHARGE_TOUS := 8.0
+const SANGLIER_CHARGE_MULT := 1.5
+# Phalene : dissipe ses malus, et un trait qui passe les boucliers.
+const PHALENE_DISSIPE_TOUS := 6.0
+const PHALENE_TRAIT_TOUS := 7.0
+const PHALENE_TRAIT := 25.0
+# Vouivre : +3 % de degats par malus subi (charge de brulure, de givre, de
+# malediction, 5 doses de poison), plafond +90 % ; a mi-vie, une fois, elle
+# brise ses entraves : malus effaces, +40 % de degats et d'attaque.
+const VOUIVRE_PAR_MALUS := 0.03
+const VOUIVRE_MAX := 0.9
+const VOUIVRE_FURIE := 1.4
+# Les chiffres d'une elite grandissent avec la manche.
+const ELITE_PAR_MANCHE := 0.05
+
 static func dynasties_jouables() -> Array:
 	return DYNASTIES.keys().filter(func(d): return not d in DYNASTIES_A_VENIR)
 

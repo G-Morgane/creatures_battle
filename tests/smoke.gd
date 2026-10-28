@@ -20,6 +20,7 @@ func _ready() -> void:
 	ok = _gel() and ok
 	ok = _dynasties() and ok
 	ok = _reserve() and ok
+	ok = _elites() and ok
 	ok = _carte() and ok
 	ok = _run() and ok
 	ok = _fusion() and ok
@@ -276,13 +277,13 @@ func _gel() -> bool:
 	avant[1] = ""
 	p.geler()
 	p.conclure_combat(0)
-	var ok := _verifier(p.offres == avant, "boutique gelee : memes offres au noeud suivant, l'achetee reste vide")
+	var ok := _verifier(p.offres[0] == avant[0] and p.offres[2] == avant[2] and p.offres[1] != "", "boutique gelee : offres gardees, la place achetee se remplit")
 	ok = _verifier(p.relancer() and not p.gelee, "une relance degele") and ok
 	p.geler()
 	p.noeud()["type"] = "elite"
 	p.offres[2] = ""
 	p.conclure_combat(0)
-	return _verifier(p.gratuite == 2, "gelee : la relique offerte prend la place vide") and ok
+	return _verifier(p.gratuite == 2 and not "" in p.offres, "gelee : la relique offerte prend la place vide, le reste se remplit") and ok
 
 func _dynasties() -> bool:
 	var p := Partie.new(5, ["feu", "nuit", "aube"])
@@ -327,6 +328,33 @@ func _reserve() -> bool:
 	ok = _verifier(p.main.is_empty() and "tison" in p.nid.cases.values(), "reserve pleine : la main va dans le sac") and ok
 	var or_avant := p.bourse
 	ok = _verifier(p.vendre_source({"reserve": 0}) and p.bourse == or_avant + Partie.prix_revente("ruban") and p.reserve[0].is_empty(), "revendre depuis la reserve") and ok
+	return ok
+
+func _elites() -> bool:
+	var ok := true
+	var base := Exemples.nid_feu().eclore()
+	for e in Data.ELITES:
+		var cr := Exemples.nid_aube().eclore()
+		cr["elite"] = e
+		var c := Combat.new(cr, base)
+		c.simuler()
+		var types := c.evenements.map(func(x): return x["type"])
+		var attendu: String = {"sanglier": "charge", "phalene": "trait", "vouivre": "entraves"}[e]
+		ok = _verifier(attendu in types, "%s : %s" % [e, attendu]) and ok
+	# phalene : ses malus disparaissent
+	var ph := Exemples.nid_aube().eclore()
+	ph["elite"] = "phalene"
+	var d := Combat.new(ph, base)
+	d.cotes[0]["poison"] = 20.0
+	d.cotes[0]["elite_t"] = Data.PHALENE_DISSIPE_TOUS
+	d._elite(d.cotes[0], d.cotes[1])
+	ok = _verifier(d.cotes[0]["poison"] == 0.0, "phalene : dissipe le poison") and ok
+	# partie : une elite a son nom et sa regle
+	var p := Partie.new(17)
+	p.entrer(p.accessibles()[0])
+	p.noeud()["type"] = "elite"
+	var adv := p.creature_adverse()
+	ok = _verifier(adv["elite"] in Data.ELITES and adv["nom"] == Data.ELITES[adv["elite"]]["nom"], "noeud elite : creature d'elite") and ok
 	return ok
 
 func _carte() -> bool:

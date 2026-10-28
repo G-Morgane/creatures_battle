@@ -3,20 +3,20 @@ extends Control
 
 # Carte de l'acte en cours : les etages de gauche a droite, le boss au bout.
 # On clique un noeud accessible pour y entrer. Une rencontre s'ouvre ici,
-# un combat part dans l'arene, feu de camp et marche ramenent au Nid.
+# un combat part dans l'arene, le feu de camp ramene au Nid.
 
 signal combat
 signal fini
 signal retour
 
 const RAYON := 24.0
-const NOMS := {"duel": "Duel", "elite": "Élite", "rencontre": "Rencontre", "marche": "Marché",
+const NOMS := {"duel": "Duel", "elite": "Élite", "rencontre": "Rencontre",
 	"feu": "Feu de camp", "boss": "Boss"}
-# Icones peintes (images/carte) ; marche et feu de camp gardent leur lettre.
+# Icones peintes (images/carte) ; le feu de camp garde sa lettre.
 const ICONES := {"duel": "duel", "rencontre": "rencontre", "elite": "elite", "boss": "elite"}
-const SIGLES := {"duel": "D", "elite": "E", "rencontre": "?", "marche": "M", "feu": "F", "boss": "B"}
+const SIGLES := {"duel": "D", "elite": "E", "rencontre": "?", "feu": "F", "boss": "B"}
 const COULEURS := {"duel": Color("#5b9bd5"), "elite": Color("#d0564a"), "rencontre": Color("#a855c9"),
-	"marche": Color("#e0a526"), "feu": Color("#ff8a3d"), "boss": Color("#e8e4da")}
+	"feu": Color("#ff8a3d"), "boss": Color("#e8e4da")}
 
 var partie: Partie
 var survol := -1
@@ -119,6 +119,8 @@ func _draw() -> void:
 				HORIZONTAL_ALIGNMENT_CENTER, r * 2, taille, plein)
 		if ouvert or n["type"] == "boss":
 			var nom: String = NOMS[n["type"]]
+			if n["type"] == "elite":
+				nom = Data.ELITES[partie.elite_de(i)]["nom"]
 			var l := police.get_string_size(nom, HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x + 12
 			draw_rect(Rect2(p + Vector2(-l / 2, r + 6), Vector2(l, 20)), Color(Palette.FOND, 0.8))
 			draw_string(police, p + Vector2(-60, r + 21), nom,
