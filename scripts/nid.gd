@@ -169,29 +169,12 @@ func accepte(c: Vector2i, id: String, depuis) -> bool:
 		return false
 	return true
 
-# Le cavalier a deux mains : une arme a deux mains, ou deux a une main. Le sac
-# accepte autant d'armes qu'il a de place (pour les fusionner) ; le cavalier
-# tient les premieres qui rentrent dans ses mains, dans l'ordre du sac (de haut
-# en bas, puis de gauche a droite). Les autres sont rangees, sans effet.
-func tenues() -> Array:
-	var ancres := cases.keys().filter(func(a): return Data.mains(cases[a]) > 0)
-	ancres.sort_custom(func(a, b): return a.y < b.y or (a.y == b.y and a.x < b.x))
-	var l := []
-	var mains := 0
-	for a in ancres:
-		if mains + Data.mains(cases[a]) <= 2:
-			l.append(a)
-			mains += Data.mains(cases[a])
-	return l
-
-func mains_prises() -> int:
-	var n := 0
-	for a in tenues():
-		n += Data.mains(cases[a])
-	return n
-
+# Armes du sac, sans limite : toutes lancent leur sort. Dans l'ordre du sac (de
+# haut en bas, puis de gauche a droite) ; le cavalier montre les deux premieres.
 func armes() -> Array:
-	return tenues().map(func(a): return cases[a])
+	var ancres := cases.keys().filter(func(a): return Data.RELIQUES[cases[a]]["type"] == "arme")
+	ancres.sort_custom(func(a, b): return a.y < b.y or (a.y == b.y and a.x < b.x))
+	return ancres.map(func(a): return cases[a])
 
 func arme():
 	var l := armes()
@@ -339,12 +322,10 @@ func eclore() -> Dictionary:
 		"inversion": false,
 		"arme": arme(),
 		"armes": armes(),
-		"tenues": tenues(),
 		"hybride": hybride(),
 		"sorts": [],
 	}
 	var vitesse := 0.0
-	var tenues_ici := tenues()
 	for c in cases:
 		var r: Dictionary = Data.RELIQUES[cases[c]]
 		var m: float = Data.NIVEAU_MULT[niveau(c)]
@@ -395,9 +376,6 @@ func eclore() -> Dictionary:
 				for drapeau in ["belladone", "coeur", "graine", "rose"]:
 					cr[drapeau] = cr[drapeau] or r.get(drapeau, false)
 			"sort", "arme":
-				# une arme rangee (mains prises) ne fait rien
-				if r["type"] == "arme" and not c in tenues_ici:
-					continue
 				cr["sorts"].append(_sort(c, r, aff))
 				# une Lame donne du crit a toute la monture
 				if r.get("famille", "") == "lame":

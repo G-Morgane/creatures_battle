@@ -104,13 +104,15 @@ Les Nids d'exemple et les tests de mécanique gardent une case par relique (`enc
 désactivé) ; la partie l'active. Simulation (100 runs) : joueur simple 30 % de runs gagnées,
 inchangé.
 
-### Les deux mains du cavalier
+### Les armes du cavalier
 
-Le cavalier a **deux mains** : une arme à deux mains (Hast, Faux, Bâton, Tir) ou deux armes à
-une main (Lame, Hache). Chaque arme tenue lance son sort. Le sac accepte **autant de copies que
-de place**, armes comprises : le cavalier tient les premières armes qui rentrent dans ses mains
-(dans l'ordre du sac, de haut en bas), les autres sont **rangées**, sans effet, prêtes à fusionner. À l'écran, la seconde arme est dans l'autre
-main, derrière le cavalier. Simulation : joueur simple 37 % de runs gagnées (30 % avec une seule arme).
+**Aucune limite** : chaque arme posée dans le sac lance son propre sort (la règle des deux mains
+a été essayée puis retirée). Le cavalier en montre deux à l'écran. Le sac accepte autant de
+copies que de place, et tout fusionne, armes et légendaires compris.
+
+Simulation (100 runs) : le joueur simple tombe à 27 % de runs gagnées (40 % avec la limite),
+le joueur aléatoire à 0 % : les fantômes, qui achètent les armes en premier, en empilent beaucoup.
+À surveiller : il faudra sans doute baisser le prix ou la force des armes en grand nombre.
 
 ### Boutique entre chaque nœud
 

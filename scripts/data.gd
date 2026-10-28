@@ -277,7 +277,7 @@ const RELIQUES := {
 		"aile_lune": true},
 	"inversion":      {"nom": "Inversion",      "element": "crepuscule", "affinite": 2, "type": "essence", "rarete": "legendaire",
 		"inversion": true},
-	# armes : le cavalier en tient dans ses deux mains, chacune lance son sort.
+	# armes : le cavalier les tient toutes, chacune lance son propre sort.
 	# Les catalyseurs voisins s'appliquent aussi a ce sort.
 	# armes du Phenix : Baton et Faux
 	"baton_braise":   {"nom": "Bâton de braise","element": "feu",   "affinite": 1, "type": "arme", "famille": "baton",
@@ -382,15 +382,6 @@ static func dynasties_jouables() -> Array:
 
 const RARETES := ["commun", "rare", "epique", "legendaire"]
 const NOMS_RARETE := {"commun": "Commun", "rare": "Rare", "epique": "Épique", "legendaire": "Légendaire"}
-
-# --- mains -----------------------------------------------------------------
-# Le cavalier a deux mains : une arme a deux mains, ou deux armes a une main.
-const MAINS := {"hast": 2, "faux": 2, "baton": 2, "tir": 2, "lame": 1, "hache": 1}
-
-# Mains que prend la relique id (0 si ce n'est pas une arme).
-static func mains(id: String) -> int:
-	var r: Dictionary = RELIQUES[id]
-	return MAINS[r["famille"]] if r["type"] == "arme" else 0
 
 # --- formes ----------------------------------------------------------------
 # Cases qu'occupe une relique dans le sac, en decalages depuis son ancre (coin

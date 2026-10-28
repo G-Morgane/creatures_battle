@@ -89,7 +89,7 @@ static func contenu() -> String:
 	t += _terme("Formes", "une relique prend de 1 à 4 cases selon sa rareté, ou sa famille pour une arme. R ou la molette la tournent pendant qu'on la tient.")
 	t += _terme("Sac", "il commence sur 4 colonnes et s'agrandit d'une colonne en boutique (prix croissant) ou après chaque boss battu, jusqu'à 8.")
 	t += _terme("Fusion", "3 copies identiques au même niveau fusionnent : ★ (effets x%s), puis ★★ (effets x%s). Tout fusionne, armes et légendaires compris." % [_nombre(Data.NIVEAU_MULT[2]), _nombre(Data.NIVEAU_MULT[3])])
-	t += _terme("Deux mains", "le cavalier tient une arme à deux mains (Hast, Faux, Bâton, Tir) ou deux armes à une main (Lame, Hache), en partant du haut du sac. Les autres armes sont rangées : sans effet, mais elles peuvent fusionner.")
+	t += _terme("Armes", "pas de limite : chaque arme du sac lance son propre sort. Le cavalier en montre deux.")
 	t += _section("La run")
 	t += _terme("Carte", "3 actes à embranchements. On choisit son chemin ; le boss attend au bout de chaque acte.")
 	t += _terme("Nœuds", "Duel (contre un autre Nid au même stade), Élite (plus fort, relique épique offerte), Rencontre (un choix), Marché (raretés en avance, relances gratuites), Feu de camp (soigne des PV de run), Boss (relique légendaire offerte).")

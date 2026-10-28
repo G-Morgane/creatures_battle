@@ -15,7 +15,7 @@ func _ready() -> void:
 	ok = _partie() and ok
 	ok = _sac() and ok
 	ok = _formes_sac() and ok
-	ok = _deux_mains() and ok
+	ok = _armes_sans_limite() and ok
 	ok = _hybrides() and ok
 	ok = _gel() and ok
 	ok = _dynasties() and ok
@@ -102,7 +102,7 @@ func _ecran() -> bool:
 func _armes() -> bool:
 	var n := Nid.new()
 	var ok := _verifier(n.placer(Vector2i(0, 0), "lance_guet"), "poser une arme")
-	ok = _verifier(n.placer(Vector2i(1, 0), "faux_lunaire") and n.armes() == ["lance_guet"], "mains prises : la faux est rangee") and ok
+	ok = _verifier(n.placer(Vector2i(1, 0), "faux_lunaire") and n.armes() == ["lance_guet", "faux_lunaire"], "deux armes : toutes deux tenues") and ok
 	n.retirer(Vector2i(1, 0))
 	ok = _verifier(n.affinites().is_empty(), "la lance n'a pas d'element") and ok
 	n.placer(Vector2i(1, 0), "fourrure")
@@ -217,11 +217,11 @@ func _formes_sac() -> bool:
 	ok = _verifier(q.acheter(2, Vector2i(3, 1)) and q.nid.cases.size() == 1 and q.nid.niveau(Vector2i(2, 1)) == 2, "trois rares : fusion sur la copie visee") and ok
 	q.vendre(Vector2i(3, 1))
 	ok = _verifier(q.nid.cases.is_empty(), "revendre par n'importe quelle case") and ok
-	# copies sans limite : trois lances fusionnent, meme si les mains sont prises
+	# copies sans limite : trois lances fusionnent
 	for k in 3:
 		q.offres[k] = "lance_guet"
 	q.acheter(0, Vector2i(2, 0))
-	ok = _verifier(q.acheter(1, Vector2i(3, 0)) and q.nid.armes().size() == 1, "deuxieme lance : rangee") and ok
+	ok = _verifier(q.acheter(1, Vector2i(3, 0)) and q.nid.armes().size() == 2, "deuxieme lance : active aussi") and ok
 	ok = _verifier(q.acheter(2, Vector2i(4, 0)) and q.nid.cases.size() == 1 and q.nid.niveau(Vector2i(4, 0)) == 2, "trois lances : lance etoilee") and ok
 	return ok
 
@@ -230,28 +230,14 @@ func _famille(f: String, rang := 0) -> String:
 	l.sort()
 	return l[rang]
 
-func _deux_mains() -> bool:
-	var lame := _famille("lame")
-	var lame2 := _famille("lame", 1)
-	var hache := _famille("hache")
-	var ok := _verifier(Data.mains(lame) == 1 and Data.mains("lance_guet") == 2 and Data.mains("charbon") == 0, "mains par famille")
+func _armes_sans_limite() -> bool:
 	var n := Nid.new()
-	ok = _verifier(n.placer(Vector2i(0, 0), lame) and n.placer(Vector2i(1, 0), hache), "deux armes a une main") and ok
-	ok = _verifier(n.placer(Vector2i(2, 0), lame2) and n.armes().size() == 2 and not Vector2i(2, 0) in n.tenues(), "troisieme lame : rangee") and ok
-	n.retirer(Vector2i(2, 0))
+	for k in 4:
+		n.placer(Vector2i(k, 0), _famille("lame", k % 2))
+	n.placer(Vector2i(0, 1), "lance_guet")
 	var cr := n.eclore()
-	ok = _verifier(cr["armes"].size() == 2 and cr["sorts"].filter(func(s): return s["cavalier"]).size() == 2, "deux sorts du cavalier") and ok
-	var m := Nid.new()
-	m.placer(Vector2i(0, 0), "lance_guet")
-	ok = _verifier(m.placer(Vector2i(1, 0), lame) and m.armes() == ["lance_guet"], "deux mains prises : la lame est rangee") and ok
-	ok = _verifier(m.eclore()["sorts"].filter(func(s): return s["cavalier"]).size() == 1, "une arme rangee ne lance rien") and ok
-	var p := Partie.new(4)
-	p.bourse = 100
-	p.offres[0] = lame
-	p.offres[1] = lame2
-	p.offres[2] = "lance_guet"
-	ok = _verifier(p.acheter(0, Vector2i(2, 0)) and p.acheter(1, Vector2i(4, 0)), "boutique : deux lames") and ok
-	ok = _verifier(p.acheter(2, Vector2i(3, 1)) and p.nid.armes().size() == 2, "la lance s'achete mais reste rangee") and ok
+	var ok := _verifier(cr["armes"].size() == 5, "cinq armes : toutes tenues")
+	ok = _verifier(cr["sorts"].filter(func(s): return s["cavalier"]).size() == 5, "cinq armes : cinq sorts du cavalier") and ok
 	return ok
 
 func _hybrides() -> bool:

@@ -68,7 +68,7 @@ func _ready() -> void:
 	monture_ui = _cadre(_panneau())
 	add_child(monture_ui)
 	var aide := Label.new()
-	aide.text = "Glisse pour acheter, R ou molette pour tourner. 3 copies : ★. Clic droit pour revendre. Deux mains, les autres armes sont rangées."
+	aide.text = "Glisse pour acheter, R ou molette pour tourner. 3 copies : ★. Clic droit pour revendre."
 	aide.add_theme_font_size_override("font_size", 13)
 	aide.add_theme_color_override("font_color", Palette.TEXTE_DOUX)
 	aide_ui = _cadre(aide)
@@ -529,8 +529,7 @@ static func dessiner_relique(ci: CanvasItem, rect: Rect2, id: String, niv := 1, 
 # Une relique sur ses cases : fond de son element (les cases d'une meme
 # relique se rejoignent), contour a la couleur de sa rarete, icone sur
 # l'ensemble, etoiles de niveau. cote : taille d'une case.
-# rangee : arme que le cavalier ne tient pas (mains prises), dessinee eteinte.
-static func dessiner_forme(ci: CanvasItem, cellules: Array, id: String, niv: int, cote: float, survol := false, rangee := false) -> void:
+static func dessiner_forme(ci: CanvasItem, cellules: Array, id: String, niv: int, cote: float, survol := false) -> void:
 	var r: Dictionary = Data.RELIQUES[id]
 	var couleurs: Dictionary = Palette.ELEMENTS[r["element"]]
 	var rarete := Data.rarete(id)
@@ -564,11 +563,6 @@ static func dessiner_forme(ci: CanvasItem, cellules: Array, id: String, niv: int
 	if niv > 1:
 		ci.draw_string(ThemeDB.fallback_font, Vector2(boite.position.x, boite.position.y + marge + 16), "★".repeat(niv - 1),
 			HORIZONTAL_ALIGNMENT_CENTER, boite.size.x, 16, Color("#f2c94c"))
-	if rangee:
-		for c in cellules:
-			ci.draw_rect(c.grow(-marge), Color(0, 0, 0, 0.5))
-		ci.draw_string(ThemeDB.fallback_font, Vector2(boite.position.x, boite.end.y - marge - 6), "rangée",
-			HORIZONTAL_ALIGNMENT_CENTER, boite.size.x, 13, Palette.TEXTE)
 
 # Icone centree dans la zone, proportions gardees.
 static func _icone(ci: CanvasItem, tex: Texture2D, zone: Rect2) -> void:
@@ -599,7 +593,7 @@ static func bulle(id: String, niv := 1, manque := 0) -> Control:
 	pile.add_child(nom)
 	var genre: String = r["type"].capitalize()
 	if r.has("famille"):
-		genre = "Arme (%s), %s" % [Data.FAMILLES[r["famille"]], "une main" if Data.mains(id) == 1 else "deux mains"]
+		genre = "Arme (%s)" % Data.FAMILLES[r["famille"]]
 	var cour: String = Data.DYNASTIES.get(r["element"], "Neutre")
 	var taille := Data.empreinte(id).size()
 	var ligne := "%s, %s, %d case%s" % [Data.NOMS_RARETE[rarete], genre.to_lower(), taille, "s" if taille > 1 else ""]
@@ -662,13 +656,7 @@ class Offre extends Control:
 	func _get_tooltip(_p: Vector2) -> String:
 		return "" if _id() == "" else NidScreen.info(_id())
 	func _make_custom_tooltip(_t: String) -> Object:
-		var b := NidScreen.bulle(_id(), 1, _manque())
-		if _rangee():
-			var l := Label.new()
-			l.text = "Les mains du cavalier sont prises : cette arme sera rangée\n(sans effet) mais peut servir à une fusion. Il tient les armes\ndu haut du sac en premier."
-			l.add_theme_color_override("font_color", Color("#f2c94c"))
-			b.add_child(l)
-		return b
+		return NidScreen.bulle(_id(), 1, _manque())
 	func _id() -> String:
 		return ecran.partie.offres[index]
 	# Posee sur le comptoir : une ombre sur le bois, l'icone, une pierre a la
@@ -713,8 +701,6 @@ class Offre extends Control:
 			_cadenas(icone.get_center())
 		# etiquette : nom et prix
 		var texte := "Offert" if index == ecran.partie.gratuite else "%d or" % prix
-		if _rangee() and manque <= 0:
-			texte += ", rangée"
 		if manque > 0:
 			texte = "%d or, il manque %d" % [prix, manque]
 		var etiquette := Rect2(Vector2(2, icone.end.y + 6), Vector2(size.x - 4, 40))
@@ -723,9 +709,6 @@ class Offre extends Control:
 		draw_string(police, etiquette.position + Vector2(0, 17), Data.RELIQUES[_id()]["nom"], HORIZONTAL_ALIGNMENT_CENTER, etiquette.size.x, 12, Palette.TEXTE)
 		draw_string(police, etiquette.position + Vector2(0, 34), texte, HORIZONTAL_ALIGNMENT_CENTER, etiquette.size.x, 13,
 			NidScreen.TROP_CHER if manque > 0 else Color("#f2c94c"))
-	# Une arme qui ne tiendrait pas dans les mains du cavalier : elle sera rangee.
-	func _rangee() -> bool:
-		return Data.mains(_id()) > 0 and ecran.nid.mains_prises() + Data.mains(_id()) > 2
 	func _manque() -> int:
 		return maxi(0, ecran.partie.prix_offre(index) - ecran.partie.bourse)
 	func _cadenas(c: Vector2) -> void:
@@ -854,13 +837,11 @@ class Tapis extends Control:
 		NidScreen.dessiner_tapis(self, colonnes, cote, Vector2.ZERO)
 		var nid := ecran.nid
 		var survolee = nid.ancre(ecran.case_survolee) if ecran.case_survolee != null else null
-		var tenues := nid.tenues()
 		for a in nid.cases:
 			var cellules := []
 			for k in nid.cases_de(a):
 				cellules.append(_rect(k))
-			NidScreen.dessiner_forme(self, cellules, nid.cases[a], nid.niveau(a), cote, a == survolee,
-				Data.mains(nid.cases[a]) > 0 and not a in tenues)
+			NidScreen.dessiner_forme(self, cellules, nid.cases[a], nid.niveau(a), cote, a == survolee)
 		# apercu de la pose : vert si permise, rouge sinon
 		if not ecran.pose_vue.is_empty():
 			var couleur := Color(0.4, 0.9, 0.4, 0.35) if ecran.pose_vue["ok"] else Color(0.95, 0.3, 0.25, 0.35)

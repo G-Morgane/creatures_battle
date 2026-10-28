@@ -465,8 +465,7 @@ class MiniNid extends Control:
 			var cellules := []
 			for c in _cases(a):
 				cellules.append(_rect(c))
-			NidScreen.dessiner_forme(self, cellules, id, cr["niveaux"].get(a, 1), CASE + ECART, false,
-				Data.mains(id) > 0 and not a in cr.get("tenues", []))
+			NidScreen.dessiner_forme(self, cellules, id, cr["niveaux"].get(a, 1), CASE + ECART)
 			# recharge : une seule jauge pour toute la relique, qui se devoile de bas
 			# en haut sur sa hauteur entiere, et la relique s'allume au depart
 			if sort_de.has(a):
