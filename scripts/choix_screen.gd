@@ -44,6 +44,7 @@ func _ready() -> void:
 	var titre := Label.new()
 	titre.text = "Choisis les dynasties de ta partie"
 	titre.add_theme_font_size_override("font_size", 28)
+	Palette.titre(titre)
 	titre.add_theme_color_override("font_color", Palette.TEXTE)
 	titre.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	pile.add_child(titre)
@@ -134,7 +135,7 @@ class Blason extends Control:
 	func _init(e: ChoixScreen, el: String) -> void:
 		ecran = e
 		element = el
-		custom_minimum_size = Vector2(190, 170)
+		custom_minimum_size = Vector2(190, 210)
 		mouse_entered.connect(func(): ecran.survoler(element))
 		mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	func _gui_input(ev: InputEvent) -> void:
@@ -146,14 +147,20 @@ class Blason extends Control:
 		var a_venir := element in Data.DYNASTIES_A_VENIR
 		var r := Rect2(Vector2.ZERO, size)
 		draw_rect(r, c["fond"] if choisie else Palette.CASE)
+		# le blason en grand, la monture en petit devant lui
+		var teinte := Color(0.4, 0.4, 0.4) if a_venir else Color.WHITE
+		var blason := Palette.blason(element)
+		if blason != null:
+			var kb := (size.y - 64) / blason.get_height()
+			var tb := blason.get_size() * kb
+			draw_texture_rect(blason, Rect2(Vector2((size.x - tb.x) / 2, 8), tb), false, teinte)
 		var tex := Palette.image("res://images/montures/%s.png" % element)
 		if tex != null:
-			var k := minf((size.x - 30) / tex.get_width(), (size.y - 60) / tex.get_height())
+			var k := minf(size.x * 0.42 / tex.get_width(), size.y * 0.32 / tex.get_height())
 			var t := tex.get_size() * k
-			draw_texture_rect(tex, Rect2(Vector2((size.x - t.x) / 2, 12), t), false,
-				Color(0.4, 0.4, 0.4) if a_venir else Color.WHITE)
+			draw_texture_rect(tex, Rect2(Vector2(size.x - t.x - 6, size.y - 52 - t.y), t), false, teinte)
 		var police := ThemeDB.fallback_font
-		draw_string(police, Vector2(0, size.y - 26), NidScreen._NOMS_ELEMENTS[element],
+		draw_string(Palette.police_titre(), Vector2(0, size.y - 26), NidScreen._NOMS_ELEMENTS[element],
 			HORIZONTAL_ALIGNMENT_CENTER, size.x, 16, Palette.TEXTE)
 		draw_string(police, Vector2(0, size.y - 8), "à venir" if a_venir else Data.FORMES[element]["nom"],
 			HORIZONTAL_ALIGNMENT_CENTER, size.x, 13, Palette.TEXTE_DOUX)

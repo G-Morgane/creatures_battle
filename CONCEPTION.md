@@ -337,8 +337,8 @@ Paires à garder distinctes :
 Le Crépuscule n'a de sens que face à un build qui a des bonus ou des malus à voler :
 contre un build d'attaques brutes, il reste correct grâce au projectile d'arcane.
 
-- **Hybride** : dès qu'une deuxième dynastie a de l'affinité, la monture est l'hybride des deux
-  premières (28 images, `images/hybrides`), nommé dynastie dominante d'abord (« Phénix-Chauve-souris »).
+- **Hybride** : dès que le sac contient au moins 2 objets d'une autre dynastie que la principale,
+  la monture est l'hybride des deux (28 images, `images/hybrides`), nommé dynastie dominante d'abord (« Phénix-Chauve-souris »).
   Le passif reste celui de la dynastie dominante.
 - **Aucune affinité** : créature informe, sans passif.
 

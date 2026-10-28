@@ -278,6 +278,7 @@ func _initialize() -> void:
 		_reduire(ic, 96)
 		ic.save_png("res://images/ui/%s.png" % UI[k])
 	_bouton()
+	_blasons()
 	_controle(icones, betes)
 	print("icones : ", icones.size())
 	quit()
@@ -304,6 +305,76 @@ func _hybrides() -> void:
 		m.save_png("res://images/montures/hybrides/%s_%s.png" % els)
 		vus["%s_%s" % els] = true
 	print("hybrides : ", vus.size())
+
+# Blasons des dynasties : planche 4 x 2 sur un fond flou opaque. Chaque case
+# est detouree par remplissage depuis ses bords : le fond, un degrade doux,
+# passe de proche en proche ; le liseré net du blason arrete le remplissage.
+const BLASONS := [["aube", "jour", "crepuscule", "nuit"], ["nature", "feu", "automne", "glace"]]
+const BLASON_SAUT := 0.045   # ecart de couleur max entre deux voisins du fond
+# Les rangees ne sont pas a mi-hauteur : la pointe d'en haut et le sommet d'en bas
+# se frolent vers 488 px.
+const BLASON_RANGEES := [0, 488, 1024]
+
+func _blasons() -> void:
+	DirAccess.make_dir_recursive_absolute("res://images/blasons")
+	var planche := Image.load_from_file("res://images/blason.png")
+	planche.convert(Image.FORMAT_RGBA8)
+	var w := planche.get_width() / 4
+	for r in 2:
+		var h: int = BLASON_RANGEES[r + 1] - BLASON_RANGEES[r]
+		for c in 4:
+			var img := planche.get_region(Rect2i(c * w, BLASON_RANGEES[r], w, h))
+			var source := img.duplicate()
+			var vu := PackedByteArray()
+			vu.resize(w * h)
+			var pile: Array[Vector2i] = []
+			for x in w:
+				pile.append(Vector2i(x, 0))
+				pile.append(Vector2i(x, h - 1))
+			for y in h:
+				pile.append(Vector2i(0, y))
+				pile.append(Vector2i(w - 1, y))
+			for p in pile:
+				vu[p.y * w + p.x] = 1
+			while not pile.is_empty():
+				var p: Vector2i = pile.pop_back()
+				var cp := img.get_pixelv(p)
+				for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+					var q: Vector2i = p + d
+					if q.x < 0 or q.y < 0 or q.x >= w or q.y >= h or vu[q.y * w + q.x] == 1:
+						continue
+					var cq := img.get_pixelv(q)
+					if absf(cq.r - cp.r) + absf(cq.g - cp.g) + absf(cq.b - cp.b) < BLASON_SAUT:
+						vu[q.y * w + q.x] = 1
+						pile.append(q)
+			for y in h:
+				for x in w:
+					if vu[y * w + x] == 1:
+						img.set_pixel(x, y, Color(0, 0, 0, 0))
+			_poussiere(img, POUSSIERE_MONTURE)
+			# l'ecu est convexe : son enveloppe donne la forme, meme si le
+			# remplissage a mange un fond uni a l'interieur
+			var points := PackedVector2Array()
+			for y in range(0, h, 2):
+				var g := -1
+				var d := -1
+				for x in w:
+					if img.get_pixel(x, y).a > 0.5:
+						if g < 0:
+							g = x
+						d = x
+				if g >= 0:
+					points.append(Vector2(g, y))
+					points.append(Vector2(d, y))
+			var enveloppe := Geometry2D.convex_hull(points)
+			img = source
+			for y in h:
+				for x in w:
+					if not Geometry2D.is_point_in_polygon(Vector2(x, y), enveloppe):
+						img.set_pixel(x, y, Color(0, 0, 0, 0))
+			img = img.get_region(img.get_used_rect())
+			_reduire(img, 256)
+			img.save_png("res://images/blasons/%s.png" % BLASONS[r][c])
 
 # Fond de bouton : le cadre du milieu de images/boutons.png, sans la lueur
 # autour (un masque en pilule : bords arrondis, rayon d'une demi-hauteur).

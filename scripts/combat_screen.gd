@@ -63,6 +63,7 @@ func _ready() -> void:
 
 	bandeau = Label.new()
 	bandeau.add_theme_font_size_override("font_size", 40)
+	Palette.titre(bandeau)
 	bandeau.add_theme_constant_override("outline_size", 10)
 	bandeau.add_theme_color_override("font_outline_color", Color(Palette.FOND, 0.85))
 	bandeau.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -341,7 +342,7 @@ func _dessiner() -> void:
 		var demi := maxf(162.0, 75.0 * etats.size() + 20.0)
 		var bas := 62.0 if img[14 + i] != "" else 44.0
 		calque.draw_rect(Rect2(x + 150 - demi, y - 36, demi * 2, bas + 36), Color(Palette.FOND, 0.7))
-		calque.draw_string(police, Vector2(x, y - 12), cr["nom"], HORIZONTAL_ALIGNMENT_CENTER, 300, 20, Palette.TEXTE)
+		calque.draw_string(Palette.police_titre(), Vector2(x, y - 12), cr["nom"], HORIZONTAL_ALIGNMENT_CENTER, 300, 20, Palette.TEXTE)
 		var part := clampf(img[i] / cr["pv_max"], 0.0, 1.0)
 		calque.draw_rect(Rect2(x, y, 300, 16), Palette.CASE)
 		calque.draw_rect(Rect2(x, y, 300 * part, 16), Palette.ELEMENTS[cr["forme"]]["vif"])
@@ -449,7 +450,7 @@ class MiniNid extends Control:
 		colonnes.sort()
 		# un grand sac prend des cases plus petites
 		CASE = 48.0 if colonnes.size() <= 4 else 36.0
-		size = Vector2(colonnes.size() * (CASE + ECART) - ECART, Data.NID_H * (CASE + ECART) - ECART + 26)
+		size = Vector2(colonnes.size() * (CASE + ECART) - ECART, Data.NID_H * (CASE + ECART) - ECART)
 		tooltip_text = " "
 	# Cases de la relique d'ancre a (sa forme si le sac en a).
 	func _cases(a: Vector2i) -> Array:
@@ -458,9 +459,9 @@ class MiniNid extends Control:
 		return Data.empreinte(cr["cases"][a], cr["rotations"].get(a, 0)).map(func(d): return a + d)
 	func _ancre_sous(p: Vector2):
 		var i := int(p.x / (CASE + ECART))
-		if p.y < 26 or i < 0 or i >= colonnes.size():
+		if p.y < 0 or i < 0 or i >= colonnes.size():
 			return null
-		var c := Vector2i(colonnes[i], int((p.y - 26) / (CASE + ECART)))
+		var c := Vector2i(colonnes[i], int(p.y / (CASE + ECART)))
 		for a in cr["cases"]:
 			if c in _cases(a):
 				return a
@@ -477,12 +478,10 @@ class MiniNid extends Control:
 	# que les cases d'une meme relique se touchent.
 	func _rect(c: Vector2i) -> Rect2:
 		var pas := CASE + ECART
-		return Rect2(Vector2(colonnes.find(c.x), c.y) * pas + Vector2(0, 26), Vector2(CASE, CASE)).grow(ECART / 2)
+		return Rect2(Vector2(colonnes.find(c.x), c.y) * pas, Vector2(CASE, CASE)).grow(ECART / 2)
 	func _draw() -> void:
 		var police := ThemeDB.fallback_font
-		draw_rect(Rect2(-8, -4, size.x + 16, size.y + 12), Color(Palette.FOND, 0.7))
-		draw_string(police, Vector2(0, 16), "Ton Nid" if cote == 0 else "Nid adverse", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Palette.TEXTE)
-		NidScreen.dessiner_tapis(self, colonnes, CASE, Vector2(0, 26))
+		NidScreen.dessiner_tapis(self, colonnes, CASE, Vector2.ZERO)
 		var prog := ecran.recharges(cote)
 		for a in cr["cases"]:
 			var id: String = cr["cases"][a]
@@ -557,7 +556,7 @@ class Recap extends Control:
 		var police := ThemeDB.fallback_font
 		draw_rect(Rect2(Vector2.ZERO, size), Color(Palette.FOND, 0.97))
 		draw_rect(Rect2(Vector2.ZERO, size), Palette.CASE_BORD, false, 2.0)
-		draw_string(police, Vector2(0, 34), "Récap du combat", HORIZONTAL_ALIGNMENT_CENTER, size.x, 22, Palette.TEXTE)
+		draw_string(Palette.police_titre(), Vector2(0, 34), "Récap du combat", HORIZONTAL_ALIGNMENT_CENTER, size.x, 22, Palette.TEXTE)
 		for i in 2:
 			var x0 := 24.0 + i * (LARGEUR + 12)
 			var cr: Dictionary = combat.cotes[i]["cr"]

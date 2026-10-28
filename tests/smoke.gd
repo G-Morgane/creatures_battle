@@ -244,29 +244,17 @@ func _armes_sans_limite() -> bool:
 	return ok
 
 func _hybrides() -> bool:
-	var ok := true
-	# egalite a deux : hybride ; egalite a trois ou aucune affinite : informe
-	var h := Nid.new()
-	h.placer(Vector2i(0, 0), "charbon")
-	var autre := ""
-	for id in Data.RELIQUES:
-		var r: Dictionary = Data.RELIQUES[id]
-		if r["element"] == "nature" and r["affinite"] == 2 and r["type"] != "arme":
-			autre = id
-			break
-	h.placer(Vector2i(1, 0), autre)
-	var cr := h.eclore()
-	ok = _verifier(cr["forme"] == "" and cr["hybride"] == "feu_nature" and cr["nom"] == "Phénix-Cerf", "egalite Ete-Printemps : Phenix-Cerf") and ok
-	ok = _verifier(Nid.new().hybride() == "", "nid vide : pas d'hybride") and ok
+	var ok := _verifier(Nid.new().hybride() == "", "nid vide : pas d'hybride")
+	# un seul objet d'une autre dynastie : monture pure
 	var m := Nid.new()
 	m.placer(Vector2i(0, 0), "charbon")
 	m.placer(Vector2i(1, 0), "tison")
 	m.placer(Vector2i(2, 0), "sceau")
+	ok = _verifier(m.hybride() == "" and m.eclore()["nom"] == "Phénix", "un seul objet de la Nuit : Phenix pur") and ok
+	# deux objets de la Nuit : hybride, passif du Phenix
+	m.placer(Vector2i(3, 0), "sablier")
 	var cm := m.eclore()
-	ok = _verifier(cm["forme"] == "feu" and cm["hybride"] == "feu_nuit" and cm["nom"] == "Phénix-Chauve-souris", "Ete dominant + un peu de Nuit : hybride, passif du Phenix") and ok
-	var pur := Nid.new()
-	pur.placer(Vector2i(0, 0), "charbon")
-	ok = _verifier(pur.hybride() == "" and pur.eclore()["nom"] == "Phénix", "une seule dynastie : monture pure") and ok
+	ok = _verifier(cm["forme"] == "feu" and cm["hybride"] == "feu_nuit" and cm["nom"] == "Phénix-Chauve-souris", "deux objets de la Nuit : Phenix-Chauve-souris") and ok
 	return ok
 
 func _gel() -> bool:

@@ -33,6 +33,7 @@ func _ready() -> void:
 	add_child(bandeau)
 	barre = Label.new()
 	barre.add_theme_font_size_override("font_size", 22)
+	Palette.titre(barre)
 	barre.add_theme_color_override("font_color", Palette.TEXTE)
 	bandeau.add_child(barre)
 	for nom in ["vie", "victoires", "or"]:
@@ -199,6 +200,7 @@ func _rencontre() -> void:
 	var titre := Label.new()
 	titre.text = partie.rencontre["titre"]
 	titre.add_theme_font_size_override("font_size", 28)
+	Palette.titre(titre)
 	titre.add_theme_color_override("font_color", Palette.TEXTE)
 	pile.add_child(titre)
 	var texte := Label.new()

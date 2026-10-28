@@ -22,12 +22,12 @@ window/size/mode=2
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
+[gui]
+
+timers/tooltip_delay_sec=0.12
+
 [rendering]
 
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
 environment/defaults/default_clear_color=Color(0.055, 0.063, 0.078, 1)
-
-[gui]
-
-timers/tooltip_delay_sec=0.12

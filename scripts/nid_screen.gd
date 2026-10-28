@@ -69,7 +69,7 @@ func _ready() -> void:
 	# bandeau : acte, vie, victoires, or, puis le message du dernier noeud
 	var bandeau := HBoxContainer.new()
 	bandeau.add_theme_constant_override("separation", 34)
-	barre = _titre("")
+	barre = Palette.titre(_titre(""))
 	bandeau.add_child(barre)
 	for nom in ["vie", "victoires", "or"]:
 		var c: Array = Palette.compteur(nom, 20)
@@ -371,7 +371,7 @@ func _decrire(cr: Dictionary) -> String:
 	var aff := nid.affinites()
 	var doux := Palette.TEXTE_DOUX.to_html(false)
 	var lignes := [
-		"[font_size=22][b]%s[/b][/font_size]" % cr["nom"],
+		"[font=%s][font_size=24]%s[/font_size][/font]" % [Palette.TITRE_POLICE, cr["nom"]],
 		_affinites(aff),
 		"[color=#%s][i]%s[/i][/color]" % [doux, Data.FORMES[cr["forme"]]["passif"]],
 		"",
@@ -728,11 +728,24 @@ static func bulle(id: String, niv := 1, manque := 0) -> Control:
 	var rarete := Data.rarete(id)
 	var pile := VBoxContainer.new()
 	pile.add_theme_constant_override("separation", 6)
+	# en tete : le blason de la dynastie, puis le nom
+	var tete := HBoxContainer.new()
+	tete.add_theme_constant_override("separation", 10)
+	var blason := Palette.blason(r["element"])
+	if blason != null:
+		var ic := TextureRect.new()
+		ic.texture = blason
+		ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		ic.custom_minimum_size = Vector2(30, 38)
+		tete.add_child(ic)
 	var nom := Label.new()
 	nom.text = r["nom"] + ("  " + "★".repeat(niv - 1) if niv > 1 else "")
 	nom.add_theme_font_size_override("font_size", 18)
 	nom.add_theme_color_override("font_color", Palette.RARETES[rarete] if rarete != "commun" else Palette.TEXTE)
-	pile.add_child(nom)
+	nom.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	tete.add_child(nom)
+	pile.add_child(tete)
 	var genre: String = r["type"].capitalize()
 	if r.has("famille"):
 		genre = "Arme (%s)" % Data.FAMILLES[r["famille"]]

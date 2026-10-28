@@ -27,10 +27,53 @@ static func image(chemin: String) -> Texture2D:
 		_cache[chemin] = load(chemin) if ResourceLoader.exists(chemin) else null
 	return _cache[chemin]
 
+# Polices : Nunito Sans pour le texte, Cinzel Decorative pour les titres
+# (Google Fonts, licence OFL : polices/OFL-*.txt).
+const TITRE_POLICE := "res://polices/CinzelDecorative-Bold.ttf"
+static var _polices := {}
+
+# Police variable : sans reglage elle sort sa graisse la plus fine, on la fixe.
+static func _graisse(chemin: String, poids: int) -> Font:
+	var f := FontVariation.new()
+	f.base_font = load(chemin)
+	var ts := TextServerManager.get_primary_interface()
+	f.variation_opentype = {ts.name_to_tag("wght"): poids, ts.name_to_tag("opsz"): 12}
+	return f
+
+static func police() -> Font:
+	if not _polices.has("texte"):
+		_polices["texte"] = _graisse("res://polices/NunitoSans-Variable.ttf", 500)
+	return _polices["texte"]
+
+static func police_grasse() -> Font:
+	if not _polices.has("gras"):
+		_polices["gras"] = _graisse("res://polices/NunitoSans-Variable.ttf", 800)
+	return _polices["gras"]
+
+static func police_italique() -> Font:
+	if not _polices.has("italique"):
+		_polices["italique"] = _graisse("res://polices/NunitoSans-Italic-Variable.ttf", 500)
+	return _polices["italique"]
+
+static func police_titre() -> Font:
+	if not _polices.has("titre"):
+		_polices["titre"] = load(TITRE_POLICE)
+	return _polices["titre"]
+
+# Un Label en police de titre.
+static func titre(l: Control) -> Control:
+	l.add_theme_font_override("font", police_titre())
+	return l
+
 # Theme commun : chaque bouton prend le cadre feuillage et parchemin
 # (images/ui/bouton.png), etire en 9 tranches, texte brun sur le parchemin.
 static func theme_jeu() -> Theme:
 	var t := Theme.new()
+	t.default_font = police()
+	t.set_font("bold_font", "RichTextLabel", police_grasse())
+	t.set_font("italics_font", "RichTextLabel", police_italique())
+	# les textes dessines a la main (draw_string) prennent la police par defaut
+	ThemeDB.fallback_font = police()
 	var tex := ui("bouton")
 	if tex == null:
 		return t
@@ -56,6 +99,10 @@ static func theme_jeu() -> Theme:
 	t.set_color("font_focus_color", "Button", Color("#3b2a18"))
 	t.set_color("font_disabled_color", "Button", Color("#6f6252"))
 	return t
+
+# Blason d'une dynastie (images/blasons), null pour un objet neutre.
+static func blason(element: String) -> Texture2D:
+	return image("res://images/blasons/%s.png" % element) if element != "" else null
 
 # Icones d'interface (images/ui) : vie, victoires, or, glossaire.
 static func ui(nom: String) -> Texture2D:

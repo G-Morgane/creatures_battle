@@ -57,6 +57,7 @@ godot --headless --path . -s res://outils/decouper_icones.gd
 - `scripts/nid.gd` : grille, affinités, éclosion de la créature
 - `scripts/combat.gd` : simulation déterministe par pas fixe
 - `scripts/descriptions.gd` : ce que fait chaque relique, pour les infobulles (à tenir à jour avec CONCEPTION.md)
+- `polices/` : Cinzel Decorative (titres) et Nunito Sans (texte), Google Fonts, licence OFL
 - `images/damier_items.png` : les 16 tuiles du tapis du sac, découpées par l'outil d'images dans `images/tapis/`
 - `scripts/carte.gd` : carte d'une run (3 actes, étages, types de nœuds)
 - `scripts/carte_screen.gd` : écran de la carte et des rencontres

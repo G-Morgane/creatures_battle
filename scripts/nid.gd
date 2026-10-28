@@ -221,18 +221,35 @@ func forme() -> String:
 			egalite = true
 	return "" if egalite else meilleur
 
-# Des qu'une deuxieme dynastie a de l'affinite, la monture est l'hybride des
-# deux premieres (cle "a_b", elements tries), "" sinon. Le passif reste celui
-# de la dynastie dominante (forme()).
+# Hybride : la dynastie principale (la plus d'affinite) et une autre dont le
+# sac contient au moins HYBRIDE_OBJETS objets ; s'il y en a plusieurs, celle qui
+# a le plus d'objets. Cle "a_b" (elements tries), "" sinon. Le passif reste
+# celui de la dynastie dominante (forme()).
+const HYBRIDE_OBJETS := 2
+
 func hybride() -> String:
 	var aff := affinites()
-	var tete := aff.keys().filter(func(e): return aff[e] > 0)
-	if tete.size() < 2:
+	if aff.is_empty():
 		return ""
-	tete.sort_custom(func(a, b): return aff[a] > aff[b] or (aff[a] == aff[b] and a < b))
-	tete = tete.slice(0, 2)
-	tete.sort()
-	var cle := "%s_%s" % tete
+	var ordre := aff.keys()
+	ordre.sort_custom(func(a, b): return aff[a] > aff[b] or (aff[a] == aff[b] and a < b))
+	var principale: String = ordre[0]
+	var objets := {}
+	for c in cases:
+		var e: String = Data.RELIQUES[cases[c]]["element"]
+		if e != "" and e != principale:
+			objets[e] = objets.get(e, 0) + 1
+	var seconde := ""
+	for e in objets:
+		if objets[e] < HYBRIDE_OBJETS:
+			continue
+		if seconde == "" or objets[e] > objets[seconde] or (objets[e] == objets[seconde] and aff.get(e, 0) > aff.get(seconde, 0)):
+			seconde = e
+	if seconde == "":
+		return ""
+	var deux := [principale, seconde]
+	deux.sort()
+	var cle := "%s_%s" % deux
 	return cle if ResourceLoader.exists("res://images/montures/hybrides/%s.png" % cle) else ""
 
 func eclore() -> Dictionary:

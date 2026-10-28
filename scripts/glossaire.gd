@@ -51,6 +51,7 @@ func _ready() -> void:
 	var titre := Label.new()
 	titre.text = "Glossaire"
 	titre.add_theme_font_size_override("font_size", 26)
+	Palette.titre(titre)
 	titre.add_theme_color_override("font_color", Palette.TEXTE)
 	titre.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	tete.add_child(titre)
@@ -90,7 +91,7 @@ func _ready() -> void:
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		b.custom_minimum_size.y = 40
 		b.pressed.connect(func():
-			texte.text = "[font_size=22][color=#f2c94c]%s[/color][/font_size]\n\n%s" % liste[k]
+			texte.text = "[font=%s][font_size=24][color=#f2c94c]%s[/color][/font_size][/font]\n\n%s" % [Palette.TITRE_POLICE, liste[k][0], liste[k][1]]
 			defile.scroll_vertical = 0)
 		signets.add_child(b)
 		if k == 0:
@@ -127,7 +128,7 @@ static func contenu() -> String:
 	var t := ""
 	t += _section("Le Nid et la monture")
 	t += _terme("Reliques", "on les achète en boutique et on les pose sur le tapis du sac. Chacune donne de l'affinité à sa dynastie.")
-	t += _terme("Monture", "la dynastie qui a le plus d'affinité donne son passif. Une seule dynastie : sa monture pure. Deux ou plus : un hybride des deux premières. Sans affinité : une créature informe.")
+	t += _terme("Monture", "la dynastie qui a le plus d'affinité donne son passif. Au moins 2 objets d'une autre dynastie : un hybride des deux. Sinon, la monture pure. Sans affinité : une créature informe.")
 	t += _terme("Types", "Essence (stats et effets permanents), Sort (se déclenche sur sa recharge), Catalyseur (renforce les reliques qui touchent l'une de ses cases ; des flèches jaunes autour, et ses voisines s'allument au survol), Arme (tenue par le cavalier, lance son propre sort).")
 	t += _terme("Formes", "une relique prend de 1 à 4 cases selon sa rareté, ou sa famille pour une arme. R ou la molette la tournent pendant qu'on la tient.")
 	t += _terme("Sac", "il commence sur 4 colonnes et s'agrandit d'une colonne en boutique (prix croissant) ou après chaque boss battu, jusqu'à 8.")
