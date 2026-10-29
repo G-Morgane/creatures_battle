@@ -33,7 +33,9 @@ const TAILLE_BOUTIQUE := 9   # un carre de 3 x 3 sur le comptoir
 # XP_NIVEAUX[k] : experience totale pour atteindre le niveau k + 1. Chaque
 # niveau gagne donne PV_PAR_NIVEAU a la monture et une case de sac offerte.
 const XP_NIVEAUX := [0, 2, 5, 8, 12, 16, 21, 26]
-const PV_PAR_NIVEAU := 20.0
+const PV_PAR_NIVEAU := 40.0
+# Elites et boss : plus de PV des deux cotes, pour des combats qui durent.
+const PV_NOEUD := {"elite": 1.75, "boss": 2.0}
 
 const FERVEUR := 60
 # Une defaite coute selon le noeud, plus ce qui reste de vie a l'adversaire (comme TFT).
@@ -214,7 +216,13 @@ static func avec_cavalier(cr: Dictionary, c: String) -> Dictionary:
 	return cr
 
 func creature_joueur() -> Dictionary:
-	return Partie.avec_niveau(Partie.avec_cavalier(nid.eclore(), cavalier), niveau())
+	return _pv_noeud(Partie.avec_niveau(Partie.avec_cavalier(nid.eclore(), cavalier), niveau()))
+
+# PV des deux combattants selon le noeud en cours (elite, boss).
+func _pv_noeud(cr: Dictionary) -> Dictionary:
+	if position >= 0:
+		cr["pv_max"] *= PV_NOEUD.get(noeud()["type"], 1.0)
+	return cr
 
 func relancer() -> bool:
 	if bourse < prix_relance():
@@ -440,7 +448,7 @@ func creature_adverse() -> Dictionary:
 	var cavs := Data.CAVALIERS.keys()
 	Partie.avec_cavalier(cr, cavs[(manche + graine) % cavs.size()])
 	# le fantome a le niveau de ses manches jouees
-	Partie.avec_niveau(cr, Partie.niveau_pour(xp() + AVANCE[noeud()["type"]]))
+	_pv_noeud(Partie.avec_niveau(cr, Partie.niveau_pour(xp() + AVANCE[noeud()["type"]])))
 	if noeud()["type"] == "boss" and acte < Data.GARDIEN_ACTE.size():
 		var g: String = Data.GARDIEN_ACTE[acte]
 		cr["elite"] = g

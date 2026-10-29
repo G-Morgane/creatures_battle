@@ -8,7 +8,7 @@ const NID_H := 4
 
 # --- creature --------------------------------------------------------------
 
-const PV_BASE := 300.0
+const PV_BASE := 600.0
 const ATTAQUE_BASE := 5.0
 const INTERVALLE_BASE := 1.0   # secondes entre deux attaques de base
 

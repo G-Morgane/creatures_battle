@@ -14,7 +14,8 @@
 - Attaques de base selon la vitesse, sorts sur leur recharge.
 - Mort subite après 30 s : dégâts croissants des deux côtés, pas de match nul interminable.
 - **Affichage = relecture** : `combat_screen.gd` rejoue les événements et les PV. L'animation ne peut donc jamais changer le résultat.
-- Vitesse de l'arène : x1, x2 ou x3. Durée visée : 15 à 25 s (`tests/equilibrage.gd`).
+- Vitesse de l'arène : x1 ou x2 (x3 retiré, combats trop vite lus). Durée visée : 15 à 25 s (`tests/equilibrage.gd`, et la durée par type de nœud dans `tests/simulation.gd`).
+- **PV** (2026-10-29) : 600 de base (au lieu de 300), +40 par niveau, et les deux combattants ×1,75 en élite, ×2 en boss (`Partie.PV_NOEUD`). **Pourquoi :** combats trop rapides (duel 9 s, boss 6 s) ; mesuré ensuite : duel 15 s, élite 17 s, boss 18 s, taux de victoire inchangé.
 
 ## Pas d'avantage élémentaire
 

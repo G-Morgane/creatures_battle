@@ -1048,9 +1048,9 @@ func _vitesses() -> bool:
 	var e := CombatScreen.new(Exemples.nid_feu().eclore(), Exemples.nid_nuit().eclore())
 	add_child(e)
 	var vues := []
-	for i in 4:
+	for i in 3:
 		vues.append([e.vitesse, e.bouton_vitesse.text])
 		e._changer_vitesse()
 	e.queue_free()
-	return _verifier(vues == [[1.0, "Vitesse x1"], [2.0, "Vitesse x2"], [3.0, "Vitesse x3"], [1.0, "Vitesse x1"]], "vitesse x1, x2, x3 puis x1")
+	return _verifier(vues == [[1.0, "Vitesse x1"], [2.0, "Vitesse x2"], [1.0, "Vitesse x1"]], "vitesse x1, x2 puis x1")
 

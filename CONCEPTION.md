@@ -770,7 +770,7 @@ On adapte son Nid à ce qu'on affronte, pas à une couleur.
   trois rencontres. Trois élites à règle et le gardien de l'acte I (Bastion endormi) ; les boss
   des actes II et III sont encore des fantômes en avance.
 - Choix des dynasties, puis du cavalier et de son talent.
-- Arène : vitesse x1, x2 ou x3.
+- Arène : vitesse x1 ou x2.
 - Sac de 4 à 8 colonnes sur 4 rangées, reliques à formes (1 à 4 cases), rotation.
 - Hybrides en place (28 images). Rareté et fusion en place. Pas de réseau.
 - Boutique, manches, combat animé contre un adversaire généré, fin de partie.

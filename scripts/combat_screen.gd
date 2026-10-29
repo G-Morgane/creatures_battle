@@ -114,8 +114,8 @@ func _placer() -> void:
 	nids[1].position = Vector2(size.x - nids[1].size.x - 24, size.y - nids[1].size.y - 38)
 	recap.position = (size - recap.size) / 2 - Vector2(0, 30)
 
-# x1, x2, x3, puis retour a x1. Le bouton affiche la vitesse en cours.
-const VITESSES := [1.0, 2.0, 3.0]
+# x1, x2, puis retour a x1. Le bouton affiche la vitesse en cours.
+const VITESSES := [1.0, 2.0]
 
 func _changer_vitesse() -> void:
 	vitesse = VITESSES[(VITESSES.find(vitesse) + 1) % VITESSES.size()]

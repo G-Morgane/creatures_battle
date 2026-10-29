@@ -16,7 +16,7 @@ func _initialize() -> void:
 		var gagnees := 0
 		var noeuds := 0
 		var actes := [0, 0, 0]          # runs arrivees a chaque acte
-		var par_type := {}              # type -> [victoires, combats]
+		var par_type := {}              # type -> [victoires, combats, duree totale]
 		var par_element := {}           # element choisi -> [runs, gagnees]
 		var par_relique := {}           # id dans le sac -> [combats, victoires]
 		# element choisi -> {combats, degats faits, degats subis, duree, sources: source -> degats}
@@ -34,9 +34,10 @@ func _initialize() -> void:
 				if p.combat():
 					var c := Combat.new(p.creature_joueur(), p.creature_adverse())
 					var v := c.simuler()
-					var m: Array = par_type.get(type, [0, 0])
+					var m: Array = par_type.get(type, [0, 0, 0.0])
 					m[0] += 1 if v == 0 else 0
 					m[1] += 1
+					m[2] += c.t
 					par_type[type] = m
 					var vus := {}
 					for id in p.nid.cases.values():
@@ -75,7 +76,7 @@ func _initialize() -> void:
 			roundi(100.0 * actes[1] / RUNS), roundi(100.0 * actes[2] / RUNS)])
 		var ligne := "Taux de victoire par type : "
 		for t in par_type:
-			ligne += "%s %d %% (%d)  " % [t, roundi(100.0 * par_type[t][0] / par_type[t][1]), par_type[t][1]]
+			ligne += "%s %d %% (%d, %.1f s)  " % [t, roundi(100.0 * par_type[t][0] / par_type[t][1]), par_type[t][1], par_type[t][2] / par_type[t][1]]
 		print(ligne)
 		if style == "simple":
 			ligne = "Runs gagnées par élément : "

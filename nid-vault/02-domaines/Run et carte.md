@@ -44,6 +44,6 @@ Bouton Glossaire (ou F1) en haut à droite de tous les écrans. Ses chiffres vie
 
 ## Niveau
 
-**Décision :** un niveau qui monte seul, d'un point d'expérience par nœud franchi (`Partie.XP_NIVEAUX` : niveaux 2 à 8 à 2, 5, 8, 12, 16, 21 et 26 XP). Chaque niveau gagné donne **+20 PV à la monture** et **une case de sac offerte**. Les fantômes ont le niveau de leurs manches jouées (boss : 4 manches d'avance). Affiché dans le bandeau du Nid.
+**Décision :** un niveau qui monte seul, d'un point d'expérience par nœud franchi (`Partie.XP_NIVEAUX` : niveaux 2 à 8 à 2, 5, 8, 12, 16, 21 et 26 XP). Chaque niveau gagné donne **+40 PV à la monture** (20 au départ, doublé avec les PV de base le 2026-10-29) et **une case de sac offerte**. Les fantômes ont le niveau de leurs manches jouées (boss : 4 manches d'avance). Affiché dans le bandeau du Nid.
 **Pourquoi :** demandé le 2026-10-29 ([[2026-10-29 Niveau]]) : la monture doit se renforcer et le sac grandir sans que tout passe par l'or.
 **Alternatives écartées :** acheter de l'expérience avec de l'or comme TFT (l'agrandissement payant fait déjà ce rôle) ; expérience par victoire seulement (punirait deux fois une défaite).

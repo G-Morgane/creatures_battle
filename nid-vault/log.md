@@ -18,3 +18,4 @@ _Ajout seulement. Une ligne par ingestion, question, discussion ou passe de nett
 | 2026-10-29 | maj | « PV de run » renommés « Ferveur » (confusion avec les PV de la monture) → Run et carte, Rencontres, Adversaire fantôme, CONCEPTION.md |
 | 2026-10-29 | discussion | Niveau passif (XP par nœud, +20 PV et une case de sac par niveau) → Run et carte, Sac et formes |
 | 2026-10-29 | maj | Rééquilibrage du Crépuscule (arcane x1,5, Brume 12, Cocon 30, signature 4) → Équilibrage, Crépuscule (Papillon), Reliques, CONCEPTION.md |
+| 2026-10-29 | maj | Combats allongés : PV de base 600, +40 par niveau, élite x1,75 et boss x2 des deux côtés ; vitesse x3 retirée → Combat, Run et carte, CONCEPTION.md |
