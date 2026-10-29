@@ -154,8 +154,9 @@ le joueur aléatoire à 0 % : les fantômes, qui achètent les armes en premier,
 
 ### Boutique entre chaque nœud
 
-**Geler** la boutique garde ses offres pour le prochain passage (les achetées restent vides) ;
-une relance la dégèle. Une relique offerte (élite, boss) prend alors une place vide.
+**Verrouiller** une offre (clic droit) la garde aux relances et à la boutique suivante, comme
+la réservation de Backpack Battles. Une relique offerte (élite, boss) prend une place vide, sinon
+une offre non verrouillée.
 
 Comme dans TFT : **après chaque combat, la boutique est ouverte mais facultative**. On achète,
 relance, réorganise le Nid, ou l'on passe directement au nœud suivant. L'or non dépensé se garde.
@@ -171,7 +172,7 @@ La **Ferveur** (la volonté du cavalier de poursuivre la quête) remplace « 7 v
   quand même à l'acte suivant ; le boss du dernier acte termine la run.
 - Élite battue : une relique **épique offerte** dans la boutique (de l'élément du Nid si possible).
   Boss battu : une **légendaire offerte**. L'offre offerte survit aux relances.
-- Élites et boss du prototype : le fantôme, avec 2 (élite) ou 4 (boss) manches d'avance.
+- Le fantôme a des manches d'avance : 1 en duel, 3 en élite, 5 au boss (`Partie.AVANCE`, réglé le 2026-10-29 pour 40 % de runs gagnées par le joueur simple).
   Les vraies élites à gimmick viendront ensuite.
 - Rencontres du prototype : le Heaume qui Juge, le Grand Chaudron, le Pont des Lames.
 
@@ -234,7 +235,11 @@ Ils visent une famille d'armes (voir Familles d'armes). Pistes :
 ### Boutique et or
 
 - **10 or par combat** ; feu de camp et rencontre ne donnent ni or ni boutique (on reste sur la carte). L'or non dépensé se garde.
-- **5 offres** tirées au hasard, **relance pour 1 or**.
+- **9 offres** tirées au hasard. **Relance : 1 or, puis 1 de plus à chaque relance de la même
+  boutique** (1, 2, 3...), remise à 1 à la boutique suivante.
+- **Soldes** : chaque offre a 10 % de chances d'être à moitié prix (arrondi au-dessus).
+- Arbitrages voulus (2026-10-29, d'après Backpack Battles et Oaken Tower) : relancer encore ou
+  garder son or, verrouiller une offre qu'on ne peut pas payer, saisir un solde.
 - Prix : essence 3, sort 4, catalyseur 4, arme 5.
 - **On achète en posant** : glisser une offre dans une case vide du Nid.
 - **Revente à moitié prix** (au moins 1 or) : ramener la relique à la boutique, ou clic droit.

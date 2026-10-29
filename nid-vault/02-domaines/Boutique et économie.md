@@ -1,6 +1,6 @@
 # Boutique et économie
 
-**Résumé :** Boutique à la TFT, facultative après chaque combat : 9 offres en carré 3 x 3, relance à 1 or, prix selon le type et la rareté, gel, revente et fusion (3 copies, puis 2).
+**Résumé :** Boutique à la TFT, facultative après chaque combat : 9 offres en carré 3 x 3, relance qui s'enchérit, verrou par offre, soldes, prix selon le type et la rareté, revente et fusion (3 copies, puis 2).
 **Tags :** #boutique, #economie, #fusion, #rarete
 **Mis à jour :** 2026-10-29
 **Liens :** [[Run et carte]], [[Sac et formes]], [[Reliques]], [[Équilibrage]], [[Adversaire fantôme et PvP]], [[Cavaliers et armes]]
@@ -10,11 +10,16 @@
 ## Règles
 
 - 10 or par combat (feu de camp et rencontre : ni or ni boutique, [[Run et carte]]), l'or non dépensé se garde. Un bonus par victoire existe (`OR_PAR_VICTOIRE`) mais vaut 0.
-- 9 offres en carré de 3 x 3 ([[2026-10-28 Refonte de la boutique]]), relance à 1 or. Talent Érudit : première relance de chaque boutique gratuite.
+- 9 offres en carré de 3 x 3 ([[2026-10-28 Refonte de la boutique]]), relance à partir de 1 or (voir plus bas). Talent Érudit : première relance de chaque boutique gratuite.
 - **Prix** : essence 3, sort 4, catalyseur 4, arme 5, plus la rareté (rare +2, épique +4, légendaire +7).
 - On achète **en posant** l'offre dans le Nid. Revente à moitié prix (au moins 1 or), en ramenant la relique à la boutique ou par clic droit.
-- **Geler** garde les offres pour le prochain passage ; une relance les dégèle. Les offres gelées portent un flocon.
-- Une relique offerte (élite, boss) prend une place vide et survit aux relances.
+- **Verrou par offre** (clic droit) : l'offre reste aux relances et à la boutique suivante ; elle porte un flocon. Remplace le gel de toute la boutique.
+- **Relance qui s'enchérit** : 1 or, puis +1 à chaque relance payée dans la même boutique ; remise à 1 à la boutique suivante.
+- **Soldes** : 10 % des offres à moitié prix (arrondi au-dessus), étiquette « Soldé ».
+- **Décision (2026-10-29) :** ces trois règles, prises à Backpack Battles et Oaken Tower ([[Difficulté et leçons de Backpack Battles et Oaken Tower]]).
+  **Pourquoi :** créer des arbitrages (relancer encore ou garder son or, réserver une offre qu'on ne peut pas encore payer, saisir une occasion), pour qu'il faille chercher au lieu d'aller tout droit.
+  **Alternatives écartées pour l'instant :** un niveau de boutique à acheter (Oaken Tower), moins d'offres. La pénurie seule ne change pas la difficulté : les fantômes la subissent aussi.
+- Une relique offerte (élite, boss) prend une place vide, sinon une offre non verrouillée, et survit aux relances.
 - Tout le hasard passe par une graine : même graine, mêmes boutiques, mêmes adversaires.
 
 ## Rareté

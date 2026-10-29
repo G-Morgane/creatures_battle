@@ -22,7 +22,10 @@ const CHANCES_RARETE := [
 	[20, [38.0, 33.0, 25.0, 4.0]],
 	[30, [25.0, 33.0, 32.0, 10.0]],
 ]
+# Relance : 1 or, +1 a chaque relance payee dans la meme boutique (1, 2, 3...).
 const PRIX_RELANCE := 1
+# Soldes : chaque offre tiree a cette chance d'etre a moitie prix (arrondi au-dessus).
+const SOLDE_CHANCE := 0.10
 # Le sac commence sur les 4 colonnes du centre du damier et s'agrandit d'une
 # case a la fois, au choix du joueur, collee au sac : en boutique (2 or, puis
 # +1 a chaque case achetee) ou gratuitement (boss battu, Croissance).
@@ -45,7 +48,7 @@ const PERTE_RESTE := 8
 const SOIN_FEU := 20
 # Elites et boss : un fantome qui a joue quelques manches de plus.
 # Les elites ont deja leur regle : pas de manche d'avance.
-const AVANCE := {"duel": 0, "elite": 0, "boss": 4}
+const AVANCE := {"duel": 1, "elite": 3, "boss": 5}
 # Recompense d'une victoire : une relique offerte de cette rarete.
 const RECOMPENSE := {"elite": "epique", "boss": "legendaire"}
 const CHAUDRON_PV := 15
@@ -63,9 +66,10 @@ var offres: Array = []   # ids, "" pour une offre deja achetee
 var gratuite := -1       # index de l'offre offerte, -1 sans
 var cases_achetees := 0   # fixe le prix de la prochaine case du sac
 var cases_offertes := 0   # cases du sac gratuites, encore a placer
-# Boutique gelee : ses offres restent au noeud suivant (les achetees restent vides).
-# Une relance la degele.
-var gelee := false
+# Offres verrouillees : elles restent aux relances et a la boutique suivante.
+var verrous: Array = []
+var soldes: Array = []   # offres a moitie prix
+var relances := 0        # relances payees dans la boutique en cours
 # Reserve : des emplacements hors du sac, sans effet, pour garder des reliques.
 const TAILLE_RESERVE := 8
 var reserve: Array = []  # par emplacement : {} vide, ou {id, niv}
@@ -136,7 +140,9 @@ static func prix(id: String) -> int:
 	return PRIX[Data.RELIQUES[id]["type"]] + BONUS_RARETE[Data.rarete(id)]
 
 func prix_offre(i: int) -> int:
-	return 0 if i == gratuite else prix(offres[i])
+	if i == gratuite:
+		return 0
+	return ceili(prix(offres[i]) / 2.0) if soldes[i] else prix(offres[i])
 
 static func chances(m: int) -> Array:
 	var avant: Array = CHANCES_RARETE[0]
@@ -177,16 +183,28 @@ static func tirer_id(r: RandomNumberGenerator, ids: Array, m: int, sans_legendai
 static func prix_revente(id: String, niv := 1) -> int:
 	return maxi(1, prix(id) * Data.copies_niveau(niv) / 2)
 
-# L'offre offerte survit aux relances.
+# Nouvelles offres. Les offres verrouillees et l'offre offerte restent.
 func tirer() -> void:
-	var garde: String = offres[gratuite] if gratuite >= 0 and gratuite < offres.size() else ""
 	var ids := pool()
-	offres.clear()
+	if offres.size() != TAILLE_BOUTIQUE:
+		offres.resize(TAILLE_BOUTIQUE)
+		offres.fill("")
+		verrous.resize(TAILLE_BOUTIQUE)
+		verrous.fill(false)
+		soldes.resize(TAILLE_BOUTIQUE)
+		soldes.fill(false)
+	var garde := []
 	for i in TAILLE_BOUTIQUE:
-		offres.append(tirer_id(rng, ids, manche, _a_legendaire()))
-	if garde != "":
-		offres[gratuite] = garde
-	else:
+		garde.append(offres[i] != "" and (verrous[i] or i == gratuite))
+		if not garde[i]:
+			offres[i] = ""
+	for i in TAILLE_BOUTIQUE:
+		if garde[i]:
+			continue
+		offres[i] = tirer_id(rng, ids, manche, _a_legendaire())
+		verrous[i] = false
+		soldes[i] = rng.randf() < SOLDE_CHANCE
+	if gratuite >= 0 and offres[gratuite] == "":
 		gratuite = -1
 
 func _a_legendaire() -> bool:
@@ -199,7 +217,7 @@ func pool() -> Array:
 func prix_relance() -> int:
 	if cavalier == "capuchon" and relance_offerte:
 		return 0
-	return PRIX_RELANCE
+	return PRIX_RELANCE + relances
 
 # Le cavalier se choisit une fois, en debut de partie. Croissance : des cases
 # de sac offertes, a placer (les suivantes coutent comme si de rien n'etait).
@@ -228,15 +246,19 @@ func _pv_noeud(cr: Dictionary) -> Dictionary:
 func relancer() -> bool:
 	if bourse < prix_relance():
 		return false
-	bourse -= prix_relance()
+	var cout := prix_relance()
+	bourse -= cout
+	if cout > 0:
+		relances += 1
 	if cavalier == "capuchon":
 		relance_offerte = false
-	gelee = false
 	tirer()
 	return true
 
-func geler() -> void:
-	gelee = not gelee
+# Verrouiller une offre : elle reste aux relances et a la boutique suivante.
+func verrouiller(i: int) -> void:
+	if offres[i] != "":
+		verrous[i] = not verrous[i]
 
 # On achete en posant : l'offre va dans une case vide du Nid, ou sur une copie
 # d'elle-meme si cela complete un trio (fusion, reserve comprise).
@@ -346,6 +368,8 @@ func _prendre(src: Dictionary) -> void:
 		var i: int = src["offre"]
 		bourse -= prix_offre(i)
 		offres[i] = ""
+		verrous[i] = false
+		soldes[i] = false
 		if i == gratuite:
 			gratuite = -1
 	elif src.has("depuis"):
@@ -563,22 +587,17 @@ func _suivant(recompense := "", element := "") -> void:
 			offrir(recompense, element)
 			message += " Relique %s offerte dans la boutique du Nid." % Data.NOMS_RARETE[recompense].to_lower()
 		return
-	bourse += OR_PAR_MANCHE
-	relance_offerte = true
-	if not gelee:
-		tirer()
+	nouvelle_boutique()
 	if recompense != "":
 		offrir(recompense, element)
-	if gelee:
-		_completer()
 
-# Boutique gelee : les offres gardees restent, les places vides (achetees) se
-# remplissent.
-func _completer() -> void:
-	var ids := pool()
-	for i in offres.size():
-		if offres[i] == "":
-			offres[i] = tirer_id(rng, ids, manche, _a_legendaire())
+# Apres un combat : l'or de la manche, des offres neuves (les verrouillees
+# restent), la relance remise a son prix de depart.
+func nouvelle_boutique() -> void:
+	bourse += OR_PAR_MANCHE
+	relance_offerte = true
+	relances = 0
+	tirer()
 
 # Met une relique de cette rarete en premiere offre, gratuite. Element du Nid
 # de preference, sinon n'importe lequel.
@@ -588,9 +607,13 @@ func offrir(rarete: String, element := "") -> void:
 	var ids := pool().filter(func(id): return Data.rarete(id) == rarete and (element == "" or Data.RELIQUES[id]["element"] == element))
 	if ids.is_empty():
 		ids = pool().filter(func(id): return Data.rarete(id) == rarete)
-	# boutique gelee : la relique offerte prend une place vide si possible
-	var i := maxi(0, offres.find(""))
+	# la relique offerte prend une place vide, sinon une offre non verrouillee
+	var i := offres.find("")
+	if i < 0:
+		i = maxi(0, verrous.find(false))
 	offres[i] = ids[rng.randi() % ids.size()]
+	verrous[i] = false
+	soldes[i] = false
 	gratuite = i
 
 # --- rencontres (hommages) -------------------------------------------------
@@ -669,8 +692,7 @@ func adversaire(avance := 0) -> Nid:
 			# une manche sur trois est un feu de camp ou une rencontre (environ un
 			# tiers des noeuds de la carte) : ni or ni boutique, comme le joueur
 			if f["joues"] % 3 != 0:
-				fantome.bourse += OR_PAR_MANCHE
-				fantome.tirer()
+				fantome.nouvelle_boutique()
 		f["joueur"].jouer_manche(fantome)
 		f["joues"] += 1
 	return fantome.nid

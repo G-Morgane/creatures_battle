@@ -81,3 +81,10 @@ Après le passage à 10 objets et un principe par Dynastie ([[2026-10-29 Archét
 - Printemps : épines du Cerf 4, poison 0,6 par dose. Automne : esquive du Renard 15 %.
 **Résultat (200 runs, fusion 3 puis 2) :** simple 54 %, aléatoire 18 %. Aube 77 %, Hiver 70 %, Été 72 %, Crépuscule 68 %, Jour 67 %, Nuit 45 %, Automne 42 %, Printemps 18 %.
 **À suivre :** le Printemps (44 runs, le chiffre le plus sûr) est nettement le plus faible ; Liane, Ortie et Arc de saule ferment le classement. Aube, Nuit et Crépuscule ont 11 à 19 runs chacun : bruit possible. Le taux du joueur simple (54 %) n'est pas comparable aux 37 % d'avant : les fantômes jouent maintenant les huit dynasties.
+
+## Difficulté : viser 40 % (2026-10-29)
+
+**Demande :** le jeu était trop facile (joueur simple 54 %) ; viser 40 % pour qu'il faille chercher et optimiser ([[Difficulté et leçons de Backpack Battles et Oaken Tower]]).
+**Décision :** fantômes en avance (duel 1, élite 3, boss 5) et boutique à arbitrages (relance qui s'enchérit, verrou par offre, soldes) ([[Boutique et économie]]).
+**Résultat (200 runs) :** simple **41 %**, aléatoire 17 %. Duels 58 %, élites 42 %, boss 50 %. Par dynastie : Aube 71 %, Été 68 %, Crépuscule 56 %, Hiver 52 %, Jour 31 %, Printemps 28 %, Automne 15 %, Nuit 6 %.
+**À suivre :** l'écart entre dynasties s'est creusé (6 à 71 %) ; Nuit et Automne sont à reprendre. Le joueur automatique simple ne verrouille pas d'offre : un joueur « expert » mesurerait ce que l'optimisation rapporte.

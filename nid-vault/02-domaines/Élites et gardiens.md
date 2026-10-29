@@ -35,7 +35,7 @@ Gardien de l'acte I ([[Univers et histoire#Le Rêveur]]). Tortue géante qui dor
 Un build offensif entame le bouclier et affaiblit le regard ; un build défensif l'encaisse et profite de la résistance. Victoire : « Purifié ! Le Bastion endormi est libéré ».
 Simulation : boss gagnés 41 % (34 % avant), 29 % de runs gagnées.
 
-Actes II et III : encore un boss fantôme (2 ou 4 manches d'avance) en attendant leurs gardiens.
+Actes II et III : encore un boss fantôme (5 manches d'avance) en attendant leurs gardiens.
 
 ## Pistes
 

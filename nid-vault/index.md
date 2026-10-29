@@ -47,6 +47,7 @@ _Catalogue des pages. Mis à jour à chaque nouvelle page._
 ## Synthèses
 
 - [[Écarts entre CONCEPTION et le code]] : les dix écarts relevés et corrigés.
+- [[Difficulté et leçons de Backpack Battles et Oaken Tower]] : viser 40 %, leviers mesurés, arbitrages de boutique et synergies.
 
 ## Archives
 

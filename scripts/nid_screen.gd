@@ -22,7 +22,6 @@ var message_ui: Label
 var offres_ui: Array = []
 var relance: Button
 var agrandir: Button
-var geler: Button
 var bouton_combat: Button
 var sac: Control
 var haut: Control
@@ -97,7 +96,7 @@ func _ready() -> void:
 	add_child(reserve_ui)
 	var aide := Label.new()
 	aide.text = "Glisse pour acheter, R ou molette pour tourner. 3 copies (sac ou réserve) : ★, puis 2 ★ : ★★.
-Ramène un objet sur le comptoir pour le revendre. Sur un autre objet : il prend sa place, l'autre passe en main."
+Ramène un objet sur le comptoir pour le revendre. Clic droit sur une offre : la verrouiller (elle reste aux relances)."
 	aide.add_theme_font_size_override("font_size", 13)
 	aide.add_theme_color_override("font_color", Palette.TEXTE_DOUX)
 	aide_ui = _cadre(aide)
@@ -210,13 +209,6 @@ func _boutique() -> Control:
 		choix_case = not choix_case
 		rafraichir())
 	boutons.add_child(agrandir)
-	geler = Button.new()
-	geler.custom_minimum_size = Vector2(150, 34)
-	geler.tooltip_text = "Garde ces offres pour le prochain passage en boutique. Une relance dégèle."
-	geler.pressed.connect(func():
-		partie.geler()
-		rafraichir())
-	boutons.add_child(geler)
 	col.add_child(boutons)
 	return col
 
@@ -338,8 +330,6 @@ func rafraichir() -> void:
 	else:
 		agrandir.text = "Agrandir (%d or)" % prix_sac
 	agrandir.disabled = prix_sac < 0 or partie.bourse < prix_sac or partie.terminee()
-	geler.text = "Dégeler" if partie.gelee else "Geler"
-	geler.disabled = partie.terminee()
 	barre.text = "Acte %d" % (partie.acte + 1)
 	compteurs["vie"].text = "%d / %d" % [maxi(partie.ferveur, 0), Partie.FERVEUR]
 	compteurs["victoires"].text = "%d" % partie.victoires
@@ -675,6 +665,12 @@ class Offre extends Control:
 		return null if _id() == "" else NidScreen.bulle(_id(), 1, _manque())
 	func _id() -> String:
 		return ecran.partie.offres[index]
+	# Clic droit : verrouiller l'offre (elle reste aux relances et a la boutique suivante).
+	func _gui_input(event: InputEvent) -> void:
+		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT and _id() != "":
+			ecran.partie.verrouiller(index)
+			ecran.rafraichir()
+			accept_event()
 	# Posee sur le comptoir : une ombre sur le bois, l'icone, une pierre a la
 	# couleur de sa rarete, sa forme en petit, et une etiquette nom et prix.
 	func _draw() -> void:
@@ -689,7 +685,7 @@ class Offre extends Control:
 		draw_set_transform(Vector2(size.x / 2, icone.end.y - 6), 0.0, Vector2(1.0, 0.22))
 		draw_circle(Vector2.ZERO, cote * 0.45, Color(0, 0, 0, 0.35))
 		draw_set_transform(Vector2.ZERO)
-		if ecran.partie.gelee:
+		if ecran.partie.verrous[index]:
 			draw_circle(icone.get_center(), cote * 0.55, Color("#9cd3f0", 0.25))
 			draw_arc(icone.get_center(), cote * 0.55, 0, TAU, 40, Color("#9cd3f0"), 2.0, true)
 		var tex := Palette.icone(_id())
@@ -715,13 +711,15 @@ class Offre extends Control:
 				draw_rect(Rect2(o + Vector2(d) * 8, Vector2(7, 7)), Color(0, 0, 0, 0.6), false, 1.0)
 		if manque > 0:
 			_cadenas(icone.get_center())
-		# gelee : le flocon peint, pose sur l'objet, en haut a gauche
-		if ecran.partie.gelee:
+		# verrouillee : le flocon peint, pose sur l'objet, en haut a gauche
+		if ecran.partie.verrous[index]:
 			var flocon := Palette.image("res://images/freeze.png")
 			if flocon != null:
 				draw_texture_rect(flocon, Rect2(icone.position + Vector2(-6, -6), Vector2(40, 38)), false)
 		# etiquette : nom et prix
 		var texte := "Offert" if index == ecran.partie.gratuite else "%d or" % prix
+		if ecran.partie.soldes[index] and index != ecran.partie.gratuite:
+			texte = "Soldé : %d or" % prix
 		if manque > 0:
 			texte = "%d or, il manque %d" % [prix, manque]
 		var etiquette := Rect2(Vector2(2, icone.end.y + 6), Vector2(size.x - 4, 40))

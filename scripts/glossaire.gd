@@ -142,7 +142,7 @@ static func contenu() -> String:
 	t += _terme("Carte", "3 actes à embranchements. On choisit son chemin ; le boss attend au bout de chaque acte.")
 	t += _terme("Nœuds", "Duel (contre un autre Nid au même stade), Élite (plus fort, relique épique offerte), Rencontre (un choix), Feu de camp (ravive la Ferveur), Boss (relique légendaire offerte).")
 	t += _terme("Ferveur", "la volonté du cavalier de poursuivre la quête. Une défaite en coûte selon le nœud et la vie qui restait à l'adversaire. À 0, la run est perdue.")
-	t += _terme("Boutique", "ouverte après chaque nœud, sans obligation d'acheter. Relancer change les offres ; Geler les garde pour le prochain passage. Ramener un objet du sac sur le comptoir le revend pour la moitié de son prix.")
+	t += _terme("Boutique", "ouverte après chaque combat, sans obligation d'acheter. Relancer change les offres : 1 or, puis 1 de plus à chaque relance de la même boutique. Clic droit sur une offre : la verrouiller, elle reste aux relances et à la boutique suivante. Une offre sur dix environ est soldée à moitié prix. Ramener un objet du sac sur le comptoir le revend pour la moitié de son prix.")
 	t += _terme("Rareté", "commun, rare, épique, légendaire. Les raretés hautes apparaissent au fil des nœuds.")
 	t += _section("Le combat")
 	t += _terme("Déroulé", "automatique : attaques selon la vitesse, sorts selon leur recharge. Même Nids, même combat.")

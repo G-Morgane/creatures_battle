@@ -18,7 +18,7 @@ func _ready() -> void:
 	ok = _formes_sac() and ok
 	ok = _armes_sans_limite() and ok
 	ok = _hybrides() and ok
-	ok = _gel() and ok
+	ok = _verrou() and ok
 	ok = _dynasties() and ok
 	ok = _reserve() and ok
 	ok = _elites() and ok
@@ -174,6 +174,7 @@ func _partie() -> bool:
 	ok = _verifier(p.offres.size() == Partie.TAILLE_BOUTIQUE and p.bourse == Partie.OR_PAR_MANCHE, "depart : 9 offres, 10 or") and ok
 	p.offres[0] = "charbon"
 	p.offres[1] = "baton_braise"
+	p.soldes.fill(false)
 	ok = _verifier(p.acheter(0, Vector2i(2, 0)) and p.bourse == 7 and p.offres[0] == "", "acheter : -3 or, offre vendue") and ok
 	ok = _verifier(not p.acheter(0, Vector2i(3, 0)), "offre deja vendue") and ok
 	ok = _verifier(not p.acheter(1, Vector2i(2, 0)), "case occupee") and ok
@@ -282,22 +283,34 @@ func _hybrides() -> bool:
 	ok = _verifier(cm["forme"] == "feu" and cm["hybride"] == "feu_nuit" and cm["nom"] == "Phénix-Chauve-souris", "deux objets de la Nuit : Phenix-Chauve-souris") and ok
 	return ok
 
-func _gel() -> bool:
+# Boutique : verrou par offre, relance qui s'encherit, soldes.
+func _verrou() -> bool:
 	var p := Partie.new(21)
+	p.verrouiller(0)
+	var gardee: String = p.offres[0]
+	var ok := _verifier(p.relancer() and p.offres[0] == gardee and p.verrous[0], "offre verrouillee : reste a la relance")
+	ok = _verifier(p.prix_relance() == Partie.PRIX_RELANCE + 1, "la relance s'encherit dans la boutique") and ok
 	p.entrer(p.accessibles()[0])
-	var avant := p.offres.duplicate()
-	p.offres[1] = ""
-	avant[1] = ""
-	p.geler()
-	p.conclure_combat(0)
-	var ok := _verifier(p.offres[0] == avant[0] and p.offres[2] == avant[2] and p.offres[1] != "", "boutique gelee : offres gardees, la place achetee se remplit")
-	ok = _verifier(p.relancer() and not p.gelee, "une relance degele") and ok
-	p.geler()
 	p.noeud()["type"] = "elite"
-	p.offres[2] = ""
 	p.conclure_combat(0)
-	return _verifier(p.gratuite == 2 and not "" in p.offres, "gelee : la relique offerte prend la place vide, le reste se remplit") and ok
-
+	ok = _verifier(p.offres[0] == gardee and p.prix_relance() == Partie.PRIX_RELANCE, "verrou : reste a la boutique suivante ; relance remise a 1") and ok
+	ok = _verifier(p.gratuite > 0 and Data.rarete(p.offres[p.gratuite]) == "epique", "la relique offerte ne prend pas une offre verrouillee") and ok
+	p.verrouiller(0)
+	ok = _verifier(not p.verrous[0], "deverrouiller") and ok
+	# soldes : moitie prix, arrondi au-dessus
+	var i := (p.gratuite + 1) % Partie.TAILLE_BOUTIQUE
+	p.offres[i] = "baton_braise"
+	p.soldes.fill(false)
+	p.soldes[i] = true
+	ok = _verifier(p.prix_offre(i) == ceili(Partie.prix("baton_braise") / 2.0), "solde : moitie prix") and ok
+	var soldes := 0
+	for k in 200:
+		p.bourse = 100
+		p.relances = 0
+		p.relancer()
+		soldes += p.soldes.count(true)
+	var part := float(soldes) / (200 * Partie.TAILLE_BOUTIQUE)
+	return _verifier(part > 0.05 and part < 0.15, "environ 10 %% d'offres soldees (%.2f)" % part) and ok
 func _dynasties() -> bool:
 	var p := Partie.new(5, ["feu", "nuit", "aube"])
 	var ok := true
