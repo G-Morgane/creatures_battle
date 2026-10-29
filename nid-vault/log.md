@@ -21,3 +21,6 @@ _Ajout seulement. Une ligne par ingestion, question, discussion ou passe de nett
 | 2026-10-29 | maj | Combats allongés : PV de base 600, +40 par niveau, élite x1,75 et boss x2 des deux côtés ; vitesse x3 retirée → Combat, Run et carte, CONCEPTION.md |
 | 2026-10-29 | maj | Feu de camp et rencontre : ni or ni boutique, on reste sur la carte ; fantômes sans or une manche sur trois → Run et carte, Boutique et économie, CONCEPTION.md |
 | 2026-10-29 | maj | Simulation 200 runs après le retrait de l'or hors combat : 37 % (36 % avant) → Équilibrage |
+| 2026-10-29 | discussion | Archétypes resserrés (proposition à valider) : 10 objets, un principe et une famille par Dynastie → discussion seule, pages de domaine après validation |
+| 2026-10-29 | discussion | Archétypes resserrés v2 : Printemps épines+poison, Crépuscule arcane et illusions, Automne esquive et crit, Jour Éventail d'armes → discussion |
+| 2026-10-29 | discussion | Archétypes resserrés codés (80 objets, un principe par Dynastie, Automne et Jour jouables), réglage par simulation, fusion 3 puis 2 → Dynasties, 8 pages de dynastie, Reliques, Cavaliers et armes, Boutique et économie, Équilibrage, Éléments abandonnés, CONCEPTION.md |

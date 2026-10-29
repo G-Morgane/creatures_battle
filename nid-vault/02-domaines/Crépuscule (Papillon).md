@@ -1,34 +1,21 @@
 # Crépuscule (Papillon)
 
-**Résumé :** Dynastie du Transfert : le Papillon vole les bonus adverses et renvoie ses propres malus, et tire de l'arcane quand il n'y a rien à déplacer.
-**Tags :** #dynastie, #crepuscule, #transfert
-**Mis à jour :** 2026-10-28
-**Liens :** [[Dynasties]], [[Combat]], [[Cavaliers et armes]], [[Hiver (Ours)]], [[Été (Phénix)]], [[Aube (Lion)]], [[Élites et gardiens]]
+**Résumé :** Lancer des sorts, semer des illusions : chaque sort de la monture crée une Illusion, qui encaisse un coup puis éclate en arcane.
+**Tags :** #dynastie, #crepuscule, #arcane, #illusions
+**Mis à jour :** 2026-10-29
+**Liens :** [[Dynasties]], [[Combat]], [[Cavaliers et armes]], [[Automne et Jour]], [[Aube (Lion)]], [[2026-10-29 Archétypes resserrés]]
 
 ---
 
-Code : `crepuscule`. Familles d'armes : **Tir et Hast**. Fait.
+Code : `crepuscule`. Famille d'armes : **Bâton** (partagée avec l'Été). Objets : CONCEPTION.md, section 5.
 
 ## Règles
 
-- **Malus renvoyés** : poison, brûlure, givre, malédictions. « Le malus le plus lourd » = celui dont la cible porte le plus.
-- **Bonus volés** : bouclier, Braise, jauge d'Éclat, bonus d'épines.
-- **Transfert** : déplacer un malus vers l'adversaire ou lui prendre un bonus. C'est le déclencheur commun du set (« à chaque Transfert »), comme le bris de bouclier pour l'[[Hiver (Ours)|Ours]].
-- **Passif** : un Transfert sans rien à déplacer lance un **projectile d'arcane** (comète violet et orangé).
-- Le projectile compte comme Transfert pour Phalène et Arc des deux lunes, **pas** pour Mue, Brume du soir, Aile de lune.
-  **Pourquoi :** voler et renvoyer doivent rester plus rentables que le projectile.
+- **Illusion** : 2 au plus (3 avec la Mue). Elle encaisse une attaque ou un coup d'arme à la place du Papillon, puis éclate en projectile d'arcane de 5. Le Hast la perce.
+- **Passif** : chaque sort **de la monture** crée une Illusion ; les armes non (sauf le Bâton de brume).
+- **Chrysalide** (légendaire) : chaque sort se répète une fois, à moitié de ses dégâts.
 
-**Pourquoi le projectile :** le Crépuscule n'a de sens que face à un build chargé d'effets ; contre des attaques brutes, il reste correct grâce à l'arcane.
+**Décision (2026-10-29) :** l'identité devient arcane, sorts et illusions ; le Transfert (renvoyer les malus, voler les bonus) et l'Inversion sont retirés.
+**Pourquoi :** demande de l'utilisatrice. Des Illusions plutôt qu'une esquive : l'esquive est au hasard et appartient à l'Automne, l'Illusion est une charge sûre.
 
-## Décisions de chiffres
-
-- Chaque source de Transfert a une **puissance** : quantité volée, et dégâts du projectile.
-- **Cocon** : 30 de bouclier au départ, **+3 à chaque Transfert**.
-  **Pourquoi :** la version « plus gros pour chaque malus adverse » ne servait à rien en début de combat, quand personne n'a de malus.
-- **Inversion** (légendaire) : à 12 s, échange les pourcentages de vie. Volontairement folle, à tester avec prudence.
-
-Chiffres : Battement d'ailes 10 + 0,5 par point toutes les 5 s, Poudre d'écailles 4 de bouclier volé par attaque, Mue x1,5, Brume 12 PV par vol, Aile de lune +2 Braise pendant 3 s.
-
-## Pistes d'apparence
-
-Poussière d'écailles irisées, violets et orangés du soleil couchant, cocons, antennes, ailes de phalène, lune basse.
+**Réglage :** à la première simulation (3 Illusions, arcane de 8, passif aussi sur les armes), le Crépuscule gagnait 89 % de ses runs. Avec 2 Illusions, un arcane de 5 et les armes exclues : 74 %.

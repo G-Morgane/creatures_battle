@@ -1,18 +1,27 @@
 # Automne et Jour
 
-**Résumé :** Les deux Dynasties qui restent à concevoir : Automne (Renard) et Jour (Paon), montures prêtes, sets à faire.
-**Tags :** #dynastie, #a-concevoir
-**Mis à jour :** 2026-10-28
-**Liens :** [[Dynasties]], [[Cavaliers et armes]], [[Périmètre du prototype]]
+**Résumé :** Les deux Dynasties conçues le 2026-10-29 : l'Automne (Renard) esquive puis frappe en critique, le Jour (Paon) enchaîne les armes du cavalier.
+**Tags :** #dynastie, #automne, #jour, #esquive, #crit, #eventail
+**Mis à jour :** 2026-10-29
+**Liens :** [[Dynasties]], [[Cavaliers et armes]], [[Crépuscule (Papillon)]], [[Aube (Lion)]], [[Équilibrage]], [[2026-10-29 Archétypes resserrés]]
 
 ---
 
-| Dynastie | Monture | Code | Piste |
-|---|---|---|---|
-| Automne | Renard | `automne` | Aucune pour l'instant |
-| Jour | Paon | `jour` | *La Parade* : des bonus qui montent par paliers (texte de `data.gd`) |
+Jouables depuis le 2026-10-29. Objets : CONCEPTION.md, section 5. **Pas encore d'icônes** : leurs objets s'affichent sans image.
 
-- Visibles au choix des dynasties, pas encore jouables.
-- Format à respecter : 15 objets (10 monture, 5 armes).
-- **Contrainte des familles d'armes** : 8 Dynasties à 2 familles = 16 places pour 6 familles. Il restait 4 places pour ces deux Dynasties, donc quatre familles passeraient à 3 Dynasties. À recompter depuis la refonte des armes de la Nuit ([[Cavaliers et armes#Familles d'armes]]).
-- Garder chacune distincte des six existantes (voir les paires dans [[Dynasties]]).
+## Automne (Renard) : esquiver, puis frapper juste
+
+Code : `automne`. Famille : **Lame**, la seule Dynastie à coups critiques.
+- **Passif** : 15 % d'esquive ; après une esquive, le coup suivant est un critique garanti.
+- Esquive : une attaque ou un coup d'arme esquivé ne fait rien, 60 % au plus. Le Hast la perce.
+- **Queue du Vieux Renard** (légendaire) : après un crit, la prochaine attaque reçue est esquivée ; esquive et crit se nourrissent.
+- **Décision :** esquive et crit, à la demande de l'utilisatrice. La Récolte (montée en puissance au fil du combat) ne l'avait pas convaincue.
+
+## Jour (Paon) : faire la roue
+
+Code : `jour`. Famille : **Tir** (partagée avec le Printemps).
+- **Passif** : chaque arme lancée donne 1 Éventail (10 au plus) ; +8 % de dégâts et de vitesse de recharge des armes par charge.
+- **Œil du Zénith** (légendaire) : à 10 Éventail, chaque arme se lance deux fois.
+- **Décision :** la Dynastie des builds d'armes, une piste qu'aucune autre ne prend.
+- **Alternatives écartées :** la Parade (bonus d'entrée qui se dépense), refusée par l'utilisatrice ; « Rester intact » (boucliers), trop proche de l'Aube.
+- **Risque :** les armes empilées étaient déjà fortes ([[Équilibrage]]).

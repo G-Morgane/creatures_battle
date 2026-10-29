@@ -1,34 +1,31 @@
 # Printemps (Cerf)
 
-**Résumé :** Dynastie des épines et du poison : le Cerf blesse qui le frappe et empile un poison qui traverse le bouclier.
+**Résumé :** Qui me touche s'empoisonne : les épines du Cerf ripostent, et chaque riposte pose du poison.
 **Tags :** #dynastie, #nature, #poison, #epines
-**Mis à jour :** 2026-10-28
-**Liens :** [[Dynasties]], [[Combat]], [[Cavaliers et armes]], [[Hiver (Ours)]], [[Aube (Lion)]], [[Été (Phénix)]], [[Élites et gardiens]]
+**Mis à jour :** 2026-10-29
+**Liens :** [[Dynasties]], [[Combat]], [[Cavaliers et armes]], [[Aube (Lion)]], [[Été (Phénix)]], [[Automne et Jour]], [[2026-10-29 Archétypes resserrés]]
 
 ---
 
-Code : `nature`. Familles d'armes : **Tir et Lame**. Fait (images découpées par `outils/decouper_icones.gd`).
+Code : `nature`. Famille d'armes : **Tir**. Objets : CONCEPTION.md, section 5.
 
-## Deux axes reliés
+## Principe
 
-- **Épines** : blessent qui frappe le Cerf. Contre les builds à beaucoup de petits coups.
-- **Poison** : s'accumule sur la cible.
-- Les ponts : Liane barbelée (les ripostes empoisonnent), Graine du Jardin interdit (légendaire, chaque axe nourrit l'autre), Serpe de ronces (fait des épines une attaque).
+- **Une seule boucle** : on frappe le Cerf, ses épines ripostent (4), et chaque riposte pose 1 dose de poison.
+- **Poison** : s'empile (100 doses au plus), 0,6 dégât par dose et par seconde, ne s'efface pas, traverse le bouclier.
+- **Décision (2026-10-29) :** épines et poison réunis en une boucle, au lieu de deux axes parallèles.
+  **Pourquoi :** l'utilisatrice voulait garder les deux ; la boucle en fait un seul principe.
+- Retirés : Cœur de roncier (épines x2), Gousse, Amanite, Mousse (grappe), Terreau, Dague d'épine, Serpe de ronces.
 
-## Règles
+## Objets clés
 
-- Le poison **s'empile**, dure longtemps, **traverse le bouclier**. 100 doses au plus.
-- Les épines se déclenchent à chaque coup reçu (attaque ou sort), pas sur la brûlure, le poison ni la fatigue.
-- Cœur de roncier et Graine : épines x2 au plus.
-- **Fleur de belladone** (épique) : un adversaire empoisonné ne peut plus se soigner. Contre l'[[Aube (Lion)]] et le Phénix qui se soigne.
+- **Fleur de belladone** (épique) : un empoisonné ne peut plus se soigner. Contre l'[[Aube (Lion)]].
+- **Graine du Jardin interdit** (légendaire) : à chaque coup reçu, le poison de l'attaquant agit aussitôt pendant une seconde.
+- **Arc du Jardin interdit** : riposte tous les 2 coups reçus.
 
-## Chiffres actuels (modifiés, pas encore commités)
+## Rapports
 
-Épines du Cerf **3** par coup reçu (avant : 2), Épine de ronce +2 et **+40 PV**, poison **0,5** dégât par dose et par seconde (avant : 0,2). Baie 0,5 dose par attaque, Nuage de spores 2 doses + 0,2 par point de Nature toutes les 6 s, Ortie et Amanite +50 % à leurs voisins, Gousse : salve de 15 tous les 5 coups reçus.
+- Punit les builds à beaucoup de petits coups, dont les armes du [[Automne et Jour|Jour]].
+- Brûlure / poison : la brûlure est courte et consumée, le poison s'empile et dure.
 
-## Rapports avec les autres
-
-- L'[[Hiver (Ours)]] souffre contre lui : le poison passe le bouclier sans le briser. C'est voulu.
-- Ne pas confondre avec l'[[Aube (Lion)]] : l'Aube soigne, le Printemps punit.
-
-**Ouvert :** les plafonds (x2, 100 doses) sont des valeurs de départ, à régler par simulation.
+**Ouvert :** c'est la Dynastie la plus faible à la simulation du 2026-10-29 (20 %). Liane, Ortie et Arc de saule ferment le classement.

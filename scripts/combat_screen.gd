@@ -195,41 +195,18 @@ func _jouer(e: Dictionary) -> void:
 			effets.append({"type": "projectile", "de": cible.position + cible.source(false),
 				"a": moi.position + moi.size / 2 + Vector2(0, 20), "t0": lecture,
 				"duree": VOL_PROJECTILE, "couleur": Color("#7b5cff"), "coeur": cp["clair"], "taille": 10.0})
-		"renvoi":
-			var noms := {"poison": "poison", "brulure": "brûlure", "givre": "givre", "maledictions": "malédictions"}
-			_texte(moi, 2, "Renvoyé : " + noms[e["malus"]], Palette.ELEMENTS["crepuscule"]["clair"])
-		"vol":
-			var noms := {"bouclier": "bouclier", "braise": "Braise", "eclat": "Éclat", "epines": "épines"}
-			_texte(moi, 2, "Volé : " + noms[e["bonus"]], Palette.ELEMENTS["crepuscule"]["clair"])
-		"inversion":
-			_texte(moi, 1, "Inversion !", Palette.ELEMENTS["crepuscule"]["vif"])
-			_texte(cible, 1, "Inversion !", Palette.ELEMENTS["crepuscule"]["vif"])
+		"illusion":
+			_texte(moi, 2, "Illusion %d" % e["n"], Palette.ELEMENTS["crepuscule"]["clair"])
 		"malediction":
-			var nv: Dictionary = Palette.ELEMENTS["nuit"]
-			_texte(moi, 2, Data.NOMS_MALEDICTION[e["nom"]] + (" x%d" % e["n"] if e["n"] > 1 else ""), nv["clair"])
+			_texte(moi, 2, Data.NOMS_MALEDICTION[e["nom"]], Palette.ELEMENTS["nuit"]["clair"])
 		"crit":
 			_texte(moi, 2, "Critique !", Color("#f2c94c"))
+		"esquive":
+			_texte(moi, 2, "Esquive", Palette.ELEMENTS["automne"]["clair"])
+		"bourrasque":
+			_texte(moi, 1, "Bourrasque", Palette.ELEMENTS["automne"]["clair"])
 		"gel":
 			_texte(moi, 2, "Gel !", Palette.ELEMENTS["glace"]["clair"])
-		"brise_gel":
-			_texte(moi, 2, "Gel brisé !", Palette.ELEMENTS["glace"]["vif"])
-		"bris":
-			_texte(moi, 2, "Bouclier brisé", Palette.ELEMENTS["glace"]["clair"])
-		"nova":
-			var g: Dictionary = Palette.ELEMENTS["glace"]
-			for k in 8:
-				var a := TAU * k / 8.0
-				effets.append({"type": "projectile", "de": moi.position + moi.size / 2,
-					"a": moi.position + moi.size / 2 + Vector2(cos(a), sin(a)) * 160, "t0": lecture,
-					"duree": VOL_PROJECTILE, "couleur": g["vif"], "coeur": g["clair"], "taille": 8.0})
-			_texte(moi, 1, "Nova", g["clair"])
-		"salve":
-			var n: Dictionary = Palette.ELEMENTS["nature"]
-			for k in 5:
-				effets.append({"type": "projectile", "de": moi.position + moi.size / 2 + Vector2(0, 20),
-					"a": cible.position + cible.size / 2 + Vector2(0, 20 - 20 + k * 10), "t0": lecture + k * ECART_COUPS * 0.5,
-					"duree": VOL_PROJECTILE, "couleur": n["vif"], "coeur": n["clair"], "taille": 7.0})
-			_texte(moi, 2, "Salve d'épines", n["clair"])
 		"charge":
 			_texte(moi, 1, "Charge ! %d" % roundi(e["valeur"]), Palette.ELEMENTS["nature"]["clair"])
 		"dissipe":
@@ -309,8 +286,10 @@ func _dessiner() -> void:
 		var etats := []
 		if img[2 + i] > 0.0:
 			etats.append(["Brûlure %d" % roundi(img[2 + i]), Palette.ELEMENTS["feu"]["vif"]])
-		if img[12 + i] > 0.0:
-			etats.append(["Braise %d" % roundi(img[12 + i]), Palette.ELEMENTS["feu"]["clair"]])
+		if img[12 + i] > 0:
+			etats.append(["Illusions %d" % img[12 + i], Palette.ELEMENTS["crepuscule"]["clair"]])
+		if img[22 + i] > 0.0:
+			etats.append(["Éventail %d" % roundi(img[22 + i]), Palette.ELEMENTS["jour"]["clair"]])
 		if img[6 + i] > 0.0:
 			etats.append(["Poison %d" % roundi(img[6 + i]), Palette.POISON])
 		if img[10 + i]:
@@ -482,7 +461,7 @@ class MiniNid extends Control:
 class Recap extends Control:
 	const MECANIQUES := {"~attaque": "Attaques", "~poison": "Poison", "~brulure": "Brûlure",
 		"~combustion": "Combustion", "~epines": "Épines", "~eclat": "Éclat",
-		"~regen": "Régénération", "~bris": "Bouclier brisé", "~racines": "Racines",
+		"~regen": "Régénération", "~illusion": "Illusions", "~renaissance": "Renaissance", "~racines": "Racines",
 		"~charge": "Charge", "~trait": "Trait de l'Ouest", "~rempart": "Rempart", "~regard": "Le Regard"}
 	const LIGNES := 10
 	const LARGEUR := 470.0

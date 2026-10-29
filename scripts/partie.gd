@@ -172,10 +172,10 @@ static func tirer_id(r: RandomNumberGenerator, ids: Array, m: int, sans_legendai
 		k -= 1
 	return ids[r.randi() % ids.size()]
 
-# La revente rend la moitie de ce que la relique a coute (3 copies par niveau),
+# La revente rend la moitie de ce que la relique a coute (Data.copies_niveau),
 # jamais moins d'une piece.
 static func prix_revente(id: String, niv := 1) -> int:
-	return maxi(1, prix(id) * int(pow(3, niv - 1)) / 2)
+	return maxi(1, prix(id) * Data.copies_niveau(niv) / 2)
 
 # L'offre offerte survit aux relances.
 func tirer() -> void:
@@ -239,21 +239,71 @@ func geler() -> void:
 	gelee = not gelee
 
 # On achete en posant : l'offre va dans une case vide du Nid, ou sur une copie
-# d'elle-meme si cela complete un trio (fusion).
+# d'elle-meme si cela complete un trio (fusion, reserve comprise).
 func peut_acheter(i: int, c: Vector2i, rot := 0) -> bool:
 	var id: String = offres[i]
-	return id != "" and bourse >= prix_offre(i) and nid.peut_ajouter(c, id, rot)
+	if id == "" or bourse < prix_offre(i):
+		return false
+	var a = nid.ancre(c)
+	if a == null:
+		return nid.peut_ajouter(c, id, rot)
+	return nid.cases[a] == id and nid.niveau(a) == 1 and nid.peut_fusionner(id, 1) \
+		and not _copies(id, 1, {"depuis": a}).is_empty()
 
 func acheter(i: int, c: Vector2i, rot := 0) -> bool:
 	if not peut_acheter(i, c, rot):
 		return false
 	var id: String = offres[i]
-	nid.ajouter(c, id, rot)
-	bourse -= prix_offre(i)
-	offres[i] = ""
-	if i == gratuite:
-		gratuite = -1
+	var a = nid.ancre(c)
+	_prendre({"offre": i})
+	if a == null:
+		nid.placer(c, id, 1, rot)
+		_fusionner({"depuis": c})
+	else:
+		# l'offre posee sur une copie compte comme la deuxieme du trio
+		_fusionner({"depuis": a}, 1)
 	return true
+
+# --- fusion : le sac et la reserve comptent ----------------------------------
+# Derniere fusion, pour l'animer : {lieu, niv, absorbees : [{lieu, id}]}, ou
+# {} une fois montree. Un lieu est une source : {"depuis": ancre} ou {"reserve": k}.
+var fusion := {}
+
+# Les autres copies (id, niv) que lieu, en reserve d'abord (sans effet), puis dans le sac.
+func _copies(id: String, niv: int, lieu: Dictionary) -> Array:
+	var l := []
+	for k in reserve.size():
+		var r: Dictionary = reserve[k]
+		if not r.is_empty() and r["id"] == id and r["niv"] == niv and lieu.get("reserve", -1) != k:
+			l.append({"reserve": k})
+	for a in nid.copies(id, niv):
+		if lieu.get("depuis") != a:
+			l.append({"depuis": a})
+	return l
+
+# Fusionne en cascade la relique de lieu avec les autres copies de son niveau.
+# offertes : copies deja absorbees (une offre lachee sur la relique).
+func _fusionner(lieu: Dictionary, offertes := 0) -> void:
+	var absorbees := []
+	while true:
+		var r := relique_de(lieu)
+		if r.is_empty() or not nid.peut_fusionner(r["id"], r["niv"]):
+			break
+		var autres := _copies(r["id"], r["niv"], lieu)
+		var besoin: int = Data.FUSION_COPIES[r["niv"]] - 1 - offertes
+		if autres.size() < besoin:
+			break
+		offertes = 0
+		for s in autres.slice(0, besoin):
+			var cases := nid.cases_de(s["depuis"]) if s.has("depuis") else []
+			absorbees.append({"lieu": s, "id": r["id"], "cases": cases})
+			_prendre(s)
+		if lieu.has("depuis"):
+			nid.niveaux[lieu["depuis"]] = r["niv"] + 1
+		else:
+			reserve[lieu["reserve"]] = {"id": r["id"], "niv": r["niv"] + 1}
+	if not absorbees.is_empty():
+		fusion = {"lieu": lieu, "niv": relique_de(lieu)["niv"], "absorbees": absorbees}
 
 # Prix de la prochaine case du sac (0 si offerte), -1 quand le damier est entier.
 func prix_agrandir() -> int:
@@ -316,7 +366,7 @@ func poser(src: Dictionary, cellule: Vector2i, b: Vector2i, rot: int, essai := f
 		return {"ok": false, "cases": []}
 	var copie = nid.ancre(cellule)
 	if src.has("offre") and copie != null and nid.cases[copie] == r["id"]:
-		var ok := nid.peut_ajouter(cellule, r["id"], rot)
+		var ok := peut_acheter(src["offre"], cellule, rot)
 		if ok and not essai:
 			acheter(src["offre"], cellule, rot)
 		return {"ok": ok, "cases": nid.cases_de(copie)}
@@ -341,7 +391,7 @@ func poser(src: Dictionary, cellule: Vector2i, b: Vector2i, rot: int, essai := f
 		main = {"id": nid.cases[o], "niv": nid.niveau(o), "rot": nid.rotation(o)}
 		nid.retirer(o)
 	nid.placer(b, r["id"], r["niv"], rot)
-	nid.fusionner(b)
+	_fusionner({"depuis": b})
 	return {"ok": true, "cases": cases}
 
 # Ranger la relique de src dans l'emplacement k de la reserve. S'il est pris,
@@ -360,6 +410,7 @@ func ranger(src: Dictionary, k: int, essai := false) -> bool:
 	reserve[k] = copie
 	if not occupant.is_empty():
 		main = occupant
+	_fusionner({"reserve": k})
 	return true
 
 # Revendre depuis le sac, la reserve ou la main (pas une offre).
@@ -471,7 +522,6 @@ func conclure_combat(vainqueur: int, reste := 0.0) -> void:
 	var recompense := ""
 	if vainqueur == 0:
 		victoires += 1
-		nid.saisons += 1 if nid.cases.values().has("terreau") else 0
 		recompense = RECOMPENSE.get(type, "")
 		message = "Victoire." if recompense == "" else "Victoire : relique %s offerte." % Data.NOMS_RARETE[recompense].to_lower()
 	elif vainqueur == 1:
@@ -615,8 +665,6 @@ func adversaire(avance := 0) -> Nid:
 	var fantome: Partie = f["partie"]
 	while f["joues"] < total:
 		if f["joues"] > 0:
-			# le fantome ne se bat pas : chaque manche compte comme une victoire pour le Terreau
-			fantome.nid.saisons += 1 if fantome.nid.cases.values().has("terreau") else 0
 			fantome._avancer()
 			# une manche sur trois est un feu de camp ou une rencontre (environ un
 			# tiers des noeuds de la carte) : ni or ni boutique, comme le joueur

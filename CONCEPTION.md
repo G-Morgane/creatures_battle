@@ -294,14 +294,14 @@ parties et les moyennes bougent de ±0,5 d'une mesure à l'autre.)
 
 ### Fusion
 
-**3 copies d'une relique au même niveau fusionnent** en une seule relique du niveau suivant
-(★ niveau 2, ★★ niveau 3), à la place de la dernière posée.
-- Stats multipliées : x2,5 au niveau 2, x6 au niveau 3. Un peu moins que trois copies
-  (x3), mais deux cases libérées.
-- L'affinité des trois copies est conservée : fusionner ne change pas la forme de la monture.
+**3 copies d'une relique fusionnent en ★ (niveau 2), puis 2 ★ fusionnent en ★★ (niveau 3)** :
+6 copies pour le niveau maximal (9 avant le 2026-10-29), à la place de la dernière posée.
+- Stats multipliées : x2,5 au niveau 2, x5 au niveau 3. Un peu moins que les copies réunies
+  (3 et 6), mais des cases libérées.
+- L'affinité des copies est conservée : fusionner ne change pas la forme de la monture.
 - Nid plein : on peut poser une offre **sur une copie** si elle complète un trio.
 - Tout fusionne, armes et légendaires compris (copies illimitées tant que le sac a de la place).
-- Revente : la moitié de ce qu'elle a coûté (3 copies par niveau).
+- Revente : la moitié de ce qu'elle a coûté (1, 3 ou 6 copies).
 
 C'est la progression de fin de partie : le Nid de 16 cases se remplit vers la manche 6, et
 avant la fusion l'or ne servait plus à rien ensuite. La répartition des victoires était en
@@ -322,24 +322,23 @@ Quatre saisons et quatre moments du jour.
 
 | Dynastie | Monture | Élément (code) | Identité | Ce qui la rend unique |
 |---|---|---|---|---|
-| Printemps | Cerf | nature | Épines, poison | Punit qui le frappe (épines), poison qui s'accumule |
-| Été | Phénix | feu | Brûlure, combustion, hâte | Dégâts sur la durée, attaque de plus en plus vite, renaît une fois |
-| Automne | Renard | automne | À concevoir | Monture prête, set à concevoir |
-| Hiver | Ours | glace | Givre, gel, bouclier qui se brise | Le gel **bloque les recharges** adverses |
-| Aube | Lion | aube | Soin, Éclat | Le soin se stocke en Éclat, qui frappe |
-| Jour | Paon | jour | À concevoir | Monture prête, set à concevoir |
-| Crépuscule | Papillon | crepuscule | Transfert | **Vole les bonus** adverses et **renvoie ses malus** ; projectile d'arcane sinon |
-| Nuit | Chauve-souris | nuit | Vol de vie, malédictions | Se soigne en frappant, affaiblit l'adversaire |
+| Printemps | Cerf | nature | Qui me touche s'empoisonne | Les épines ripostent et empoisonnent |
+| Été | Phénix | feu | Allumer puis consumer | Brûlures empilées puis consumées ; renaît une fois |
+| Automne | Renard | automne | Esquiver, puis frapper juste | Chaque esquive prépare un critique |
+| Hiver | Ours | glace | Ralentir jusqu'au gel | Le gel **bloque les recharges** adverses et ouvre une fenêtre d'attaque |
+| Aube | Lion | aube | Soigner pour frapper | Le soin se stocke en Éclat, qui frappe |
+| Jour | Paon | jour | Faire la roue | Chaque arme lancée renforce les suivantes (Éventail) |
+| Crépuscule | Papillon | crepuscule | Sorts et illusions | Les sorts créent des Illusions qui encaissent puis éclatent en arcane |
+| Nuit | Chauve-souris | nuit | Affaiblir avant de frapper | Plus forte par malédiction différente sur la cible |
 
 L'Ours a remplacé le Loup (même set). La Raie et la Lumière sont abandonnées. **Vent (Cheval) et Terre (Tortue) sont retirés**, objets compris
 (les mécaniques de combat qui leur servaient restent dans le code, sans objet pour les déclencher). À l'écran, les affinités portent le nom de la Dynastie (« Été 7 »).
 
 Paires à garder distinctes :
-- **Hiver / Crépuscule** : l'Hiver ralentit la machine adverse, le Crépuscule retourne ses effets contre elle.
+- **Automne / Crépuscule** : l'esquive est au hasard, l'Illusion est une charge sûre que produisent les sorts.
 - **Aube / Printemps** : l'Aube soigne, le Printemps punit.
-
-Le Crépuscule n'a de sens que face à un build qui a des bonus ou des malus à voler :
-contre un build d'attaques brutes, il reste correct grâce au projectile d'arcane.
+- **Brûlure / poison** : la brûlure est courte et consumée, le poison s'empile et dure.
+- **Jour / Aube** : le Jour enchaîne les armes, l'Aube convertit le soin en dégâts.
 
 - **Hybride** : dès que le sac contient au moins 2 objets d'une autre dynastie que la principale,
   la monture est l'hybride des deux (28 images, `images/hybrides`), nommé dynastie dominante d'abord (« Phénix-Chauve-souris »).
@@ -380,372 +379,205 @@ pas celle de la monture.
 | **Catalyseur** | Modifie ses voisins orthogonaux |
 | **Arme** | Tenue par le cavalier, lance son propre sort (autant que le sac en tient) |
 
-### Format cible : 15 objets par archétype
+### Format : 10 objets par Dynastie, un seul principe
 
-Chaque élément aura **15 objets** :
-- **10 pour la monture** : 4 communs, 3 rares, 2 épiques, 1 légendaire.
-- **5 armes pour le cavalier** : 2 communes, 1 rare, 1 épique, 1 légendaire.
+Chaque Dynastie a **un grand principe** (un verbe, une ressource, un passif) et **10 objets** :
+- **7 pour la monture** : 3 communs (essence offensive, essence défensive, sort qui produit la
+  ressource), 2 rares (un catalyseur, une essence qui exploite la ressource), 1 épique qui renforce
+  le principe, 1 légendaire qui en change une règle.
+- **3 armes** d'**une seule famille** : commune, rare, légendaire.
 
-La rareté est décrite dans la section Boutique.
+Chaque objet produit la ressource ou l'exploite. Décidé le 2026-10-29 (`nid-vault/discussions/2026-10-29 Archétypes resserrés.md`) :
+les 16 à 18 objets par Dynastie et leurs deux à quatre mécaniques rendaient les archétypes illisibles.
 
-### Printemps (Cerf) : épines et poison
+| Dynastie | Principe | Ressource | Famille | Passif |
+|---|---|---|---|---|
+| Été (Phénix) | Allumer puis consumer | Brûlure → combustion | Bâton | Renaît une fois à 50 %, et consume toutes les brûlures adverses |
+| Hiver (Ours) | Ralentir jusqu'au gel | Givre → gel | Hache | Ses attaques posent du givre, +100 % contre une cible gelée |
+| Printemps (Cerf) | Qui me touche s'empoisonne | Épines → poison | Tir | Épines 4 ; chaque riposte pose 1 dose de poison |
+| Nuit (Chauve-souris) | Affaiblir avant de frapper | 3 malédictions | Faux | +30 % de dégâts par malédiction différente |
+| Aube (Lion) | Soigner pour frapper | Éclat | Hast | Régénère 0,5 PV/s, ses soins chargent l'Éclat |
+| Crépuscule (Papillon) | Lancer des sorts, semer des illusions | Illusions (2 au plus) | Bâton | Chaque sort de la monture crée une Illusion |
+| Automne (Renard) | Esquiver, puis frapper juste | Esquive → crit | Lame | 15 % d'esquive ; après une esquive, crit garanti |
+| Jour (Paon) | Faire la roue : enchaîner les armes | Éventail (10 au plus) | Tir | Chaque arme lancée donne 1 Éventail ; +8 % de dégâts et de recharge des armes par charge |
 
-**Fait** (images de `images/`, découpées par `outils/decouper_icones.gd`). Chiffres de départ :
-épines du Cerf 3 par coup reçu, Épine de ronce +2 et +40 PV, Baie 0,5 dose par attaque, Nuage de spores
-2 doses + 0,2 par point de Nature toutes les 6 s, poison 0,5 dégât par dose et par seconde,
-Ortie et Amanite +50 % à leurs voisins, Gousse : salve de 15 tous les 5 coups reçus.
+Les chiffres des tableaux sont ceux du code (`scripts/data.gd`) au 2026-10-29, après une première passe de réglage.
 
-Deux axes avec des ponts entre eux. **Les épines** blessent qui frappe le Cerf (contre les builds
-à beaucoup de petits coups : Rafale, Nuée). **Le poison** s'accumule sur la cible.
+### Été (Phénix) : allumer puis consumer
 
-Règles du poison et des épines :
-- **Le poison s'empile** : chaque application ajoute des doses, chaque dose fait des dégâts par
-  seconde, et les doses durent longtemps. **Il passe à travers le bouclier** (contre la Tortue).
-  À distinguer de la brûlure du Feu : courte, intense, elle se renouvelle au lieu de s'empiler.
-- **Plafond de 100 doses** de poison sur une cible.
-- **Les épines** se déclenchent à chaque coup reçu (attaque ou sort), pas sur la brûlure,
-  le poison ni la fatigue.
+**Brûlure** : s'empile (50 au plus), 2 dégâts par charge et par seconde, chaque charge s'éteint au bout de 5 s.
+**Combustion** : consume des brûlures pour 4 dégâts par charge (x1,5 si totale). Brûlure et combustion passent le bouclier.
 
-#### Monture (10)
+| Rareté | Objet | Effet |
+|---|---|---|
+| C | Charbon ardent | +3 attaque ; chaque attaque pose 1 brûlure |
+| C | Cendre tiède | +40 PV ; les brûlures durent 1 s de plus |
+| C | Graine de brasier (sort) | Toutes les 5 s : 3 brûlures (+0,3 par point d'Été) |
+| R | Tison tenace (catalyseur) | Les voisins posent 50 % de brûlure en plus |
+| R | Éclat d'obsidienne | Toutes les 8 brûlures posées : combustion partielle |
+| É | Cœur de fournaise | La combustion laisse la moitié des charges en place |
+| L | Œuf du Premier Brasier | Les brûlures ne s'éteignent plus ; une seconde renaissance |
+| C | Bâton de braise | Boule de feu : 4 dégâts (+0,5 par point d'Été), 2 brûlures |
+| R | Bâton du brasier | Combustion partielle |
+| L | Bâton du Premier Brasier | Combustion totale, dégâts x2 |
 
-| Rareté | Objet | Apparence | Effet |
-|---|---|---|---|
-| Commun | Épine de ronce | Une longue épine courbée, vert sombre | Ajoute des dégâts d'épines lorsqu'on est attaqué |
-| Commun | Baie vénéneuse | Une petite grappe de baies violettes | Les attaques appliquent un peu de poison |
-| Commun | Feuille d'ortie | Une feuille dentelée aux nervures claires | **Catalyseur** : renforce les épines des objets voisins |
-| Commun | Spore amère | Une petite vesse-de-loup verdâtre | **Sort** *Nuage de spores* : toutes les 6 s, un nuage de poison visible |
-| Rare | Liane barbelée | Une liane enroulée, couverte de crochets | Les ripostes d'épines appliquent aussi du poison |
-| Rare | Amanite pourpre | Un champignon violet à quelques taches crème | **Catalyseur** : renforce le poison appliqué par les objets voisins |
-| Rare | Gousse éclatante | Une capsule sèche entrouverte, pleine de graines pointues | Après plusieurs attaques reçues, projette une salve d'épines |
-| Épique | Fleur de belladone | Une fleur en cloche sombre accompagnée d'une baie brillante | **Un adversaire empoisonné ne peut plus se soigner** (soins, vol de vie, régénération) |
-| Épique | Cœur de roncier | Un nœud de racines épineuses autour d'un cœur vert | Les déclenchements d'épines renforcent les prochaines ripostes, **jusqu'à x2 au maximum** |
-| Légendaire | Graine du Jardin interdit | Une graine fendue, laissant sortir une pousse dorée aux épines violettes | Chaque déclenchement d'épines intensifie le poison ; chaque déclenchement du poison fait pousser les épines. **Plafonds : 100 doses de poison, épines x2 au maximum** |
+### Hiver (Ours) : ralentir jusqu'au gel
 
-#### Armes du cavalier (5)
+**Givre** : chaque charge ralentit attaques et recharges de 3 % (40 % au plus). À 10 charges, la cible **gèle** 1,5 s : plus rien ne part, puis le givre retombe à zéro.
 
-| Rareté | Arme | Sort du cavalier | Rôle |
-|---|---|---|---|
-| Commun | Sarbacane de roseau | *Fléchette* : petit dard rapide (toutes les 2 s), pose 1 dose de poison | Prépare le poison |
-| Commun | Dague d'épine | *Contre* : après 4 coups reçus, le cavalier frappe en retour, plus fort avec des épines | Défense, pont vers les épines |
-| Rare | Arc de saule | *Flèche de chasse* (toutes les 5 s) : dégâts augmentés par dose de poison sur la cible | Récolte le poison |
-| Épique | Serpe de ronces | *Lacération* : 4 coups rapides qui infligent des dégâts d'épines (profitent des bonus d'épines) | Fait des épines une attaque (Lame, remplace le Fouet) |
-| Légendaire | Arc du Jardin interdit | *Flèche-graine* : se plante dans la cible ; chaque dose de poison qu'elle reçoit ensuite la blesse aussi d'épines | Assorti à la Graine du Jardin interdit |
+| Rareté | Objet | Effet |
+|---|---|---|
+| C | Flocon intact | +3 attaque ; +1 givre par attaque |
+| C | Fourrure hivernale | +40 PV ; le gel dure 0,5 s de plus |
+| C | Galet gelé (sort) | Souffle glacé : toutes les 5 s, 3 givre (+0,2 par point d'Hiver) |
+| R | Croc du blizzard (catalyseur) | Les voisins posent 50 % de givre en plus |
+| R | Cristal fêlé | Chaque gel inflige 30 dégâts |
+| É | Cœur de banquise | Après un gel, la cible garde la moitié de son givre |
+| L | Noyau de l'Hiver éternel | Le gel se déclenche à 6 charges au lieu de 10 |
+| C | Hachette de givre | Coup lent de 18, 2 givre |
+| R | Hache brise-glace | x2 contre une cible gelée |
+| L | Hache du Grand Hiver | 3 givre ; prolonge de 1 s le gel d'une cible gelée |
 
-Les plafonds (x2, 100 doses) sont des valeurs de départ, à régler par simulation.
+### Printemps (Cerf) : qui me touche s'empoisonne
 
----
+**Poison** : des doses qui s'empilent (100 au plus), 0,6 dégât par dose et par seconde, ne s'effacent pas et passent le bouclier.
+**Épines** : blessent qui frappe le Cerf (attaque ou coup d'arme).
+
+| Rareté | Objet | Effet |
+|---|---|---|
+| C | Épine de ronce | +40 PV ; +2 épines |
+| C | Baie vénéneuse | +3 attaque ; chaque attaque pose 0,5 dose |
+| C | Spore amère (sort) | Toutes les 6 s : 3 doses (+0,2 par point de Printemps) |
+| R | Feuille d'ortie (catalyseur) | Les sorts et armes voisins posent 1 dose de plus |
+| R | Liane barbelée | Chaque riposte d'épines pose 1 dose de plus |
+| É | Fleur de belladone | Un adversaire empoisonné ne peut plus se soigner |
+| L | Graine du Jardin interdit | À chaque coup reçu, le poison de l'attaquant inflige aussitôt une seconde de dégâts |
+| C | Sarbacane de roseau | Fléchette : 2 dégâts, 2 doses |
+| R | Arc de saule | 6 dégâts + les épines du Cerf |
+| L | Arc du Jardin interdit | Tous les 2 coups reçus, une flèche de 4 qui pose 2 doses |
+
+### Nuit (Chauve-souris) : affaiblir avant de frapper
+
+**Malédictions** (6 s, renouvelées si on les repose) : **Faiblesse** (-15 % de dégâts infligés), **Flétrissure** (-30 % de soins reçus), **Stigmate** (+15 % de dégâts reçus).
+
+| Rareté | Objet | Effet |
+|---|---|---|
+| C | Aiguille noire | +5 attaque ; 1 attaque sur 4 pose Stigmate |
+| C | Sablier vermeil | +40 PV ; les malédictions durent 2 s de plus |
+| C | Sceau de cire (sort) | Toutes les 4 s : Faiblesse |
+| R | Poupée cousue (catalyseur) | Les sorts et armes voisins posent une malédiction manquante |
+| R | Grimoire des noms perdus | Chaque nouvelle malédiction posée : 20 dégâts |
+| É | Masque du festin | Quand les trois sont posées, elles ne s'effacent plus |
+| L | Pacte de la Nuit profonde | Le passif compte double (+60 % par malédiction) |
+| C | Faux lunaire | 10 dégâts, pose Flétrissure |
+| R | Faux du festin | 12 dégâts, +35 % par malédiction sur la cible |
+| L | Faux de la Nuit profonde | Consume toutes les malédictions : +15 par malédiction |
+
+### Aube (Lion) : soigner pour frapper
+
+**Éclat** : tous les soins chargent la jauge (0,75 par point, 2 par point de soin excédentaire). À 60, un coup de lumière de 45.
+Un soin bloqué (Belladone) ou réduit (Flétrissure) charge quand même.
+
+| Rareté | Objet | Effet |
+|---|---|---|
+| C | Bande de lin | +40 PV ; +1 PV/s |
+| C | Miroir de poche | +3 attaque ; seuil d'Éclat -10 |
+| C | Mèche de veille (sort) | Veille : toutes les 4 s, soigne 6 (+0,75 par point d'Aube) |
+| R | Huile de première lumière (catalyseur) | Les sorts et armes voisins soignent 3 de plus |
+| R | Voile de l'aube | Les soins excédentaires chargent l'Éclat deux fois plus |
+| É | Carillon du réveil | Chaque Éclat soigne de 20 |
+| L | Lanterne du Premier Matin | Les dégâts subis chargent aussi l'Éclat, à moitié |
+| C | Lance de l'aurore | 6 dégâts, soigne 5 |
+| R | Pique solaire | 8 dégâts + 10 % de la jauge d'Éclat |
+| L | Lance du Premier Matin | 10 dégâts ; à mi-jauge, lance l'Éclat |
+
+Les armes de l'Aube sont des Hast : elles percent l'esquive et les Illusions.
+
+### Crépuscule (Papillon) : lancer des sorts, semer des illusions
+
+**Illusion** : un double du Papillon (2 au plus). Elle encaisse une attaque ou un coup d'arme à sa place, puis éclate en projectile d'arcane de 5.
+Seuls les sorts de la monture en créent avec le passif, pas les armes.
+
+| Rareté | Objet | Effet |
+|---|---|---|
+| C | Poudre d'écailles | +3 attaque ; projectiles d'arcane +3 |
+| C | Cocon | +40 PV ; commence avec 1 Illusion |
+| C | Battement d'ailes (sort) | Toutes les 5 s : arcane de 10 (+0,5 par point de Crépuscule) |
+| R | Pollen doré (catalyseur) | Les sorts et armes voisins rechargent 15 % plus vite |
+| R | Mue | 3 Illusions au plus ; quand une Illusion éclate, le prochain sort part 1 s plus tôt |
+| É | Phalène | À chaque sort lancé, chaque Illusion tire un projectile d'arcane |
+| L | Chrysalide | Chaque sort se répète une fois, à moitié |
+| C | Sceptre d'écailles | Arcane de 8 (+0,5 par point de Crépuscule) |
+| R | Bâton de brume | 4 dégâts, crée 2 Illusions |
+| L | Bâton de l'entre-deux | Fait éclater toutes les Illusions : 25 d'arcane chacune |
+
+### Automne (Renard) : esquiver, puis frapper juste
+
+**Esquive** : une attaque ou un coup d'arme esquivé ne fait rien (60 % au plus). Le Hast la perce.
+**Crit** : x1,75. Les Lames donnent du crit à toute la monture (10 %, ou ce que l'arme précise).
+
+| Rareté | Objet | Effet |
+|---|---|---|
+| C | Croc de renard | +3 attaque ; +8 % de crit |
+| C | Feuille morte | +40 PV ; +5 % d'esquive |
+| C | Bourrasque (sort) | Toutes les 6 s : +30 % d'esquive pendant 2 s |
+| R | Pelage roux (catalyseur) | +8 % de crit pour chaque objet qui le touche |
+| R | Bogue de châtaigne | Chaque esquive déclenche une contre-attaque |
+| É | Œil du chasseur | Crits x2,5 au lieu de x1,75 |
+| L | Queue du Vieux Renard | Après un crit, la prochaine attaque reçue est esquivée |
+| C | Dague de feuille | Toutes les 1,5 s, 4 dégâts ; 20 % de crit |
+| R | Lame rousse | 7 dégâts ; chaque crit la recharge 1 s plus tôt |
+| L | Coutelas du Vieux Renard | 10 dégâts ; le crit qui suit une esquive fait x3 |
+
+### Jour (Paon) : faire la roue
+
+**Éventail** : chaque arme lancée en donne 1 (10 au plus) ; +8 % de dégâts et de vitesse de recharge des armes par charge. La Dynastie des builds d'armes.
+
+| Rareté | Objet | Effet |
+|---|---|---|
+| C | Plume d'ocelle | +3 attaque ; commence avec 2 Éventail |
+| C | Écu doré | +40 PV ; chaque arme lancée donne 6 de bouclier |
+| C | Faire la roue (sort) | Toutes les 6 s : toutes les armes se rapprochent de 1 s |
+| R | Broche de soleil (catalyseur) | Les armes et sorts voisins font +25 % de dégâts |
+| R | Miroir d'ocelle | Chaque arme lancée inflige aussi 1 dégât par Éventail |
+| É | Couronne de midi | L'Éventail monte jusqu'à 20 |
+| L | Œil du Zénith | À 10 Éventail, chaque arme se lance deux fois |
+| C | Arc à plumes | Volée : deux flèches de 3 |
+| R | Arbalète dorée | 8 dégâts ; donne 2 Éventail au lieu de 1 |
+| L | Arc du Zénith | Une flèche de 3, plus une par Éventail |
+
+### Signature de dynastie
+
+Chaque sort et chaque arme ajoute, à chaque activation, un petit effet de son élément (x niveau) :
+Été 1 brûlure, Printemps 1 dose de poison, Hiver 1 givre, Nuit draine 5 PV, Aube soigne 3 PV,
+Crépuscule un projectile d'arcane de 4, Automne une griffe de 3, Jour 3 de bouclier.
+Chaque essence en donne un cinquième à chaque attaque de la monture.
 
 ### Familles d'armes
 
-Chaque arme appartient à une **famille**, partagée entre plusieurs éléments. Les futurs objets
-neutres viseront une famille (« Carquois : les arcs tirent une flèche de plus ») : builds
-croisés, objets neutres utiles sans être universels, style lisible quel que soit l'élément.
-**Chaque élément utilise une ou deux familles.**
+Chaque arme appartient à une **famille**, partagée entre Dynasties. **Une seule famille par Dynastie** ;
+Bâton (Été, Crépuscule) et Tir (Printemps, Jour) sont partagées.
 
-| Famille | Style | Armes actuelles |
+| Famille | Style | Dynasties |
 |---|---|---|
-| Tir | Rapide, plusieurs petits coups | armes du Cerf, armes du Papillon, Arc de l'écho (Nuit) |
-| Lame | Rapide, riposte, **coups critiques** | Dague d'épine, Serpe de ronces, Dague de minuit, Lame de la veuve |
-| Hast | Allonge, perce l'esquive | Lance du guet (neutre), armes de l'Ours, armes du Papillon |
-| Hache | Lent, gros coup | armes de l'Ours, du Lion, Hache du bourreau (Nuit) |
-| Bâton | Magie, grandit avec l'affinité | armes du Phénix, du Lion |
-| Faux | Achève les cibles affaiblies | Faux de tison, Faux des cendres, Faux de la Nuit profonde |
-
-Familles par Dynastie : **Printemps (Cerf) : Tir et Lame. Hiver (Ours) : Hast et Hache. Été (Phénix) : Bâton et Faux.
-Nuit : Lame surtout, plus un Tir, une Hache et une Faux. Aube (Lion) : Bâton et Hache. Crépuscule (Papillon) : Tir et Hast.**
-
-Huit Dynasties à 2 familles donnent 16 places pour 6 familles. Avec la Nuit sur quatre familles,
-les six Dynasties actuelles en prennent déjà 14 (Tir et Hache à 3 Dynasties). **À trancher** pour
-l'Automne (Renard) et le Jour (Paon) : assouplir la règle d'une ou deux familles par Dynastie, ou
-recentrer la Nuit.
-
-**Coups critiques** : identité de la famille Lame. Un crit fait **x1,75** de dégâts ; les chances
-viennent des armes Lame et de certains objets (aucune chance de base). Les Lames du Cerf
-(Dague d'épine, Serpe de ronces) en profiteront aussi.
-
-**Faux** : toutes partagent le trait « achever » (plus fortes contre une cible affaiblie), sur
-lequel jouera un futur objet neutre. Chaque élément y ajoute sa saveur : le feu pour le Phénix,
-le drain et les malédictions pour la Nuit.
-
-### Hiver (Ours) : givre et bouclier qui se brise
-
-**Fait** (images de `images/`). Chiffres de départ : passif de l'Ours, 1 charge de givre par attaque
-et **+100 % de dégâts contre une cible gelée** (le gel est une fenêtre d'attaque, sinon l'Ours
-jouait comme une seconde Tortue : combats de 24 à 40 s, trop peu de dégâts) ; Flocon +1 attaque ;
-ralentissement du givre plafonné à 40 % ; Armure de givre 5 + 0,5 par point de Glace ;
-Éclat de givre 30 ; Javelot 8 ; Écorce 20 de bouclier 3 s après un bris ;
-Cœur de banquise 25 ; Noyau 20 ; Rose des neiges 3 charges de moins.
-
-Là où la Tortue veut que son bouclier tienne, **l'Ours veut qu'il se brise** : chaque bris
-déclenche des effets. C'est le même bouclier que la Terre (plus simple à lire) : les hybrides
-Terre et Glace sont à surveiller en simulation. Le poison du Cerf passe à travers le bouclier
-sans le briser : l'Ours souffre contre la Nature, c'est voulu.
-
-Règles du givre :
-- Chaque **charge de givre** ralentit les attaques **et** les recharges de sorts de la cible
-  (3 % par charge pour commencer).
-- À **10 charges**, la cible **gèle** : plus rien ne part pendant 1,5 s, puis ses charges
-  retombent à zéro.
-
-#### Monture (10)
-
-| Rareté | Objet | Effet |
-|---|---|---|
-| Commun | Flocon intact | Les attaques appliquent du givre |
-| Commun | Galet gelé | **Sort** *Armure de givre* : un petit bouclier toutes les 6 s |
-| Commun | Éclat de givre | Inflige des dégâts lorsque ton bouclier est brisé |
-| Commun | Fourrure hivernale | **Catalyseur** : plus de bouclier pour les objets voisins |
-| Rare | Croc du blizzard | **Catalyseur** : les objets voisins posent 50 % de givre en plus |
-| Rare | Écorce de pergélisol | Reforme un petit bouclier après un délai lorsqu'il est brisé |
-| Rare | Cristal fêlé | Les dégâts de bris du bouclier appliquent aussi du givre |
-| Épique | Cœur de banquise | Geler la cible accorde du bouclier |
-| Épique | Rose des neiges | Quand le bouclier est brisé, le prochain gel demande moins de charges |
-| Légendaire | Noyau de l'Hiver éternel | Quand le bouclier est brisé : une nova qui inflige des dégâts et gèle immédiatement la cible si elle est déjà ralentie |
-
-#### Armes du cavalier (5, Hast et Hache)
-
-| Rareté | Arme | Famille | Sort du cavalier |
-|---|---|---|---|
-| Commun | Javelot de stalactite | Hast | Lancer toutes les 3 s qui pose 2 charges de givre |
-| Commun | Hachette de givre | Hache | Gros coup lent, doublé contre une cible ralentie |
-| Rare | Pique de banquise | Hast | Perce l'esquive, double les charges de givre posées |
-| Épique | Hache brise-glace | Hache | *Fracas* : brise ton propre bouclier et ajoute sa valeur aux dégâts (déclenche les effets de bris) |
-| Légendaire | Lance du Grand Hiver | Hast | Brise le gel de la cible pour un coup énorme |
+| Tir | Rapide, plusieurs petits coups | Printemps, Jour |
+| Lame | Rapide, **coups critiques** | Automne |
+| Hast | Allonge, **perce l'esquive et les Illusions** | Aube, Lance du guet (neutre) |
+| Hache | Lent, gros coup | Hiver |
+| Bâton | Magie, grandit avec l'affinité | Été, Crépuscule |
+| Faux | Plus forte contre une cible maudite | Nuit |
 
 ---
-
-### Été (Phénix) : brûlure, combustion, Braise
-
-**Fait** (images de `images/`). Chiffres de départ : brûlure 2 dégâts par charge et par seconde,
-5 s par charge, 50 charges au plus ; combustion 4 par charge consumée (x1,5 si totale) ; Braise
-+4 % de vitesse par point, 10 au plus ; Charbon 1 brûlure par attaque ; Embrasement toutes les 5 s ;
-Cendre tiède 4 PV par combustion, Fleur 1 PV par charge consumée ; Éclat d'obsidienne +4 ;
-Résine : brûlure doublée sous 50 % de PV ; Cœur de fournaise : +5 Braise pendant 6 s.
-La combustion passe à travers le bouclier, comme la brûlure.
-
-**On allume, puis on consume.** La brûlure s'accumule sur la cible, puis une **combustion** la
-fait exploser d'un coup. Le Phénix **brûle plus fort au bord de la mort** (Résine ambrée, Cœur
-de fournaise, renaissance). Familles d'armes : **Bâton et Faux** (la Faux est partagée avec la Nuit).
-
-Ce set remplace les anciens objets du Feu (Braise, Plume de cendre, Souffle ardent, Foyer).
-Le Bâton de braise garde son nom avec sa nouvelle version.
-
-Règles :
-- **Brûlure** : s'empile, mais **chaque charge s'éteint au bout de 5 s**, il faut l'entretenir.
-  Le poison, lui, s'empile et dure tout le combat sans jamais être consommé.
-- **Combustion** : consume les brûlures de la cible pour des dégâts immédiats.
-  *Partielle* : la moitié des charges. *Totale* : toutes, avec un bonus.
-- **Braise = hâte** : +1 Braise à chaque combustion déclenchée (jusqu'à 10), chaque point
-  accélère attaques et recharges de sorts. C'est l'inverse du givre de l'Ours, les deux se
-  compensent. (Le crit reste à concevoir, pour une autre famille ou un autre élément.)
-- **Renaissance** (passif) : une fois, à 50 % de PV.
-
-#### Monture (10)
-
-| Rareté | Objet | Apparence | Effet |
-|---|---|---|---|
-| Commun | Charbon ardent | Un morceau de charbon noir fendu d'orange | Les attaques appliquent de la brûlure |
-| Commun | Plume incandescente | Une plume rouge à la pointe dorée | **Catalyseur** : brûlure des objets voisins +50 % |
-| Commun | Tison tenace | Un petit morceau de bois rougeoyant | **Catalyseur** : Braise gagnée par les objets voisins +50 % |
-| Commun | Cendre tiède | Un petit tas de cendres claires abritant une braise | Chaque combustion rend un peu de vie |
-| Rare | Graine de brasier | Une graine sombre dont sort une petite flamme | **Sort** *Embrasement* : une combustion partielle toutes les 7 s |
-| Rare | Éclat d'obsidienne | Une lame de pierre noire au bord rougeoyant | Les attaques contre une cible en feu infligent des dégâts supplémentaires |
-| Rare | Résine ambrée | Une goutte épaisse d'ambre contenant une étincelle | Renforce les nouvelles brûlures quand ta vie est basse |
-| Épique | Cœur de fournaise | Un cœur de roche sombre au centre incandescent | En passant sous la moitié de ta vie : une combustion et un fort bonus de Braise temporaire. Une fois par combat |
-| Épique | Fleur des cendres | Une fleur aux pétales gris, orange vif au centre | Les soins des combustions augmentent selon les charges consumées |
-| Légendaire | Œuf du Premier Brasier | Un œuf rouge sombre fendu, éclairé d'or de l'intérieur | **Seconde renaissance** ; chaque renaissance déclenche une combustion totale |
-
-#### Armes du cavalier (5, Bâton et Faux)
-
-| Rareté | Arme | Famille | Sort du cavalier |
-|---|---|---|---|
-| Commun | Bâton de braise | Bâton | Une étincelle qui applique de la brûlure, dégâts selon l'affinité Feu |
-| Commun | Faux de tison | Faux | Plus de dégâts contre une cible sous la moitié de sa vie |
-| Rare | Bâton du brasier | Bâton | Applique plus de brûlure selon l'affinité Feu |
-| Épique | Faux des cendres | Faux | Contre une cible affaiblie : une combustion qui consume ses brûlures et soigne le Phénix |
-| Légendaire | Bâton du Premier Brasier | Bâton | Une combustion totale après plusieurs tirs ; la renaissance déclenche aussitôt un tir renforcé |
-
-Points ouverts :
-- **Faux de tison et Faux de la Nuit profonde** : trait « achever » commun, saveur propre à
-  chaque élément (le feu pour le Phénix, le drain et les malédictions pour la Nuit).
-- **Le Phénix se soigne** (Cendre tiède, Fleur, Faux des cendres) : à surveiller face à l'Aube,
-  dont le soin est l'identité. La Belladone du Cerf le contre.
-
-### Nuit (Chauve-souris) : vol de vie et malédictions
-
-**Fait** (images de `images/`, le Chapelet et la Serpe de ronces dans `chapelet_serpe.png`). Chiffres : malédictions 6 s, Faiblesse -15 %
-de dégâts, Langueur -15 % de vitesse d'attaque, Flétrissure -30 % de soins par charge, Stigmate
-+10 % de dégâts reçus ; passif
-de la Chauve-souris **+20 % de dégâts par malédiction différente sur la cible** (sans lui, et
-sans attaque sur ses essences, elle ne faisait presque aucun dégât : 0,8 victoire en moyenne) ;
-Ruban sanguin +4 attaque et 8 % de vol de vie ; Aiguille noire +4 attaque, Faiblesse toutes les
-3 attaques ; Sceau toutes les 4 s ; Sablier +3 s ; Poupée 30 % ; Masque +6 % de vol de vie par
-malédiction ; Grimoire tous les 40 PV volés ; Pacte 5 par attaque. Crit : x1,75, 10 % par Lame
-(25 % pour la Dague de minuit, 15 % pour la Lame de la veuve), 8 % pour le Peigne.
-
-Deux axes : **le vol de vie** et **les malédictions**, quatre états qui affaiblissent l'adversaire.
-Des objets **comptent les malédictions différentes** (Masque, Grimoire, Pacte) ; le Chapelet
-permet au contraire d'**empiler la même** : un choix de build en largeur ou en profondeur.
-Familles d'armes : **Lame** surtout, plus un Tir, une Hache et la Faux légendaire. Ce set remplace l'ancienne Nuit (Croc noir, Nuée, Voile,
-Lune creuse). Passif de la Chauve-souris inchangé : vol de vie sur les attaques de base.
-
-Règles des malédictions :
-- **Faiblesse** : la cible inflige moins de dégâts.
-- **Langueur** : la cible attaque moins vite (attaques seulement, pas les sorts ; pourcentage fixe
-  et durée limitée, là où le givre de l'Ours s'accumule, touche aussi les sorts et finit en gel).
-- **Flétrissure** : la cible reçoit moins de soins (réduction, là où la Belladone du Cerf bloque
-  tout soin, mais seulement sur une cible empoisonnée).
-- **Stigmate** : la cible reçoit plus de dégâts, de toutes les sources. Posée par l'Arc de l'écho
-  et les crits de la Lame de la veuve.
-- **Durée : 6 s**, renouvelée si on la réapplique. Sans le Chapelet, une malédiction ne compte
-  qu'une fois. Avec lui, jusqu'à 3 charges : Faiblesse -10 % de dégâts par charge, Langueur -10 %
-  de vitesse d'attaque par charge, Flétrissure -25 % de soins par charge (valeurs de départ).
-
-#### Monture (10)
-
-| Rareté | Objet | Effet |
-|---|---|---|
-| Commun | Ruban sanguin | Accorde du vol de vie aux attaques |
-| Commun | Aiguille noire | Après plusieurs attaques, applique Faiblesse |
-| Commun | Sceau de cire | **Sort** *Sceau* : applique Langueur toutes les 4 s |
-| Commun | Sablier vermeil | Prolonge les malédictions que tu appliques |
-| Rare | Poupée cousue | Une partie des dégâts reçus est renvoyée à l'adversaire tant qu'il est maudit |
-| Rare | Peigne de la veuve | Les coups critiques appliquent Flétrissure |
-| Rare | Chapelet des rancunes | *Un chapelet de perles noires dont une seule rougeoie* : chaque malédiction peut s'empiler jusqu'à 3 fois |
-| Épique | Masque du festin | Plus de vol de vie pour chaque malédiction différente sur l'adversaire |
-| Épique | Grimoire des noms perdus | Après une certaine quantité de vie volée, applique une malédiction manquante |
-| Légendaire | Pacte de la Nuit profonde | Quand la cible porte au moins trois malédictions différentes, tes attaques drainent aussi un peu de vie, indépendamment de leurs dégâts (le drain passe le bouclier) |
-
-La Coupelle d'étain (bonus de vol de vie) a été retirée au profit du Chapelet.
-
-#### Armes du cavalier (5, Lame, Tir, Hache, Faux)
-
-| Rareté | Arme | Famille | Sort du cavalier |
-|---|---|---|---|
-| Commun | Dague de minuit | Lame | Coups rapides, fortes chances de crit |
-| Commun | Arc de l'écho | Tir | *Écho* : deux flèches guidées par l'écho, qui posent Stigmate |
-| Rare | Lame de la veuve | Lame | Chaque crit pose Stigmate |
-| Épique | Hache du bourreau | Hache | *Sentence* : un coup lent, plus fort pour chaque malédiction sur la cible, double sous 40 % de vie |
-| Légendaire | Faux de la Nuit profonde | Faux | Consume toutes les malédictions de la cible pour un coup énorme et un gros drain |
-
-L'Arc de l'écho et la Hache du bourreau remplacent la Faux lunaire et la Faux du festin.
-
-### Aube (Lion) : soin et Éclat
-
-**Fait** (images de `images/`). Chiffres : régénération du Lion 0,5 PV/s ; charge 0,75 par point
-de soin et 2 par point d'excédent (le Voile ajoute +100 % sur l'excédent) ; seuil 60 (Miroir -10,
-20 au moins) ; Éclat 60 dégâts (Prisme +15, Lanterne + l'excédent accumulé) ; Veille (Mèche) 6 de
-soin + 0,75 par point d'Aube toutes les 4 s ; Bande de lin +1 PV/s sous 50 % ; Encensoir +3 PV/s pendant
-4 s ; Vasque 50 % de l'excédent en bouclier ; Carillon 40 tous les 3 Éclats. L'outil de découpe
-retire maintenant aussi les « poussières » (petits îlots isolés) des icônes et des montures.
-
-**On stocke du soin pour frapper.** Un soigneur qui ne fait que se soigner ne gagne jamais : ici,
-chaque soin charge une jauge d'**Éclat**, qui part en coup de lumière sur l'adversaire.
-Familles d'armes : **Bâton et Hache** (chacune partagée avec un autre élément).
-
-Règles :
-- **Passif du Lion** : régénère un peu en continu, et **ses soins chargent l'Éclat**. La jauge est
-  propre au Lion ; hors Lion, les objets d'Éclat ne serviront qu'aux futurs hybrides.
-- **Charge** : tous les soins chargent l'Éclat **à moitié** ; les **soins excédentaires** (au-delà
-  des PV max) comptent **double** (plus avec le Voile de l'aube).
-- **Éclat** : quand la jauge atteint son seuil (60 pour commencer, moins avec le Miroir de poche),
-  il part : un coup de lumière sur l'adversaire (plus fort avec le Prisme d'aurore).
-- **Un soin bloqué** (Belladone) ou réduit (Flétrissure) charge quand même l'Éclat à moitié :
-  le Lion reste gêné par ces contres, sans être neutralisé.
-
-#### Monture (10)
-
-| Rareté | Objet | Apparence | Effet |
-|---|---|---|---|
-| Commun | Mèche de veille | Une courte mèche allumée dans une coupelle de céramique pêche | **Sort** *Veille* : rend un peu de vie à intervalles réguliers |
-| Commun | Huile de première lumière | Une petite burette ivoire laissant perler une goutte dorée | **Catalyseur** : soins des objets voisins +50 % |
-| Commun | Miroir de poche | Un miroir rond en cuivre pâle, avec un manche court | Réduit le seuil de l'Éclat |
-| Commun | Bande de lin | Une bande crème roulée, dont une extrémité se déroule | Sous la moitié de ta vie, renforce la régénération |
-| Rare | Encensoir du matin | Un brûle-parfum trapu, percé de trois ouvertures, avec une volute de fumée rose | Chaque Éclat renforce temporairement la régénération |
-| Rare | Vasque de rosée | Une vasque peu profonde sur un petit pied, contenant une eau nacrée | **Les soins excédentaires deviennent du bouclier** |
-| Rare | Prisme d'aurore | Un prisme triangulaire laissant passer trois larges bandes de lumière pêche et or | Augmente les dégâts de l'Éclat |
-| Épique | Voile de l'aube | Une étoffe légère, crème et rose, tenue par une attache de cuivre | Les soins excédentaires chargent davantage l'Éclat |
-| Épique | Carillon du réveil | Trois petites cloches plates suspendues à une arche dorée | Tous les trois Éclats, un soin important |
-| Légendaire | Lanterne du Premier Matin | Une lanterne ronde en céramique ajourée, abritant un soleil flottant, avec deux anses en volutes | L'Éclat ajoute à ses dégâts les soins excédentaires accumulés depuis le dernier Éclat |
-
-#### Armes du cavalier (5, Bâton et Hache)
-
-| Rareté | Arme | Famille | Sort du cavalier |
-|---|---|---|---|
-| Commun | Sceptre de l'aurore | Bâton | Un rayon dont les dégâts grandissent avec l'affinité Aube |
-| Commun | Hachette du matin | Hache | Un coup lent qui charge l'Éclat |
-| Rare | Bâton de rosée | Bâton | Chaque tir soigne un peu ; l'excédent nourrit l'Éclat |
-| Épique | Hache solaire | Hache | Après chaque Éclat, le prochain coup est doublé |
-| Légendaire | Sceptre du Premier Matin | Bâton | Un Éclat gratuit tous les quelques tirs |
-
-Points à surveiller : la **Vasque** crée un pont avec la Terre et la Glace (bouclier, effets de bris) ;
-le Lion est contré par la Nature (Belladone) et la Nuit (Flétrissure), adouci par la règle ci-dessus.
-
-### Crépuscule (Papillon) : Transfert
-
-**Fait** (images de `images/`). Chaque source de Transfert a une **puissance** : quantité volée,
-et dégâts du projectile d'arcane (x1,5) quand il n'y a rien à déplacer. Battement d'ailes 10 + 0,5 par
-point de Crépuscule toutes les 5 s ; Poudre d'écailles 4 de bouclier volé par attaque ; Cocon 30 de
-bouclier au départ et **+3 de bouclier à chaque Transfert** (tel qu'écrit au départ, « plus gros
-pour chaque malus adverse », il ne servait à rien en début de combat, quand personne ne porte de
-malus) ; Mue x1,5 ; Brume 12 PV par vol ; Aile de lune +2 Braise pendant 3 s ; Inversion à 12 s.
-« Le malus le plus lourd » : poison, brûlure, givre ou malédictions selon la quantité portée.
-
-**Le moment où tout s'inverse.** Le Papillon **vole les bonus** de l'adversaire et lui **renvoie ses
-propres malus**. Familles d'armes : **Tir et Hast** (chacune partagée avec un autre élément).
-
-Règles :
-- **Malus qu'on renvoie** : poison, brûlure, givre, malédictions.
-- **Bonus qu'on vole** : bouclier, Braise (hâte), jauge d'Éclat, bonus d'épines.
-- **Transfert** : déplacer un malus vers l'adversaire, ou lui prendre un bonus. C'est le
-  déclencheur commun du set (« à chaque Transfert »), comme le bris de bouclier pour l'Ours.
-- **Passif du Papillon** : *un Transfert sans rien à voler ni à renvoyer lance un projectile
-  d'arcane* (une petite comète violet et orangé). Le Papillon n'est jamais à vide : contre un
-  build chargé d'effets il vole et renvoie, contre un build brut il tire de l'arcane.
-- **Le projectile compte comme un Transfert** pour les objets « à chaque Transfert » (Phalène,
-  Arc des deux lunes), mais **pas** pour ceux qui ont besoin d'un vrai bonus ou malus (Mue, Brume
-  du soir, Aile de lune) : voler et renvoyer restent plus rentables que le projectile.
-
-#### Monture (10)
-
-| Rareté | Objet | Effet |
-|---|---|---|
-| Commun | Battement d'ailes | **Sort** : toutes les 5 s, renvoie ton malus le plus lourd à l'adversaire |
-| Commun | Poudre d'écailles | Tes attaques volent un peu de bouclier adverse |
-| Commun | Cocon | Commence le combat avec un petit bouclier, et en regagne un peu à chaque Transfert |
-| Commun | Pollen doré | **Catalyseur** : les Transferts des objets voisins déplacent 50 % de plus (et leurs projectiles d'arcane font 50 % de dégâts en plus) |
-| Rare | Mue | Un malus renvoyé arrive renforcé chez l'adversaire |
-| Rare | Brume du soir | Voler un bonus te soigne |
-| Rare | Phalène | Chaque Transfert déclenche une seconde attaque |
-| Épique | Chrysalide | Une fois, sous la moitié de ta vie : renvoie tous tes malus et vole tous ses bonus |
-| Épique | Aile de lune | Chaque bonus volé t'accélère un moment (tu lui prends sa hâte) |
-| Légendaire | Inversion | Une fois par combat, au milieu : échange vos pourcentages de vie |
-
-L'Inversion est volontairement folle : elle peut renverser un combat perdu comme en perdre un
-gagné. À tester avec prudence en simulation.
-
-#### Armes du cavalier (5, Tir et Hast)
-
-| Rareté | Arme | Famille | Effet |
-|---|---|---|---|
-| Commun | Arc du crépuscule | Tir | Flèches qui volent un peu de bouclier |
-| Commun | Fléchettes d'écailles | Tir | Rapides, renvoient un malus tous les 3 coups |
-| Rare | Glaive de brume | Hast | Perce l'esquive, vole un bonus à chaque coup |
-| Épique | Arc des deux lunes | Tir | Plus fort pour chaque Transfert fait pendant le combat |
-| Légendaire | Lance de l'entre-deux | Hast | Chaque coup échange un bonus de la cible contre un de tes malus |
-
-Pistes d'apparence : poussière d'écailles irisées, violets et orangés du soleil couchant, cocons,
-antennes, ailes de phalène, lune basse.
 
 ## 6. Pas d'avantage élémentaire
 
 **Aucun élément ne bat un autre.** Pas de triangle, pas de multiplicateur caché.
 
 Le contre-jeu passe par les mécaniques des sorts, lisibles à l'écran :
-- Prison de glace (gel des recharges) coupe une Nuée avant qu'elle parte.
-- Ronces (renvoie les dégâts) punit les builds à beaucoup de petits coups.
-- Le vol de vie de la Nuit tient face au soin de l'Aube.
-- Le Papillon punit les builds qui empilent bonus et malus.
+- Le gel de l'Hiver coupe les recharges adverses.
+- Les épines du Printemps punissent les builds à beaucoup de petits coups (et les armes du Jour).
+- La Belladone et la Flétrissure gênent l'Aube, qui charge quand même son Éclat.
+- Le Hast de l'Aube perce l'esquive de l'Automne et les Illusions du Crépuscule.
 
 On adapte son Nid à ce qu'on affronte, pas à une couleur.
 

@@ -52,9 +52,8 @@ Les chiffres de Cerf, Ours et Lion viennent d'être modifiés (pas encore commit
 
 ## Ouvert
 
-- Prix ou force des armes en grand nombre.
-- Plafonds du Printemps (x2 épines, 100 doses de poison).
-- Inversion du Crépuscule.
+- Prix ou force des armes en grand nombre (le Jour en vit).
+- Après la refonte du 2026-10-29 : Printemps trop faible, Aube et Crépuscule trop forts (voir plus bas).
 
 ## Rééquilibrage du Crépuscule (2026-10-29)
 
@@ -68,3 +67,17 @@ Les chiffres de Cerf, Ours et Lion viennent d'être modifiés (pas encore commit
 **Changement :** ni or ni boutique après un feu de camp ou une rencontre ; les fantômes perdent l'or d'une manche sur trois ([[Run et carte]]).
 **Résultat (200 runs) :** simple 37 % de runs gagnées (36 % avant), aléatoire 6 %. Duels 60 %, élites 42 %, boss 46 % ; durées 17 / 20 / 20 s. Par élément : Crépuscule 52 %, Nuit 49 %, Aube 48 %, Printemps 39 %, Été 25 %, Hiver 8 % (25 runs seulement).
 **Lecture :** comme les fantômes perdent autant d'or, l'équilibre ne bouge pas. L'Hiver reste le plus faible (Fourrure, Galet, Écorce, Stalagmite, Cristal, Croc du blizzard, Lance du Grand Hiver en bas du classement).
+
+## Refonte des archétypes (2026-10-29)
+
+Après le passage à 10 objets et un principe par Dynastie ([[2026-10-29 Archétypes resserrés]]). Le joueur automatique choisit désormais parmi les dynasties de la partie (il ignorait l'Automne et le Jour).
+
+**Première mesure (200 runs) :** simple 48 %, aléatoire 19 %. Écart énorme : Crépuscule 89 %, Aube 85 %, Nuit 0 %, Jour 24 %, Printemps 25 %.
+**Réglages :**
+- Crépuscule : Illusions 2 au plus (3 avec la Mue), arcane d'Illusion 5 (au lieu de 8), Battement toutes les 5 s, Trait d'arcane 8, et **les armes ne créent plus d'Illusion** avec le passif.
+- Aube : Éclat 45 (au lieu de 60).
+- Nuit : passif +30 % par malédiction (au lieu de 20), Stigmate +15 %, Aiguille +5 d'attaque, Sceau toutes les 4 s, Grimoire 20, Faux lunaire 10, Faux du festin 12 et +35 %, signature 5.
+- Jour : Éventail +8 % par charge (au lieu de 5), Écu doré 6.
+- Printemps : épines du Cerf 4, poison 0,6 par dose. Automne : esquive du Renard 15 %.
+**Résultat (200 runs, fusion 3 puis 2) :** simple 54 %, aléatoire 18 %. Aube 77 %, Hiver 70 %, Été 72 %, Crépuscule 68 %, Jour 67 %, Nuit 45 %, Automne 42 %, Printemps 18 %.
+**À suivre :** le Printemps (44 runs, le chiffre le plus sûr) est nettement le plus faible ; Liane, Ortie et Arc de saule ferment le classement. Aube, Nuit et Crépuscule ont 11 à 19 runs chacun : bruit possible. Le taux du joueur simple (54 %) n'est pas comparable aux 37 % d'avant : les fantômes jouent maintenant les huit dynasties.

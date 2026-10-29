@@ -1,6 +1,6 @@
 # Boutique et économie
 
-**Résumé :** Boutique à la TFT, facultative après chaque combat : 9 offres en carré 3 x 3, relance à 1 or, prix selon le type et la rareté, gel, revente et fusion par trois.
+**Résumé :** Boutique à la TFT, facultative après chaque combat : 9 offres en carré 3 x 3, relance à 1 or, prix selon le type et la rareté, gel, revente et fusion (3 copies, puis 2).
 **Tags :** #boutique, #economie, #fusion, #rarete
 **Mis à jour :** 2026-10-29
 **Liens :** [[Run et carte]], [[Sac et formes]], [[Reliques]], [[Équilibrage]], [[Adversaire fantôme et PvP]], [[Cavaliers et armes]]
@@ -42,12 +42,14 @@ Sur la carte, la manche est le nombre de nœuds franchis. Une tuile non commune 
 
 ## Fusion
 
-- 3 copies au même niveau donnent 1 relique du niveau suivant (★, puis ★★), à la place de la dernière posée.
-- Stats x2,5 au niveau 2, x6 au niveau 3 : un peu moins que trois copies, mais deux cases libérées.
-- L'affinité des trois copies est conservée : fusionner ne change pas la forme de la monture.
+- **3 copies donnent ★, puis 2 ★ donnent ★★** : 6 copies pour le niveau maximal, à la place de la dernière posée (`Data.FUSION_COPIES`).
+  **Décision (2026-10-29) :** 3 puis 2 au lieu de 3 puis 3 (9 copies). **Pourquoi :** demande de l'utilisatrice, le niveau maximal était trop loin.
+  **Alternative écartée :** 2 puis 3.
+- Stats x2,5 au niveau 2, x5 au niveau 3 (x6 avant) : un peu moins que les copies réunies, mais des cases libérées.
+- L'affinité des copies est conservée : fusionner ne change pas la forme de la monture.
 - Nid plein : on peut poser une offre **sur une copie** si elle complète un trio.
 - Tout fusionne, armes et légendaires compris, et les copies sont illimitées tant que le sac a de la place.
-- Revente : la moitié de ce qu'elle a coûté (3 copies par niveau).
+- Revente : la moitié de ce qu'elle a coûté (1, 3 ou 6 copies).
 
 **Pourquoi la fusion :** le Nid de 16 cases se remplissait vers la manche 6, et l'or ne servait plus à rien ensuite. La répartition des victoires avait deux bosses (beaucoup de 0 à 2, un pic à 7) ; elle est devenue régulière.
 

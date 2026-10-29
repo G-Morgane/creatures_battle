@@ -96,7 +96,7 @@ func _ready() -> void:
 	reserve_ui = _cadre(_reserve())
 	add_child(reserve_ui)
 	var aide := Label.new()
-	aide.text = "Glisse pour acheter, R ou molette pour tourner. 3 copies : ★.
+	aide.text = "Glisse pour acheter, R ou molette pour tourner. 3 copies (sac ou réserve) : ★, puis 2 ★ : ★★.
 Ramène un objet sur le comptoir pour le revendre. Sur un autre objet : il prend sa place, l'autre passe en main."
 	aide.add_theme_font_size_override("font_size", 13)
 	aide.add_theme_color_override("font_color", Palette.TEXTE_DOUX)
@@ -351,6 +351,32 @@ func rafraichir() -> void:
 		bouton_combat.text = ("Run gagnée !" if partie.gagnee else "Run perdue.") + " Nouvelle partie"
 	else:
 		bouton_combat.text = "Vers la carte"
+	if not partie.fusion.is_empty():
+		_animer_fusion(partie.fusion)
+		partie.fusion = {}
+
+# Cellules d'un lieu de la partie ({"depuis": ancre} ou {"reserve": k}) dans
+# le repere de l'ecran, et leur cote. cases : celles d'une relique deja retiree.
+func _cellules(lieu: Dictionary, cases := []) -> Array:
+	if lieu.has("reserve"):
+		var r: Rect2 = reserve_cases[lieu["reserve"]].get_global_rect()
+		return [[Rect2(r.position - global_position, r.size)], r.size.x]
+	if cases.is_empty():
+		cases = nid.cases_de(lieu["depuis"])
+	var l := []
+	for k in cases:
+		l.append(Rect2(sac.global_position - global_position + Vector2(k) * sac.cote, Vector2(sac.cote, sac.cote)))
+	return [l, sac.cote]
+
+func _animer_fusion(f: Dictionary) -> void:
+	var e := EffetFusion.new()
+	var cible := _cellules(f["lieu"])
+	e.cible = cible[0]
+	e.niv = f["niv"]
+	for a in f["absorbees"]:
+		var c := _cellules(a["lieu"], a["cases"])
+		e.copies.append({"id": a["id"], "cellules": c[0], "cote": c[1]})
+	add_child(e)
 
 # Les affinites portent le nom de la dynastie de leur element.
 const _NOMS_ELEMENTS := {"nature": "Printemps", "feu": "Été", "automne": "Automne", "glace": "Hiver",
@@ -567,6 +593,72 @@ class Apercu extends Control:
 		for d in Data.empreinte(id, ecran.rot_prise):
 			cellules.append(Rect2(Vector2(d) * cote, Vector2(cote, cote)))
 		NidScreen.dessiner_forme(self, cellules, id, 1, cote)
+
+# Une fusion : les copies absorbees volent vers la relique qui monte de
+# niveau, puis eclat dore, anneaux et « Fusion ! ★ » qui s'eleve.
+class EffetFusion extends Control:
+	const VOL := 0.4
+	const DUREE := 1.6
+	const OR := Color("#f2c94c")
+	var cible: Array = []    # cellules de la relique fusionnee
+	var niv := 2
+	var copies: Array = []   # {id, cellules, cote}
+	var t := 0.0
+	func _ready() -> void:
+		set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+	func _process(d: float) -> void:
+		t += d
+		if t >= DUREE:
+			queue_free()
+		queue_redraw()
+	static func _boite(cellules: Array) -> Rect2:
+		var b: Rect2 = cellules[0]
+		for c in cellules:
+			b = b.merge(c)
+		return b
+	func _draw() -> void:
+		var dest := _boite(cible)
+		var centre := dest.get_center()
+		# 1. les copies filent vers la cible en retrecissant
+		if t < VOL:
+			var e := ease(t / VOL, 2.4)
+			for c in copies:
+				var depart := _boite(c["cellules"]).get_center()
+				var locales := []
+				for r in c["cellules"]:
+					locales.append(Rect2(r.position - depart, r.size))
+				var pos: Vector2 = depart.lerp(centre, e)
+				draw_circle(pos, 10.0 + 16.0 * e, Color(OR, 0.35))
+				draw_set_transform(pos, e * 0.6, Vector2.ONE * lerpf(1.0, 0.35, e))
+				NidScreen.dessiner_forme(self, locales, c["id"], 1, c["cote"])
+				draw_set_transform(Vector2.ZERO)
+			return
+		# 2. l'eclat sur la relique fusionnee
+		var u := (t - VOL) / (DUREE - VOL)
+		var flash := 1.0 - minf(u * 3.0, 1.0)
+		for r in cible:
+			draw_rect(r, Color(1.0, 0.95, 0.7, 0.75 * flash))
+		var rayon := maxf(dest.size.x, dest.size.y) * 0.5
+		for i in 3:
+			var v := clampf(u * 1.6 - i * 0.18, 0.0, 1.0)
+			if v > 0.0 and v < 1.0:
+				draw_arc(centre, rayon * (0.6 + 1.4 * v), 0, TAU, 48, Color(OR, 1.0 - v), 6.0 * (1.0 - v) + 1.0, true)
+		for i in 14:
+			var a := TAU * i / 14.0 + 0.3
+			var p := centre + Vector2.from_angle(a) * rayon * (0.5 + 1.6 * ease(u, 0.4))
+			draw_circle(p, 4.0 * (1.0 - u) + 0.5, Color(OR, 1.0 - u))
+		for r in cible:
+			draw_rect(r.grow(-2), Color(OR, 1.0 - u), false, 4.0)
+		# 3. le titre s'eleve
+		var police := ThemeDB.fallback_font
+		var texte := "Fusion !  " + "★".repeat(niv - 1)
+		var taille := int(lerpf(22.0, 34.0, minf(u * 4.0, 1.0)))
+		var y := dest.position.y - 10.0 - 40.0 * u
+		var alpha := 1.0 if u < 0.6 else 1.0 - (u - 0.6) / 0.4
+		var largeur := 320.0
+		draw_string_outline(police, Vector2(centre.x - largeur / 2, y), texte, HORIZONTAL_ALIGNMENT_CENTER, largeur, taille, 6, Color(0, 0, 0, 0.8 * alpha))
+		draw_string(police, Vector2(centre.x - largeur / 2, y), texte, HORIZONTAL_ALIGNMENT_CENTER, largeur, taille, Color(OR, alpha))
 
 class Offre extends Control:
 	var ecran: NidScreen

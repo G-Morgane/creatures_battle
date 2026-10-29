@@ -2,7 +2,7 @@
 
 **Résumé :** Un cavalier encapuchonné monte la créature ; on le choisit en début de partie pour son talent, et il tient toutes les armes du sac, chacune lançant son sort.
 **Tags :** #cavalier, #armes, #familles, #talents
-**Mis à jour :** 2026-10-28
+**Mis à jour :** 2026-10-29
 **Liens :** [[Dynasties]], [[Sac et formes]], [[Reliques]], [[Rencontres et objets neutres]], [[Équilibrage]], [[Nuit (Chauve-souris)]], [[Automne et Jour]]
 
 ---
@@ -38,15 +38,15 @@ Chaque arme appartient à une famille partagée entre Dynasties. Les futurs obje
 
 | Famille | Style | Forme | Dynasties (code actuel) |
 |---|---|---|---|
-| Tir | Rapide, plusieurs petits coups | 1 x 2 | Printemps, Crépuscule, Nuit |
-| Lame | Rapide, riposte, **coups critiques** (x1,75) | 1 x 2 | Printemps, Nuit |
-| Hast | Allonge, perce l'esquive | 1 x 3 | Hiver, Crépuscule, neutre |
-| Hache | Lent, gros coup | 2 x 2 | Hiver, Aube, Nuit |
-| Bâton | Magie, grandit avec l'affinité | 1 x 3 | Été, Aube |
-| Faux | Achève les cibles affaiblies | 1 x 3 | Été, Nuit |
+| Tir | Rapide, plusieurs petits coups | 1 x 2 | Printemps, Jour |
+| Lame | Rapide, **coups critiques** (x1,75) | 1 x 2 | Automne |
+| Hast | Allonge, **perce l'esquive et les Illusions** | 1 x 3 | Aube, neutre |
+| Hache | Lent, gros coup | 2 x 2 | Hiver |
+| Bâton | Magie, grandit avec l'affinité | 1 x 3 | Été, Crépuscule |
+| Faux | Plus forte contre une cible maudite | 1 x 3 | Nuit |
 
-- **Crit** : aucune chance de base, elles viennent des Lames et de certains objets (10 % par Lame, 25 % Dague de minuit, 15 % Lame de la veuve, 8 % Peigne).
-- **Faux** : trait commun « achever » (plus forte contre une cible affaiblie), sur lequel jouera un futur neutre. Chaque Dynastie y ajoute sa saveur.
+- **Crit** : aucune chance de base ; elles viennent des Lames (10 %, ou ce que l'arme précise) et des objets de l'Automne.
 
-**Règle d'origine :** chaque Dynastie utilise une ou deux familles ; 8 x 2 = 16 places pour 6 familles.
-**Tension :** depuis a56fabc, la Nuit touche quatre familles (Lame, Tir, Hache, Faux), et les six Dynasties faites occupent déjà 14 places. Il en reste 2 pour l'[[Automne et Jour|Automne et le Jour]], qui en voudraient 4. À trancher : assouplir la règle, ou recentrer la Nuit.
+**Décision (2026-10-29) :** **une seule famille par Dynastie**, 3 armes chacune ([[2026-10-29 Archétypes resserrés]]).
+**Pourquoi :** une identité nette ; règle la tension d'avant (la Nuit touchait quatre familles, il ne restait pas de place pour l'Automne et le Jour).
+Bâton et Tir sont partagés par des Dynasties éloignées, et les six familles restent utilisées.

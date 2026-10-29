@@ -16,18 +16,18 @@ _Catalogue des pages. Mis à jour à chaque nouvelle page._
 - [[Sac et formes]] : tapis 8 x 4, formes selon famille et rareté.
 - [[Boutique et économie]] : prix, courbe de rareté, gel, fusion.
 - [[Combat]] : simulation déterministe, pas d'avantage élémentaire, états.
-- [[Reliques]] : essence, sort, catalyseur, arme.
+- [[Reliques]] : essence, sort, catalyseur, arme ; 7 de monture et 3 armes par Dynastie.
 - [[Cavaliers et armes]] : talents des cavaliers, familles d'armes, crit.
 
 **Dynasties**
 - [[Dynasties]] : vue d'ensemble, hybrides, paires à garder distinctes.
-- [[Printemps (Cerf)]] : épines et poison.
-- [[Été (Phénix)]] : brûlure, combustion, Braise.
-- [[Hiver (Ours)]] : givre et bouclier qui se brise.
-- [[Nuit (Chauve-souris)]] : vol de vie, malédictions, crit.
-- [[Aube (Lion)]] : soin et Éclat.
-- [[Crépuscule (Papillon)]] : Transfert.
-- [[Automne et Jour]] : à concevoir.
+- [[Printemps (Cerf)]] : qui me touche s'empoisonne.
+- [[Été (Phénix)]] : allumer puis consumer.
+- [[Hiver (Ours)]] : ralentir jusqu'au gel.
+- [[Nuit (Chauve-souris)]] : affaiblir avant de frapper (malédictions).
+- [[Aube (Lion)]] : soigner pour frapper (Éclat).
+- [[Crépuscule (Papillon)]] : sorts et Illusions.
+- [[Automne et Jour]] : esquive et crit ; Éventail d'armes.
 
 **Adversaires**
 - [[Élites et gardiens]] : trois élites, le Bastion endormi, pistes.
@@ -59,3 +59,4 @@ _Catalogue des pages. Mis à jour à chaque nouvelle page._
 - [[2026-10-28 Refonte de la boutique]] : 9 offres en 3 x 3, sac qui grandit case par case, plus d'aperçu de la monture
 - [[2026-10-28 Reliques de placement]] : six mécaniques de placement, plus de neutres, arène agrandie
 - [[2026-10-29 Niveau]] : niveau passif, +PV et une case de sac par niveau
+- [[2026-10-29 Archétypes resserrés]] : 10 objets et un principe par Dynastie, huit Dynasties jouables, fusion 3 puis 2

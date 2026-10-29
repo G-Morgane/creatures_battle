@@ -109,5 +109,3 @@ func _reliques(par_relique: Dictionary) -> void:
 	print("Reliques, pires : " + ", ".join(ids.slice(-8).map(f)))
 	var absentes := Data.RELIQUES.keys().filter(func(id): return not par_relique.has(id) or par_relique[id][0] < 30)
 	print("Reliques trop peu vues : " + ", ".join(absentes.map(func(id): return "%s (%d)" % [id, par_relique.get(id, [0])[0]])))
-	var nouvelles := ["calice", "cadran", "mousse", "stalagmite", "trainee", "reflet", "terreau"]
-	print("Nouvelles reliques : " + ", ".join(nouvelles.filter(func(id): return par_relique.has(id)).map(f)))
