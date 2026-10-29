@@ -23,11 +23,11 @@ Code : `crepuscule`. Familles d'armes : **Tir et Hast**. Fait.
 ## Décisions de chiffres
 
 - Chaque source de Transfert a une **puissance** : quantité volée, et dégâts du projectile.
-- **Cocon** : 20 de bouclier au départ, **+3 à chaque Transfert**.
+- **Cocon** : 30 de bouclier au départ, **+3 à chaque Transfert**.
   **Pourquoi :** la version « plus gros pour chaque malus adverse » ne servait à rien en début de combat, quand personne n'a de malus.
 - **Inversion** (légendaire) : à 12 s, échange les pourcentages de vie. Volontairement folle, à tester avec prudence.
 
-Chiffres : Battement d'ailes 10 + 0,5 par point toutes les 5 s, Poudre d'écailles 4 de bouclier volé par attaque, Mue x1,5, Brume 8 PV par vol, Aile de lune +2 Braise pendant 3 s.
+Chiffres : Battement d'ailes 10 + 0,5 par point toutes les 5 s, Poudre d'écailles 4 de bouclier volé par attaque, Mue x1,5, Brume 12 PV par vol, Aile de lune +2 Braise pendant 3 s.
 
 ## Pistes d'apparence
 

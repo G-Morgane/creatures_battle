@@ -17,3 +17,4 @@ _Ajout seulement. Une ligne par ingestion, question, discussion ou passe de nett
 | 2026-10-28 | maj | Rééquilibrage de l Été (renaissance 50 %, brûlure 2/s sur 5 s, Traînée +50 %) → Équilibrage, Été (Phénix), CONCEPTION.md |
 | 2026-10-29 | maj | « PV de run » renommés « Ferveur » (confusion avec les PV de la monture) → Run et carte, Rencontres, Adversaire fantôme, CONCEPTION.md |
 | 2026-10-29 | discussion | Niveau passif (XP par nœud, +20 PV et une case de sac par niveau) → Run et carte, Sac et formes |
+| 2026-10-29 | maj | Rééquilibrage du Crépuscule (arcane x1,5, Brume 12, Cocon 30, signature 4) → Équilibrage, Crépuscule (Papillon), Reliques, CONCEPTION.md |

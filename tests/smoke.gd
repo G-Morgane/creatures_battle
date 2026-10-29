@@ -960,7 +960,7 @@ func _crepuscule() -> bool:
 	# poudres : 4 x 1,5 chacune (toutes deux a cote du pollen) ; battement : (10 + 0,5 x crepuscule 8) x 1,5
 	ok = _verifier(is_equal_approx(cr["poudre"], 4.0 * 1.5 * 2), "pollen renforce les poudres voisines") and ok
 	ok = _verifier(is_equal_approx(cr["sorts"][0]["puissance"], (10.0 + 0.5 * 8) * 1.5), "battement : puissance et pollen") and ok
-	ok = _verifier(cr["bouclier"] == 20.0, "cocon : bouclier de depart") and ok
+	ok = _verifier(cr["bouclier"] == Data.RELIQUES["cocon"]["bouclier"], "cocon : bouclier de depart") and ok
 	# renvoyer le malus le plus lourd
 	var c := Combat.new(cr, vide)
 	c.cotes[0]["poison"] = 12.0
@@ -972,7 +972,7 @@ func _crepuscule() -> bool:
 	c.cotes[0]["givre"] = 0.0
 	var b0: float = c.cotes[0]["bouclier"]
 	c._transfert(c.cotes[0], c.cotes[1], "renvoyer", 10.0)
-	ok = _verifier(c.cotes[1]["pv"] == pv - 10.0 and c.evenements.any(func(e): return e["type"] == "arcane"), "rien a renvoyer : projectile d'arcane") and ok
+	ok = _verifier(is_equal_approx(c.cotes[1]["pv"], pv - 10.0 * Data.ARCANE_PAR_PUISSANCE) and c.evenements.any(func(e): return e["type"] == "arcane"), "rien a renvoyer : projectile d'arcane") and ok
 	ok = _verifier(c.cotes[0]["bouclier"] == b0 + 3.0, "cocon : bouclier a chaque transfert") and ok
 	# un non-Papillon ne tire pas d'arcane
 	var n := Nid.new()
@@ -1008,7 +1008,7 @@ func _crepuscule() -> bool:
 	var g := Combat.new(ph.eclore(), vide)
 	pv = g.cotes[1]["pv"]
 	g._transfert(g.cotes[0], g.cotes[1], "renvoyer", 5.0)
-	ok = _verifier(is_equal_approx(pv - g.cotes[1]["pv"], 5.0 + Data.ATTAQUE_BASE), "phalene : arcane puis attaque") and ok
+	ok = _verifier(is_equal_approx(pv - g.cotes[1]["pv"], 5.0 * Data.ARCANE_PAR_PUISSANCE + Data.ATTAQUE_BASE), "phalene : arcane puis attaque") and ok
 	# chrysalide : sous la moitie, renvoie tout et vole tout
 	var ch := Nid.new()
 	ch.placer(Vector2i(0, 0), "chrysalide")

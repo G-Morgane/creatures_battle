@@ -62,9 +62,9 @@ const CARILLON_TOUS := 3
 # Papillon : Transfert = renvoyer un malus (poison, brulure, givre, maledictions) ou
 # voler un bonus (bouclier, Braise, jauge d'Eclat, bonus d'epines). Chaque source a
 # une puissance : quantite volee, et degats du projectile d'arcane si rien a deplacer.
-const ARCANE_PAR_PUISSANCE := 1.0
+const ARCANE_PAR_PUISSANCE := 1.5
 const MUE := 1.5                   # malus renvoye renforce
-const BRUME_SOIN := 8.0
+const BRUME_SOIN := 12.0
 const AILE_BRAISE := 2.0           # hate volee : Braise temporaire
 const AILE_DUREE := 3.0
 const CHRYSALIDE_SEUIL := 0.5
@@ -248,7 +248,7 @@ const RELIQUES := {
 	"poudre":         {"nom": "Poudre d'écailles","element": "crepuscule", "affinite": 2, "type": "essence",
 		"poudre": 4.0},
 	"cocon":          {"nom": "Cocon",          "element": "crepuscule", "affinite": 2, "type": "essence",
-		"bouclier": 20.0, "cocon": 3.0},
+		"bouclier": 30.0, "cocon": 3.0},
 	"pollen":         {"nom": "Pollen doré",    "element": "crepuscule", "affinite": 1, "type": "catalyseur",
 		"effet": "transfert", "valeur": 0.5},
 	"mue":            {"nom": "Mue",            "element": "crepuscule", "affinite": 1, "type": "essence", "rarete": "rare",
@@ -476,7 +476,7 @@ const NIVEAU_MULT := [0.0, 1.0, 2.5, 6.0]
 # Signature de dynastie : a chaque activation, un sort ou une arme ajoute un
 # petit effet de son element (x niveau). Brulure, poison et givre en charges,
 # drain (passe le bouclier et soigne), soin, projectile d'arcane en degats.
-const SIGNATURES := {"feu": 1.0, "nature": 1.0, "glace": 1.0, "nuit": 3.0, "aube": 3.0, "crepuscule": 3.0}
+const SIGNATURES := {"feu": 1.0, "nature": 1.0, "glace": 1.0, "nuit": 3.0, "aube": 3.0, "crepuscule": 4.0}
 const NOMS_SIGNATURE := {"feu": "%s brûlure", "nature": "%s dose de poison", "glace": "%s givre",
 	"nuit": "draine %s PV", "aube": "soigne %s PV", "crepuscule": "projectile d'arcane de %s"}
 # Une essence n'a pas d'activation : elle donne cette part de sa signature a

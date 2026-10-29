@@ -55,3 +55,10 @@ Les chiffres de Cerf, Ours et Lion viennent d'être modifiés (pas encore commit
 - Prix ou force des armes en grand nombre.
 - Plafonds du Printemps (x2 épines, 100 doses de poison).
 - Inversion du Crépuscule.
+
+## Rééquilibrage du Crépuscule (2026-10-29)
+
+**Constat (200 runs, avec le niveau passif) :** Crépuscule 14 % ; il subit le plus de dégâts avec l'Été (612 par combat) pour 499 infligés.
+**Décision :** projectiles d'arcane x1,5 (`ARCANE_PAR_PUISSANCE`), Brume 12 PV par vol (au lieu de 8), Cocon 30 de bouclier (au lieu de 20), signature 4 (au lieu de 3).
+**Résultat (200 runs) :** Crépuscule 33 %, 559 infligés pour 547 subis. Aube 52 %, Printemps 52 %, Nuit 49 %, Hiver 24 %, Été 18 %.
+**À suivre :** l'Été est retombé à 18 % depuis le niveau passif (il subit 634 par combat) ; l'Hiver reste bas (24 %), ses communs Flocon, Galet et Fourrure ferment le classement.

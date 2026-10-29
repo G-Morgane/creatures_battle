@@ -684,11 +684,11 @@ le Lion est contré par la Nature (Belladone) et la Nuit (Flétrissure), adouci 
 ### Crépuscule (Papillon) : Transfert
 
 **Fait** (images de `images/`). Chaque source de Transfert a une **puissance** : quantité volée,
-et dégâts du projectile d'arcane quand il n'y a rien à déplacer. Battement d'ailes 10 + 0,5 par
-point de Crépuscule toutes les 5 s ; Poudre d'écailles 4 de bouclier volé par attaque ; Cocon 20 de
+et dégâts du projectile d'arcane (x1,5) quand il n'y a rien à déplacer. Battement d'ailes 10 + 0,5 par
+point de Crépuscule toutes les 5 s ; Poudre d'écailles 4 de bouclier volé par attaque ; Cocon 30 de
 bouclier au départ et **+3 de bouclier à chaque Transfert** (tel qu'écrit au départ, « plus gros
 pour chaque malus adverse », il ne servait à rien en début de combat, quand personne ne porte de
-malus) ; Mue x1,5 ; Brume 8 PV par vol ; Aile de lune +2 Braise pendant 3 s ; Inversion à 12 s.
+malus) ; Mue x1,5 ; Brume 12 PV par vol ; Aile de lune +2 Braise pendant 3 s ; Inversion à 12 s.
 « Le malus le plus lourd » : poison, brûlure, givre ou malédictions selon la quantité portée.
 
 **Le moment où tout s'inverse.** Le Papillon **vole les bonus** de l'adversaire et lui **renvoie ses
