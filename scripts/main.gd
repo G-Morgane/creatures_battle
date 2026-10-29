@@ -1,7 +1,7 @@
 extends Node
 
 # Une run : choix des dynasties -> Nid (boutique facultative) -> carte -> noeud
-# -> Nid, jusqu'au dernier boss ou a 0 PV de run. La partie survit aux
+# -> Nid, jusqu'au dernier boss ou a 0 Ferveur. La partie survit aux
 # allers-retours. Le glossaire est par-dessus tout.
 
 var partie: Partie

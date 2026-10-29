@@ -13,7 +13,7 @@
 
 - 6 Dynasties au format 15 objets (Printemps, Été, Hiver, Aube, Crépuscule, Nuit) + Lance du guet.
 - Hybrides (28 images) dès 2 objets d'une seconde Dynastie.
-- Run sur carte : 3 actes de 10 étages, PV de run, boutique facultative, trois rencontres.
+- Run sur carte : 3 actes de 10 étages, Ferveur, boutique facultative, trois rencontres.
 - Trois élites à règle, gardien de l'acte I (Bastion endormi).
 - Sac de 4 à 8 colonnes, formes, rotation, rareté, fusion, gel.
 - Choix des dynasties, choix du cavalier et talents, glossaire, blasons.

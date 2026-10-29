@@ -10,7 +10,7 @@
 ## Tapis
 
 - 8 colonnes sur 4 rangées. Départ : les 4 colonnes du centre (16 cases), plus 4 cases offertes à placer avec le talent Croissance ([[Cavaliers et armes#Talents des cavaliers]]).
-- On agrandit d'**une case à la fois, au choix**, forcément collée au sac : « Agrandir » en boutique (2 or, puis +1 à chaque case achetée), ou une case offerte après les boss des actes 1 et 2. Le sac peut prendre n'importe quelle forme dans le damier. **Pourquoi :** décidé le 2026-10-28 ([[2026-10-28 Refonte de la boutique]]), pour que la forme du sac devienne un choix de construction.
+- On agrandit d'**une case à la fois, au choix**, forcément collée au sac : « Agrandir » en boutique (2 or, puis +1 à chaque case achetée), ou une case offerte après les boss des actes 1 et 2, et une à chaque niveau gagné ([[Run et carte#Niveau]]). Le sac peut prendre n'importe quelle forme dans le damier. **Pourquoi :** décidé le 2026-10-28 ([[2026-10-28 Refonte de la boutique]]), pour que la forme du sac devienne un choix de construction.
 - Rendu : tuiles de `images/tapis`, découpées de `damier_items.png` ; chaque case prend la tuile dont les bords en cuir correspondent à sa place, une case sur deux est assombrie.
 
 ## Formes (`Data.empreinte`)

@@ -92,7 +92,7 @@ entre chaque nœud.
 | **Duel** | PvP asynchrone : le Nid d'un autre joueur, enregistré au même stade | Or |
 | **Élite** | PvE : une créature plus forte, avec un gimmick lisible | Or et choix d'une relique rare ou mieux |
 | **Rencontre** | Événement à choix (voir plus bas) | Variable, parfois un prix à payer |
-| **Feu de camp** | Repos : rendre des PV de run, ou une fusion gratuite | |
+| **Feu de camp** | Repos : raviver la Ferveur, ou une fusion gratuite | |
 | **Boss** | Fin d'acte, PvE | Relique légendaire au choix |
 
 Génération (`scripts/carte.gd`) : le premier étage est fait de Duels, l'étage avant le boss de
@@ -160,13 +160,13 @@ une relance la dégèle. Une relique offerte (élite, boss) prend alors une plac
 Comme dans TFT : **après chaque nœud, la boutique est ouverte mais facultative**. On achète,
 relance, réorganise le Nid, ou l'on passe directement au nœud suivant. L'or non dépensé se garde.
 
-### PV de run
+### Ferveur
 
-Les **PV de run** remplacent « 7 victoires ou 3 défaites ». À 0, la run est perdue.
+La **Ferveur** (la volonté du cavalier de poursuivre la quête) remplace « 7 victoires ou 3 défaites ». À 0, la run est perdue.
 - Une défaite coûte des PV selon le nœud (Duel peu, Élite plus, Boss beaucoup) et la force
   de ce qui reste à l'adversaire, comme dans TFT.
 - Une égalité ne coûte rien.
-- Prototype : **60 PV de run**. Défaite : Duel 3, Élite 6, Boss 10, plus jusqu'à 8 selon les PV
+- Prototype : **60 de Ferveur**. Défaite : Duel 3, Élite 6, Boss 10, plus jusqu'à 8 selon les PV
   qui restaient à l'adversaire. Feu de camp : +20. Perdre un boss coûte des PV mais on passe
   quand même à l'acte suivant ; le boss du dernier acte termine la run.
 - Élite battue : une relique **épique offerte** dans la boutique (de l'élément du Nid si possible).
@@ -188,7 +188,7 @@ manche à la fois (sans cela, une run coûtait des secondes).
 
 ### Duels : PvP asynchrone
 
-- À chaque Duel, on enregistre son Nid (reliques, niveaux, arme) avec l'acte, le nœud et ses PV de run.
+- À chaque Duel, on enregistre son Nid (reliques, niveaux, arme) avec l'acte, le nœud et sa Ferveur.
 - L'adversaire est tiré parmi les Nids enregistrés **au même stade**, de préférence à PV proches.
 - Le combat est déterministe : le Nid enregistré rejoue exactement. Seul le joueur qui joue
   perd ou gagne quelque chose ; le Nid enregistré ne subit rien.
@@ -220,15 +220,15 @@ Pistes :
 ### Rencontres (hommages)
 
 - **Le Heaume qui Juge** : il te range dans une Dynastie et te donne une relique de départ.
-- **Le Pont des Lames** : une épreuve ; réussir paye bien, échouer coûte des PV de run.
-- **Le Grand Chaudron** : un pacte, une relique puissante contre des PV de run.
+- **Le Pont des Lames** : une épreuve ; réussir paye bien, échouer coûte de la Ferveur.
+- **Le Grand Chaudron** : un pacte, une relique puissante contre de la Ferveur.
 - **Le Marché Gobelin** : des échanges étranges (une relique contre deux, une rareté au hasard).
 
 ### Objets neutres (hommages)
 
 Ils visent une famille d'armes (voir Familles d'armes). Pistes :
 - **Lueur-d'Alarme** (Lame) : la dague brille face aux élites et y frappe plus fort.
-- **L'Épée des Braves** : n'apparaît qu'aux joueurs à faibles PV de run.
+- **L'Épée des Braves** : n'apparaît qu'aux joueurs à faible Ferveur.
 - **La Lame de Rubis** (Lame ou Hache).
 
 ### Boutique et or
@@ -766,7 +766,7 @@ On adapte son Nid à ce qu'on affronte, pas à une couleur.
 
 - 6 Dynasties au format 15 objets : Printemps, Été, Hiver, Aube, Crépuscule, Nuit ; 1 arme neutre
   (Lance du guet). Restent l'Automne (Renard) et le Jour (Paon), montures prêtes. Vent et Terre sont retirés.
-- Run sur carte : 3 actes de 10 étages, PV de run, boutique facultative entre les nœuds,
+- Run sur carte : 3 actes de 10 étages, Ferveur, boutique facultative entre les nœuds,
   trois rencontres. Trois élites à règle et le gardien de l'acte I (Bastion endormi) ; les boss
   des actes II et III sont encore des fantômes en avance.
 - Choix des dynasties, puis du cavalier et de son talent.

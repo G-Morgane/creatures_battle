@@ -54,7 +54,7 @@ func _ready() -> void:
 
 func _rafraichir() -> void:
 	barre.text = "Acte %d sur %d" % [partie.acte + 1, Carte.ACTES]
-	compteurs["vie"].text = "%d / %d" % [partie.pv_run, Partie.PV_RUN]
+	compteurs["vie"].text = "%d / %d" % [partie.ferveur, Partie.FERVEUR]
 	compteurs["victoires"].text = "%d" % partie.victoires
 	compteurs["or"].text = "%d" % partie.bourse
 	queue_redraw()

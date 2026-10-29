@@ -202,6 +202,12 @@ func _combat_anime() -> bool:
 func _partie() -> bool:
 	var p := Partie.new(42)
 	var ok := _verifier(Partie.new(42).offres == p.offres, "meme graine, meme boutique")
+	# niveau : passe au 2 apres le deuxieme noeud, +PV et une case offerte
+	var nv := Partie.new(7)
+	ok = _verifier(nv.niveau() == 1 and nv._avancer() == 0 and nv._avancer() == 1 and nv.niveau() == 2, "niveau 2 au deuxieme noeud") and ok
+	ok = _verifier(nv.cases_offertes == 1, "niveau : une case de sac offerte") and ok
+	ok = _verifier(is_equal_approx(nv.creature_joueur()["pv_max"], Data.PV_BASE + Partie.PV_PAR_NIVEAU), "niveau : +PV a la monture") and ok
+	ok = _verifier(Partie.niveau_pour(999) == Partie.XP_NIVEAUX.size(), "niveau plafonne") and ok
 	ok = _verifier(p.offres.size() == Partie.TAILLE_BOUTIQUE and p.bourse == Partie.OR_PAR_MANCHE, "depart : 9 offres, 10 or") and ok
 	p.offres[0] = "charbon"
 	p.offres[1] = "baton_braise"
@@ -456,11 +462,11 @@ func _run() -> bool:
 	var p := Partie.new(11)
 	var ok := _verifier(not p.entrer(999) and p.entrer(p.accessibles()[0]) and p.combat(), "entrer dans un duel de depart")
 	p.conclure_combat(1, 0.5)
-	ok = _verifier(p.pv_run == Partie.PV_RUN - Partie.PERTE["duel"] - 4 and p.manche == 2 and p.bourse == 20, "defaite : PV de run perdus selon ce qui reste a l'adversaire, +10 or") and ok
+	ok = _verifier(p.ferveur == Partie.FERVEUR - Partie.PERTE["duel"] - 4 and p.manche == 2 and p.bourse == 20, "defaite : Ferveur perdue selon ce qui reste a l'adversaire, +10 or") and ok
 	# feu de camp
 	p.noeud()["type"] = "feu"
 	p.conclure()
-	ok = _verifier(p.pv_run == Partie.PV_RUN, "feu de camp : soin plafonne") and ok
+	ok = _verifier(p.ferveur == Partie.FERVEUR, "feu de camp : soin plafonne") and ok
 	# victoire contre une elite : relique epique offerte, qui survit a la relance
 	p.noeud()["type"] = "elite"
 	p.conclure_combat(0)
@@ -474,14 +480,17 @@ func _run() -> bool:
 	p.entrer(p.accessibles()[0])
 	p.noeud()["type"] = "rencontre"
 	p.rencontre = {"id": "chaudron"}
-	var pv := p.pv_run
+	var pv := p.ferveur
 	p.choisir(0)
-	ok = _verifier(p.pv_run == pv - Partie.CHAUDRON_PV and Data.rarete(p.offres[0]) == "legendaire", "chaudron : legendaire contre des PV") and ok
+	ok = _verifier(p.ferveur == pv - Partie.CHAUDRON_PV and Data.rarete(p.offres[0]) == "legendaire", "chaudron : legendaire contre de la Ferveur") and ok
 	# boss : acte suivant, dernier boss : fin de run
 	p.noeud()["type"] = "boss"
+	var offertes := p.cases_offertes
+	var niv := p.niveau()
 	p.conclure_combat(0)
 	ok = _verifier(p.acte == 1 and p.position == -1 and p.chemin.is_empty() and not p.terminee(), "boss battu : acte suivant") and ok
-	ok = _verifier(p.cases_offertes == 1 and p.agrandir(Vector2i(1, 0)) and p.nid.places() == 17, "boss battu : une case offerte") and ok
+	# une case pour le boss, plus une par niveau gagne au passage
+	ok = _verifier(p.cases_offertes == offertes + 1 + p.niveau() - niv and p.agrandir(Vector2i(1, 0)) and p.nid.places() == 17, "boss battu : une case offerte") and ok
 	p.acte = Carte.ACTES - 1
 	p.entrer(p.accessibles()[0])
 	p.noeud()["type"] = "boss"
@@ -489,9 +498,9 @@ func _run() -> bool:
 	ok = _verifier(p.terminee() and p.gagnee, "dernier boss battu : run gagnee") and ok
 	var q := Partie.new(12)
 	q.entrer(q.accessibles()[0])
-	q.pv_run = 2
+	q.ferveur = 2
 	q.conclure_combat(1, 1.0)
-	return _verifier(q.terminee() and not q.gagnee and q.accessibles().is_empty(), "0 PV de run : run perdue") and ok
+	return _verifier(q.terminee() and not q.gagnee and q.accessibles().is_empty(), "0 Ferveur : run perdue") and ok
 
 func _fusion() -> bool:
 	var n := Nid.new()

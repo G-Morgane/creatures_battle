@@ -61,7 +61,7 @@ godot --headless --path . -s res://outils/decouper_icones.gd
 - `images/damier_items.png` : les 16 tuiles du tapis du sac, découpées par l'outil d'images dans `images/tapis/`
 - `scripts/carte.gd` : carte d'une run (3 actes, étages, types de nœuds)
 - `scripts/carte_screen.gd` : écran de la carte et des rencontres
-- `scripts/partie.gd` : run (PV de run, nœuds, récompenses, rencontres), bourse, boutique, rareté, adversaire fantôme
+- `scripts/partie.gd` : run (Ferveur, nœuds, récompenses, rencontres), bourse, boutique, rareté, adversaire fantôme
 - `scripts/joueur_auto.gd` : joueur automatique (simulation, adversaire fantôme)
 - `scripts/nid_screen.gd` : écran du Nid (boutique, glisser-déposer)
 - `scripts/combat_screen.gd` : rejoue le combat simulé (barres de PV, sorts, brûlure)

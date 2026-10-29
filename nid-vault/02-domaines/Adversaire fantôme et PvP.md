@@ -9,7 +9,7 @@
 
 ## PvP asynchrone (à faire)
 
-- À chaque Duel, on enregistre son Nid (reliques, niveaux, armes) avec l'acte, le nœud et les PV de run.
+- À chaque Duel, on enregistre son Nid (reliques, niveaux, armes) avec l'acte, le nœud et sa Ferveur.
 - L'adversaire est tiré parmi les Nids enregistrés **au même stade**, de préférence à PV proches.
 - Le combat est [[Combat|déterministe]] : le Nid enregistré rejoue exactement. Seul le joueur actif gagne ou perd quelque chose.
 - Serveur : une table de Nids, Supabase suffit.

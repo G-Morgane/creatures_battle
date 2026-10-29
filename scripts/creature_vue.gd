@@ -24,7 +24,7 @@ var elan_cavalier := 0.0
 var zoom := 1.0
 # En arene : le cavalier se tient au sol devant sa monture, pas sur son dos.
 var a_terre := false
-const SOL_CAVALIER := Vector2(130, 95)   # ses pieds, dans le repere des formes
+const SOL_CAVALIER := Vector2(70, 95)   # ses pieds, dans le repere des formes
 const TAILLE_A_TERRE := 0.85
 var t := 0.0
 var pulse := 1.0
@@ -55,9 +55,15 @@ func source(cavalier: bool) -> Vector2:
 
 # Au sol (a_terre), le phenix, la chauve-souris et le papillon volent au-dessus de leur ombre.
 const VOL := {"feu": 40.0, "nuit": 50.0, "crepuscule": 70.0}
+# Elites ailees, idem.
+const VOL_ELITE := {"phalene": 60.0}
 
 func _vol() -> float:
-	return VOL.get(forme, 0.0) if a_terre and hybride == "" and elite == "" else 0.0
+	if not a_terre or hybride != "":
+		return 0.0
+	if elite != "":
+		return VOL_ELITE.get(elite, 0.0)
+	return VOL.get(forme, 0.0)
 
 func _process(delta: float) -> void:
 	t += delta

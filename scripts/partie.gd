@@ -1,7 +1,7 @@
 class_name Partie
 extends RefCounted
 
-# Une run : carte de trois actes, PV de run, bourse, boutique, Nid du joueur.
+# Une run : carte de trois actes, Ferveur, bourse, boutique, Nid du joueur.
 # Apres chaque noeud la boutique est ouverte, sans obligation d'acheter.
 # Le hasard passe par une graine : meme graine, meme carte, memes boutiques,
 # memes adversaires.
@@ -29,8 +29,13 @@ const COLONNES_DEPART := [2, 3, 4, 5]
 const PRIX_CASE := 2
 const CROISSANCE_CASES := 4
 const TAILLE_BOUTIQUE := 9   # un carre de 3 x 3 sur le comptoir
+# Niveau : l'experience monte d'un point par noeud franchi, sans rien faire.
+# XP_NIVEAUX[k] : experience totale pour atteindre le niveau k + 1. Chaque
+# niveau gagne donne PV_PAR_NIVEAU a la monture et une case de sac offerte.
+const XP_NIVEAUX := [0, 2, 5, 8, 12, 16, 21, 26]
+const PV_PAR_NIVEAU := 20.0
 
-const PV_RUN := 60
+const FERVEUR := 60
 # Une defaite coute selon le noeud, plus ce qui reste de vie a l'adversaire (comme TFT).
 const PERTE := {"duel": 3, "elite": 6, "boss": 10}
 const PERTE_RESTE := 8
@@ -68,7 +73,7 @@ var carte: Carte
 var acte := 0
 var position := -1       # noeud ou l'on est dans l'acte, -1 avant le premier
 var chemin: Array = []   # noeuds deja visites dans l'acte
-var pv_run := PV_RUN
+var ferveur := FERVEUR
 var finie := false
 var gagnee := false
 var message := ""        # resultat du dernier noeud, affiche au Nid
@@ -91,6 +96,38 @@ func _init(g := 0, dyn := []) -> void:
 	for k in TAILLE_RESERVE:
 		reserve.append({})
 	tirer()
+
+# Experience : les noeuds franchis (la manche commence a 1).
+func xp() -> int:
+	return manche - 1
+
+static func niveau_pour(x: int) -> int:
+	var n := 1
+	for k in XP_NIVEAUX.size():
+		if x >= XP_NIVEAUX[k]:
+			n = k + 1
+	return n
+
+func niveau() -> int:
+	return Partie.niveau_pour(xp())
+
+# Experience qu'il faut au total pour le niveau suivant, -1 au niveau maximum.
+func xp_suivant() -> int:
+	return XP_NIVEAUX[niveau()] if niveau() < XP_NIVEAUX.size() else -1
+
+# Les PV que le niveau ajoute a une creature.
+static func avec_niveau(cr: Dictionary, n: int) -> Dictionary:
+	cr["pv_max"] += PV_PAR_NIVEAU * (n - 1)
+	cr["niveau"] = n
+	return cr
+
+# La manche avance d'un noeud ; chaque niveau gagne offre une case de sac.
+# Renvoie le nombre de niveaux gagnes.
+func _avancer() -> int:
+	var avant := niveau()
+	manche += 1
+	cases_offertes += niveau() - avant
+	return niveau() - avant
 
 static func prix(id: String) -> int:
 	return PRIX[Data.RELIQUES[id]["type"]] + BONUS_RARETE[Data.rarete(id)]
@@ -177,7 +214,7 @@ static func avec_cavalier(cr: Dictionary, c: String) -> Dictionary:
 	return cr
 
 func creature_joueur() -> Dictionary:
-	return Partie.avec_cavalier(nid.eclore(), cavalier)
+	return Partie.avec_niveau(Partie.avec_cavalier(nid.eclore(), cavalier), niveau())
 
 func relancer() -> bool:
 	if bourse < prix_relance():
@@ -402,6 +439,8 @@ func creature_adverse() -> Dictionary:
 	# le cavalier d'en face change d'un noeud a l'autre
 	var cavs := Data.CAVALIERS.keys()
 	Partie.avec_cavalier(cr, cavs[(manche + graine) % cavs.size()])
+	# le fantome a le niveau de ses manches jouees
+	Partie.avec_niveau(cr, Partie.niveau_pour(xp() + AVANCE[noeud()["type"]]))
 	if noeud()["type"] == "boss" and acte < Data.GARDIEN_ACTE.size():
 		var g: String = Data.GARDIEN_ACTE[acte]
 		cr["elite"] = g
@@ -428,8 +467,8 @@ func conclure_combat(vainqueur: int, reste := 0.0) -> void:
 		message = "Victoire." if recompense == "" else "Victoire : relique %s offerte." % Data.NOMS_RARETE[recompense].to_lower()
 	elif vainqueur == 1:
 		var perte: int = PERTE[type] + ceili(PERTE_RESTE * clampf(reste, 0.0, 1.0))
-		pv_run -= perte
-		message = "Défaite : -%d PV de run." % perte
+		ferveur -= perte
+		message = "Défaite : -%d Ferveur." % perte
 	else:
 		message = "Égalité."
 	if type == "boss" and acte == Carte.ACTES - 1:
@@ -444,19 +483,20 @@ func conclure_combat(vainqueur: int, reste := 0.0) -> void:
 func conclure() -> void:
 	match noeud()["type"]:
 		"feu":
-			var avant := pv_run
-			pv_run = mini(PV_RUN, pv_run + SOIN_FEU)
-			message = "Feu de camp : +%d PV de run." % (pv_run - avant)
+			var avant := ferveur
+			ferveur = mini(FERVEUR, ferveur + SOIN_FEU)
+			message = "Feu de camp : +%d Ferveur." % (ferveur - avant)
 			_suivant()
 
 func _suivant(recompense := "", element := "") -> void:
-	if pv_run <= 0:
+	if ferveur <= 0:
 		finie = true
 	if noeud()["type"] == "boss" and not finie:
 		acte += 1
 		position = -1
 		chemin.clear()
-	manche += 1
+	if _avancer() > 0 and not finie:
+		message += " Niveau %d : +%d PV, une case de sac offerte." % [niveau(), PV_PAR_NIVEAU]
 	bourse += OR_PAR_MANCHE
 	relance_offerte = true
 	if not gelee:
@@ -504,11 +544,11 @@ func _preparer_rencontre() -> Dictionary:
 		"chaudron":
 			return {"id": "chaudron", "titre": "Le Grand Chaudron",
 				"texte": "Le chaudron bouillonne. Il offre une relique légendaire,\ncontre un peu de ta vie.",
-				"choix": ["Boire (-%d PV de run, relique légendaire offerte)" % CHAUDRON_PV, "Passer son chemin"]}
+				"choix": ["Boire (-%d Ferveur, relique légendaire offerte)" % CHAUDRON_PV, "Passer son chemin"]}
 		_:
 			return {"id": "pont", "titre": "Le Pont des Lames",
 				"texte": "Un pont étroit hérissé de lames. De l'autre côté, un coffre.",
-				"choix": ["Traverser (une chance sur deux : +%d or, sinon -%d PV de run)" % [PONT_OR, PONT_PV], "Contourner"]}
+				"choix": ["Traverser (une chance sur deux : +%d or, sinon -%d Ferveur)" % [PONT_OR, PONT_PV], "Contourner"]}
 
 func choisir(k: int) -> void:
 	var recompense := ""
@@ -520,9 +560,9 @@ func choisir(k: int) -> void:
 			message = "Le Heaume a parlé : %s." % Data.DYNASTIES[element]
 		"chaudron":
 			if k == 0:
-				pv_run -= CHAUDRON_PV
+				ferveur -= CHAUDRON_PV
 				recompense = "legendaire"
-				message = "Le Chaudron prend %d PV de run." % CHAUDRON_PV
+				message = "Le Chaudron prend %d de Ferveur." % CHAUDRON_PV
 			else:
 				message = "Tu laisses le Chaudron bouillonner."
 		"pont":
@@ -532,8 +572,8 @@ func choisir(k: int) -> void:
 				bourse += PONT_OR
 				message = "Traversée réussie : +%d or." % PONT_OR
 			else:
-				pv_run -= PONT_PV
-				message = "Les lames te blessent : -%d PV de run." % PONT_PV
+				ferveur -= PONT_PV
+				message = "Les lames te blessent : -%d Ferveur." % PONT_PV
 	rencontre = {}
 	_suivant(recompense, element)
 
@@ -561,7 +601,7 @@ func adversaire(avance := 0) -> Nid:
 		if f["joues"] > 0:
 			# le fantome ne se bat pas : chaque manche compte comme une victoire pour le Terreau
 			fantome.nid.saisons += 1 if fantome.nid.cases.values().has("terreau") else 0
-			fantome.manche += 1
+			fantome._avancer()
 			fantome.bourse += OR_PAR_MANCHE
 			fantome.tirer()
 		f["joueur"].jouer_manche(fantome)

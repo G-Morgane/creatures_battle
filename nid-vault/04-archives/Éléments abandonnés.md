@@ -15,7 +15,7 @@
 | Raie, Lumière | Rien | Abandonnées |
 | « Cour » | « Dynastie » | Trop proche d'un univers existant |
 | Règle des deux mains | Toutes les armes du sac lancent leur sort | Essayée puis retirée (b34ac1d) |
-| 7 victoires ou 3 défaites | PV de run | Run sur carte |
+| 7 victoires ou 3 défaites | Ferveur | Run sur carte |
 | Nœud Marché | Boutique entre chaque nœud | Redondant |
 | Anciens objets du Feu (Braise, Plume de cendre, Souffle ardent, Foyer) | Set Été actuel | Refonte |
 | Ancienne Nuit (Croc noir, Nuée, Voile, Lune creuse), Coupelle d'étain | Set Nuit actuel, Chapelet | Refonte |

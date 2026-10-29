@@ -51,7 +51,7 @@ func _simple(p: Partie) -> void:
 # Sur la carte : un feu de camp quand la vie baisse, sinon au hasard.
 func choisir_noeud(p: Partie) -> int:
 	var acc := p.accessibles()
-	if p.pv_run < Partie.PV_RUN / 2:
+	if p.ferveur < Partie.FERVEUR / 2:
 		for i in acc:
 			if p.noeuds()[i]["type"] == "feu":
 				return i
@@ -63,9 +63,9 @@ func choisir_rencontre(p: Partie) -> int:
 		"heaume":
 			return maxi(0, p.rencontre["cours"].find(element))
 		"chaudron":
-			return 0 if p.pv_run > 2 * Partie.CHAUDRON_PV else 1
+			return 0 if p.ferveur > 2 * Partie.CHAUDRON_PV else 1
 		_:
-			return 0 if p.pv_run > 2 * Partie.PONT_PV else 1
+			return 0 if p.ferveur > 2 * Partie.PONT_PV else 1
 
 # L'element le plus present dans la premiere boutique.
 func _choisir_element(p: Partie) -> String:

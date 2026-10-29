@@ -17,6 +17,7 @@ var nid: Nid:
 var cases_ui := {}   # Vector2i -> CaseNid
 var barre: Label
 var compteurs := {}     # vie, victoires, or -> Label
+var niveau_ui: Label    # niveau et experience
 var message_ui: Label
 var offres_ui: Array = []
 var relance: Button
@@ -73,6 +74,10 @@ func _ready() -> void:
 		var c: Array = Palette.compteur(nom, 20)
 		compteurs[nom] = c[1]
 		bandeau.add_child(c[0])
+	niveau_ui = _titre("")
+	niveau_ui.mouse_filter = Control.MOUSE_FILTER_STOP
+	niveau_ui.tooltip_text = "Le niveau monte d'un point d'expérience par nœud franchi. Chaque niveau : +%d PV pour la monture et une case de sac offerte." % Partie.PV_PAR_NIVEAU
+	bandeau.add_child(niveau_ui)
 	message_ui = _titre("")
 	message_ui.add_theme_color_override("font_color", Palette.TEXTE_DOUX)
 	bandeau.add_child(message_ui)
@@ -336,9 +341,11 @@ func rafraichir() -> void:
 	geler.text = "Dégeler" if partie.gelee else "Geler"
 	geler.disabled = partie.terminee()
 	barre.text = "Acte %d" % (partie.acte + 1)
-	compteurs["vie"].text = "%d / %d" % [maxi(partie.pv_run, 0), Partie.PV_RUN]
+	compteurs["vie"].text = "%d / %d" % [maxi(partie.ferveur, 0), Partie.FERVEUR]
 	compteurs["victoires"].text = "%d" % partie.victoires
 	compteurs["or"].text = "%d" % partie.bourse
+	var suivant := partie.xp_suivant()
+	niveau_ui.text = "Niveau %d" % partie.niveau() + ("" if suivant < 0 else "  (%d / %d XP)" % [partie.xp(), suivant])
 	message_ui.text = partie.message
 	if partie.terminee():
 		bouton_combat.text = ("Run gagnée !" if partie.gagnee else "Run perdue.") + " Nouvelle partie"
