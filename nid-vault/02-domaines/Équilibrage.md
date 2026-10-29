@@ -2,7 +2,7 @@
 
 **Résumé :** Comment on mesure l'équilibre (simulations de runs par joueurs automatiques) et les derniers chiffres connus.
 **Tags :** #equilibrage, #simulation, #tests
-**Mis à jour :** 2026-10-28
+**Mis à jour :** 2026-10-29
 **Liens :** [[Commandes et outils]], [[Adversaire fantôme et PvP]], [[Cavaliers et armes]], [[Élites et gardiens]], [[Combat]], [[Dynasties]]
 
 ---
@@ -62,3 +62,9 @@ Les chiffres de Cerf, Ours et Lion viennent d'être modifiés (pas encore commit
 **Décision :** projectiles d'arcane x1,5 (`ARCANE_PAR_PUISSANCE`), Brume 12 PV par vol (au lieu de 8), Cocon 30 de bouclier (au lieu de 20), signature 4 (au lieu de 3).
 **Résultat (200 runs) :** Crépuscule 33 %, 559 infligés pour 547 subis. Aube 52 %, Printemps 52 %, Nuit 49 %, Hiver 24 %, Été 18 %.
 **À suivre :** l'Été est retombé à 18 % depuis le niveau passif (il subit 634 par combat) ; l'Hiver reste bas (24 %), ses communs Flocon, Galet et Fourrure ferment le classement.
+
+## Feu de camp et rencontre sans or (2026-10-29)
+
+**Changement :** ni or ni boutique après un feu de camp ou une rencontre ; les fantômes perdent l'or d'une manche sur trois ([[Run et carte]]).
+**Résultat (200 runs) :** simple 37 % de runs gagnées (36 % avant), aléatoire 6 %. Duels 60 %, élites 42 %, boss 46 % ; durées 17 / 20 / 20 s. Par élément : Crépuscule 52 %, Nuit 49 %, Aube 48 %, Printemps 39 %, Été 25 %, Hiver 8 % (25 runs seulement).
+**Lecture :** comme les fantômes perdent autant d'or, l'équilibre ne bouge pas. L'Hiver reste le plus faible (Fourrure, Galet, Écorce, Stalagmite, Cristal, Croc du blizzard, Lance du Grand Hiver en bas du classement).

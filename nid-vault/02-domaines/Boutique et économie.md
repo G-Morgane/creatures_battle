@@ -1,15 +1,15 @@
 # Boutique et économie
 
-**Résumé :** Boutique à la TFT, facultative après chaque nœud : 9 offres en carré 3 x 3, relance à 1 or, prix selon le type et la rareté, gel, revente et fusion par trois.
+**Résumé :** Boutique à la TFT, facultative après chaque combat : 9 offres en carré 3 x 3, relance à 1 or, prix selon le type et la rareté, gel, revente et fusion par trois.
 **Tags :** #boutique, #economie, #fusion, #rarete
-**Mis à jour :** 2026-10-28
+**Mis à jour :** 2026-10-29
 **Liens :** [[Run et carte]], [[Sac et formes]], [[Reliques]], [[Équilibrage]], [[Adversaire fantôme et PvP]], [[Cavaliers et armes]]
 
 ---
 
 ## Règles
 
-- 10 or par nœud (à régler sur la carte), l'or non dépensé se garde. Un bonus par victoire existe (`OR_PAR_VICTOIRE`) mais vaut 0.
+- 10 or par combat (feu de camp et rencontre : ni or ni boutique, [[Run et carte]]), l'or non dépensé se garde. Un bonus par victoire existe (`OR_PAR_VICTOIRE`) mais vaut 0.
 - 9 offres en carré de 3 x 3 ([[2026-10-28 Refonte de la boutique]]), relance à 1 or. Talent Érudit : première relance de chaque boutique gratuite.
 - **Prix** : essence 3, sort 4, catalyseur 4, arme 5, plus la rareté (rare +2, épique +4, légendaire +7).
 - On achète **en posant** l'offre dans le Nid. Revente à moitié prix (au moins 1 or), en ramenant la relique à la boutique ou par clic droit.

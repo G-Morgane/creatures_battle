@@ -2,7 +2,8 @@ class_name Partie
 extends RefCounted
 
 # Une run : carte de trois actes, Ferveur, bourse, boutique, Nid du joueur.
-# Apres chaque noeud la boutique est ouverte, sans obligation d'acheter.
+# Apres chaque combat la boutique est ouverte, sans obligation d'acheter ; un
+# feu de camp ou une rencontre ne donne ni or ni boutique, on reste sur la carte.
 # Le hasard passe par une graine : meme graine, meme carte, memes boutiques,
 # memes adversaires.
 
@@ -505,6 +506,13 @@ func _suivant(recompense := "", element := "") -> void:
 		chemin.clear()
 	if _avancer() > 0 and not finie:
 		message += " Niveau %d : +%d PV, une case de sac offerte." % [niveau(), PV_PAR_NIVEAU]
+	# feu de camp et rencontre : ni or ni nouvelle boutique, la recompense
+	# attend dans la boutique en cours
+	if not combat():
+		if recompense != "":
+			offrir(recompense, element)
+			message += " Relique %s offerte dans la boutique du Nid." % Data.NOMS_RARETE[recompense].to_lower()
+		return
 	bourse += OR_PAR_MANCHE
 	relance_offerte = true
 	if not gelee:
@@ -610,8 +618,11 @@ func adversaire(avance := 0) -> Nid:
 			# le fantome ne se bat pas : chaque manche compte comme une victoire pour le Terreau
 			fantome.nid.saisons += 1 if fantome.nid.cases.values().has("terreau") else 0
 			fantome._avancer()
-			fantome.bourse += OR_PAR_MANCHE
-			fantome.tirer()
+			# une manche sur trois est un feu de camp ou une rencontre (environ un
+			# tiers des noeuds de la carte) : ni or ni boutique, comme le joueur
+			if f["joues"] % 3 != 0:
+				fantome.bourse += OR_PAR_MANCHE
+				fantome.tirer()
 		f["joueur"].jouer_manche(fantome)
 		f["joues"] += 1
 	return fantome.nid

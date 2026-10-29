@@ -3,7 +3,7 @@ extends Control
 
 # Carte de l'acte en cours : les etages de gauche a droite, le boss au bout.
 # On clique un noeud accessible pour y entrer. Une rencontre s'ouvre ici,
-# un combat part dans l'arene, le feu de camp ramene au Nid.
+# un combat part dans l'arene ; apres un feu de camp ou une rencontre on reste ici.
 
 signal combat
 signal fini
@@ -24,6 +24,7 @@ var t := 0.0
 var barre: Label
 var compteurs := {}
 var panneau: PanelContainer
+var message_ui: Label
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -40,6 +41,12 @@ func _ready() -> void:
 		var c: Array = Palette.compteur(nom)
 		compteurs[nom] = c[1]
 		bandeau.add_child(c[0])
+	# resultat du feu de camp ou de la rencontre, sous le bandeau
+	message_ui = Label.new()
+	message_ui.position = Vector2(32, 60)
+	message_ui.add_theme_font_size_override("font_size", 16)
+	message_ui.add_theme_color_override("font_color", Palette.TEXTE_DOUX)
+	add_child(message_ui)
 	var nid := Button.new()
 	nid.text = "Retour au Nid"
 	nid.custom_minimum_size = Vector2(160, 40)
@@ -57,6 +64,7 @@ func _rafraichir() -> void:
 	compteurs["vie"].text = "%d / %d" % [partie.ferveur, Partie.FERVEUR]
 	compteurs["victoires"].text = "%d" % partie.victoires
 	compteurs["or"].text = "%d" % partie.bourse
+	message_ui.text = partie.message
 	queue_redraw()
 
 func _process(delta: float) -> void:
@@ -184,7 +192,15 @@ func entrer(i: int) -> void:
 		_rencontre()
 	else:
 		partie.conclure()
+		_apres()
+
+# Feu de camp ou rencontre : on reste sur la carte, sauf si la run est finie.
+func _apres() -> void:
+	if partie.terminee():
 		fini.emit()
+	else:
+		survol = -1
+		_rafraichir()
 
 func _rencontre() -> void:
 	panneau = PanelContainer.new()
@@ -214,7 +230,9 @@ func _rencontre() -> void:
 		b.custom_minimum_size.y = 42
 		b.pressed.connect(func():
 			partie.choisir(k)
-			fini.emit())
+			panneau.queue_free()
+			panneau = null
+			_apres())
 		pile.add_child(b)
 	add_child(panneau)
 	panneau.reset_size()

@@ -157,7 +157,7 @@ le joueur aléatoire à 0 % : les fantômes, qui achètent les armes en premier,
 **Geler** la boutique garde ses offres pour le prochain passage (les achetées restent vides) ;
 une relance la dégèle. Une relique offerte (élite, boss) prend alors une place vide.
 
-Comme dans TFT : **après chaque nœud, la boutique est ouverte mais facultative**. On achète,
+Comme dans TFT : **après chaque combat, la boutique est ouverte mais facultative**. On achète,
 relance, réorganise le Nid, ou l'on passe directement au nœud suivant. L'or non dépensé se garde.
 
 ### Ferveur
@@ -233,7 +233,7 @@ Ils visent une famille d'armes (voir Familles d'armes). Pistes :
 
 ### Boutique et or
 
-- **10 or par nœud** (valeur du prototype, à régler sur la carte), l'or non dépensé se garde.
+- **10 or par combat** ; feu de camp et rencontre ne donnent ni or ni boutique (on reste sur la carte). L'or non dépensé se garde.
 - **5 offres** tirées au hasard, **relance pour 1 or**.
 - Prix : essence 3, sort 4, catalyseur 4, arme 5.
 - **On achète en posant** : glisser une offre dans une case vide du Nid.

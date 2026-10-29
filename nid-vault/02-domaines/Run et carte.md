@@ -2,7 +2,7 @@
 
 **Résumé :** Une run, c'est 3 actes de 10 étages sur une carte à embranchements, avec une jauge de Ferveur et une boutique facultative entre chaque nœud.
 **Tags :** #run, #carte, #roguelike
-**Mis à jour :** 2026-10-28
+**Mis à jour :** 2026-10-29
 **Liens :** [[Boutique et économie]], [[Élites et gardiens]], [[Rencontres et objets neutres]], [[Adversaire fantôme et PvP]], [[Sac et formes]], [[Équilibrage]], [[Cavaliers et armes]]
 
 ---
@@ -23,7 +23,7 @@
 | Boss | Gardien de fin d'acte | Légendaire offerte ; +1 colonne de sac après les actes 1 et 2 |
 
 **Décision :** le Marché est retiré de la carte.
-**Pourquoi :** la boutique est déjà ouverte entre chaque nœud.
+**Pourquoi :** la boutique est déjà ouverte après chaque combat.
 Retiré du code et de CONCEPTION.md.
 
 ## Ferveur
@@ -47,3 +47,10 @@ Bouton Glossaire (ou F1) en haut à droite de tous les écrans. Ses chiffres vie
 **Décision :** un niveau qui monte seul, d'un point d'expérience par nœud franchi (`Partie.XP_NIVEAUX` : niveaux 2 à 8 à 2, 5, 8, 12, 16, 21 et 26 XP). Chaque niveau gagné donne **+40 PV à la monture** (20 au départ, doublé avec les PV de base le 2026-10-29) et **une case de sac offerte**. Les fantômes ont le niveau de leurs manches jouées (boss : 4 manches d'avance). Affiché dans le bandeau du Nid.
 **Pourquoi :** demandé le 2026-10-29 ([[2026-10-29 Niveau]]) : la monture doit se renforcer et le sac grandir sans que tout passe par l'or.
 **Alternatives écartées :** acheter de l'expérience avec de l'or comme TFT (l'agrandissement payant fait déjà ce rôle) ; expérience par victoire seulement (punirait deux fois une défaite).
+
+## Feu de camp et rencontre sans boutique (2026-10-29)
+
+**Décision :** après un feu de camp ou une rencontre, ni or ni nouvelle boutique : on reste sur la carte et le résultat s'affiche sous le bandeau. Une relique gagnée (Heaume, Chaudron) attend, offerte, dans la boutique en cours ; « Retour au Nid » reste possible.
+**Pourquoi :** demandé par l'utilisatrice ; l'or et la boutique récompensent les combats.
+**Fantômes :** une manche sur trois sans or ni relance (environ un tiers des nœuds sont des feux ou des rencontres), pour garder la même économie que le joueur.
+**À surveiller :** deux reliques offertes d'affilée sans passer par une boutique : la seconde prend la place de la première si la boutique est pleine.

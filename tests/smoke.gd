@@ -465,8 +465,9 @@ func _run() -> bool:
 	ok = _verifier(p.ferveur == Partie.FERVEUR - Partie.PERTE["duel"] - 4 and p.manche == 2 and p.bourse == 20, "defaite : Ferveur perdue selon ce qui reste a l'adversaire, +10 or") and ok
 	# feu de camp
 	p.noeud()["type"] = "feu"
+	var offres_avant := p.offres.duplicate()
 	p.conclure()
-	ok = _verifier(p.ferveur == Partie.FERVEUR, "feu de camp : soin plafonne") and ok
+	ok = _verifier(p.ferveur == Partie.FERVEUR and p.bourse == 20 and p.offres == offres_avant, "feu de camp : soin plafonne, ni or ni nouvelle boutique") and ok
 	# victoire contre une elite : relique epique offerte, qui survit a la relance
 	p.noeud()["type"] = "elite"
 	p.conclure_combat(0)
@@ -481,8 +482,9 @@ func _run() -> bool:
 	p.noeud()["type"] = "rencontre"
 	p.rencontre = {"id": "chaudron"}
 	var pv := p.ferveur
+	var bourse := p.bourse
 	p.choisir(0)
-	ok = _verifier(p.ferveur == pv - Partie.CHAUDRON_PV and Data.rarete(p.offres[0]) == "legendaire", "chaudron : legendaire contre de la Ferveur") and ok
+	ok = _verifier(p.ferveur == pv - Partie.CHAUDRON_PV and p.bourse == bourse and Data.rarete(p.offres[p.gratuite]) == "legendaire", "chaudron : legendaire offerte en boutique contre de la Ferveur, sans or") and ok
 	# boss : acte suivant, dernier boss : fin de run
 	p.noeud()["type"] = "boss"
 	var offertes := p.cases_offertes
