@@ -98,7 +98,8 @@ const TRAIT := Color("#2b2117")
 
 func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), Palette.FOND)
-	var fond := Palette.image("res://images/fond_map.png")
+	# un fond par acte : la vallee, les profondeurs gelees, le sanctuaire de lave
+	var fond := Palette.image(["res://images/fond_map.png", "res://images/map_2.png", "res://images/map_3.png"][mini(partie.acte, 2)])
 	if fond != null:
 		draw_texture_rect(fond, Rect2(0, HAUT, size.x, size.y - HAUT - BAS), false)
 	var noeuds := partie.noeuds()

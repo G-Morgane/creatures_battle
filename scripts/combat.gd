@@ -70,6 +70,8 @@ func _etat(cr: Dictionary, i: int) -> Dictionary:
 		"phase": "",               # Bastion : rempart, ouverture, resistance
 		"oeil": 0.0,               # Bastion : bouclier absorbe par l'oeil
 		"oeil_debit": 0.0,
+		"sceaux": 0,               # Dernier Sceau : plaques brisees (0 a 2)
+		"emprise_t": 0.0,          # Dernier Sceau : depuis quand l'Emprise dure
 	}
 
 # Renvoie 0 ou 1 pour le vainqueur, -1 pour un nul.
@@ -146,6 +148,7 @@ func _proteger(moi: Dictionary, b: float, source := "") -> void:
 func _infliger(cible: Dictionary, d: float, source := "") -> void:
 	_compter(1 - cible["cote"], "impact", d * (_stigmate(cible) - 1.0), "~stigmate")
 	d *= _stigmate(cible)
+	_rupture(cible, d)
 	cible["pv"] -= d
 	_compter(1 - cible["cote"], "degats", d, source)
 	_lanterne(cible, d)
@@ -173,8 +176,11 @@ func _recharge(moi: Dictionary, s: Dictionary) -> float:
 
 func _agir(moi: Dictionary, cible: Dictionary) -> void:
 	var h: float = moi["horloge"]
+	# la Voix ne frappe pas pendant sa communion ni son silence
+	if moi["phase"] in ["communion", "silence", "repit"]:
+		moi["prochaine_attaque"] = maxf(moi["prochaine_attaque"], h + 0.5)
 	if h >= moi["prochaine_attaque"]:
-		moi["prochaine_attaque"] += moi["cr"]["intervalle"] / (Data.VOUIVRE_FURIE if moi["furie"] else 1.0) * (Data.BASTION_LENTEUR if moi["phase"] == "rempart" else 1.0)
+		moi["prochaine_attaque"] += moi["cr"]["intervalle"] / (Data.VOUIVRE_FURIE if moi["furie"] else 1.0) * (Data.BASTION_LENTEUR if moi["phase"] == "rempart" else 1.0) * (Data.SCEAU_LENTEUR if moi["cr"].get("elite", "") == "sceau" else 1.0)
 		origine = "~attaque"
 		_compter(moi["cote"], "activations", 1.0)
 		_evenement(moi, {"type": "attaque"})
@@ -571,6 +577,11 @@ func _blesser(cible: Dictionary, degats: float, source = null) -> void:
 	degats *= _stigmate(cible)
 	if cible["phase"] == "resistance":
 		degats *= Data.BASTION_RESISTANCE_FRAGILE
+	if cible["phase"] == "silence":
+		degats *= Data.VOIX_SILENCE_FRAGILE
+	if cible["phase"] == "repit":
+		degats *= Data.SCEAU_REPIT_FRAGILE
+	_rupture(cible, degats)
 	var absorbe := minf(cible["bouclier"], degats)
 	cible["bouclier"] -= absorbe
 	cible["pv"] -= degats - absorbe
@@ -642,6 +653,10 @@ func _elite(moi: Dictionary, adverse: Dictionary) -> void:
 				_infliger(adverse, degats, "~trait")
 		"bastion":
 			_bastion(moi, adverse, force)
+		"voix":
+			_voix(moi, adverse, force)
+		"sceau":
+			_sceau(moi, adverse, force)
 		"vouivre":
 			if not moi["furie"] and moi["pv"] < moi["cr"]["pv_max"] * 0.5:
 				moi["furie"] = true
@@ -652,6 +667,10 @@ func _elite(moi: Dictionary, adverse: Dictionary) -> void:
 func _oeil(moi: Dictionary) -> float:
 	if moi["phase"] == "":
 		return 0.0
+	if moi["cr"].get("elite", "") == "voix":
+		return moi["oeil"] / Data.VOIX_YEUX_MAX
+	if moi["cr"].get("elite", "") == "sceau":
+		return moi["sceaux"] / 2.0
 	var plafond: float = Data.BASTION_REGARD_MAX * moi["cr"].get("elite_force", 1.0) / Data.BASTION_REGARD_MULT
 	var reserve: float = moi["oeil"] if moi["phase"] == "ouverture" else moi["bouclier"]
 	return clampf(reserve / plafond, 0.0, 1.0)
@@ -689,6 +708,98 @@ func _bastion(moi: Dictionary, adverse: Dictionary, force: float) -> void:
 			if moi["elite_t"] >= Data.BASTION_RESISTANCE_DUREE:
 				moi["phase"] = "rempart"
 				moi["elite_t"] = 0.0
+
+# Voix du Gouffre : nombre d'yeux ouverts rapporte au maximum (pour l'ecran).
+# Les yeux sont dans "oeil", la jauge de rupture dans "oeil_debit".
+func _voix(moi: Dictionary, adverse: Dictionary, force: float) -> void:
+	if moi["phase"] == "":
+		moi["phase"] = "eveil"
+		moi["elite_t"] = 0.0
+		moi["elite_t2"] = 0.0
+	match moi["phase"]:
+		"eveil":
+			if moi["elite_t2"] >= Data.VOIX_OEIL_TOUS and moi["oeil"] < Data.VOIX_YEUX_MAX:
+				moi["elite_t2"] = 0.0
+				moi["oeil"] += 1.0
+				_evenement(moi, {"type": "oeil_ouvert", "n": int(moi["oeil"])})
+			if moi["elite_t"] >= Data.VOIX_EVEIL_DUREE:
+				moi["phase"] = "communion"
+				moi["elite_t"] = 0.0
+				moi["oeil_debit"] = 0.0
+				_evenement(moi, {"type": "communion"})
+		"communion":
+			if moi["elite_t"] >= Data.VOIX_COMMUNION_DUREE:
+				# la maree noire : une frappe par oeil ouvert, plus une
+				var frappes := int(moi["oeil"]) + 1
+				_evenement(adverse, {"type": "maree", "n": frappes})
+				var avant := _depuis("~maree")
+				for k in frappes:
+					_blesser(adverse, Data.VOIX_FRAPPE * force, moi)
+				origine = avant
+				moi["oeil"] = 0.0
+				moi["phase"] = "silence"
+				moi["elite_t"] = 0.0
+				_evenement(moi, {"type": "silence"})
+		"silence":
+			if moi["elite_t"] >= Data.VOIX_SILENCE_DUREE:
+				moi["phase"] = "eveil"
+				moi["elite_t"] = 0.0
+				moi["elite_t2"] = 0.0
+
+# Dernier Sceau. La phase dit ce qui est libere (gardien, fissure, emprise),
+# ou "repit" juste apres un sceau brise.
+func _sceau(moi: Dictionary, adverse: Dictionary, force: float) -> void:
+	var etats := ["gardien", "fissure", "emprise"]
+	if moi["phase"] == "":
+		moi["phase"] = "gardien"
+		moi["elite_t"] = 0.0
+	# un tiers de vie perdu : une plaque se brise, le serpent lutte un instant
+	var part: float = moi["pv"] / moi["cr"]["pv_max"]
+	if moi["sceaux"] < 2 and part < 1.0 - (moi["sceaux"] + 1) / 3.0:
+		moi["sceaux"] += 1
+		moi["phase"] = "repit"
+		moi["elite_t2"] = 0.0
+		moi["elite_t"] = 0.0
+		_evenement(moi, {"type": "sceau_brise", "n": moi["sceaux"]})
+		return
+	if moi["phase"] == "repit":
+		if moi["elite_t2"] >= Data.SCEAU_REPIT:
+			moi["phase"] = etats[moi["sceaux"]]
+			moi["elite_t"] = 0.0
+			if moi["sceaux"] == 2:
+				moi["emprise_t"] = t
+			_evenement(moi, {"type": "sceau_libere", "nom": moi["phase"]})
+		return
+	# le grand coup, annonce puis porte
+	if moi["elite_t"] >= Data.SCEAU_COUP_TOUS - Data.SCEAU_PREPARATION and moi["elite_t"] - Data.PAS < Data.SCEAU_COUP_TOUS - Data.SCEAU_PREPARATION:
+		_evenement(moi, {"type": "prepare"})
+	if moi["elite_t"] >= Data.SCEAU_COUP_TOUS:
+		moi["elite_t"] = 0.0
+		var avant := _depuis("~gardien")
+		_evenement(adverse, {"type": "grand_coup", "valeur": Data.SCEAU_COUP * force})
+		_blesser(adverse, Data.SCEAU_COUP * force, moi)
+		if moi["sceaux"] >= 1:
+			origine = "~fissure"
+			_evenement(adverse, {"type": "fissure", "n": Data.SCEAU_FISSURE_FRAPPES})
+			for k in Data.SCEAU_FISSURE_FRAPPES:
+				_blesser(adverse, Data.SCEAU_FISSURE * force, moi)
+		origine = avant
+	# l'Emprise : la machoire etrangere frappe de plus en plus fort
+	if moi["sceaux"] >= 2:
+		var dps: float = (Data.SCEAU_EMPRISE + (t - moi["emprise_t"]) * Data.SCEAU_EMPRISE_RAMPE) * force
+		_infliger(adverse, dps * Data.PAS, "~emprise")
+
+# Pendant la communion, les degats recus remplissent la jauge de rupture :
+# chaque palier ferme un oeil.
+func _rupture(cible: Dictionary, degats: float) -> void:
+	if cible["phase"] != "communion" or cible["oeil"] <= 0.0:
+		return
+	var palier: float = cible["cr"]["pv_max"] * Data.VOIX_RUPTURE
+	cible["oeil_debit"] += degats
+	while cible["oeil_debit"] >= palier and cible["oeil"] > 0.0:
+		cible["oeil_debit"] -= palier
+		cible["oeil"] -= 1.0
+		_evenement(cible, {"type": "oeil_ferme", "n": int(cible["oeil"])})
 
 func _subir(moi: Dictionary, adverse: Dictionary) -> void:
 	_elite(moi, adverse)

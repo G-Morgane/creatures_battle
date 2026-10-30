@@ -360,8 +360,12 @@ const VOUIVRE_FURIE := 1.4
 const GARDIENS := {
 	"bastion": {"nom": "Le Bastion endormi", "element": "glace",
 		"texte": "Une tortue-sanctuaire possédée. Son rempart nourrit l'œil du temple, qui frappe d'autant plus fort que le bouclier est intact."},
+	"voix": {"nom": "La Voix du Gouffre", "element": "crepuscule",
+		"texte": "La Gardienne des Marées, une pieuvre devenue le relais du Rêveur. Des yeux s'ouvrent sur ses bras ; chacun ajoute une frappe à sa marée noire, et les dégâts infligés pendant sa communion les referment."},
+	"sceau": {"nom": "Le Dernier Sceau", "element": "feu",
+		"texte": "Le serpent sacré enroulé autour de la porte du Rêveur. À chaque tiers de vie perdu, une plaque se brise : grands coups annoncés, puis frappes de la Fissure, puis l'Emprise, une mâchoire étrangère qui frappe de plus en plus fort. Chaque sceau brisé lui laisse un bref répit."},
 }
-const GARDIEN_ACTE := ["bastion"]
+const GARDIEN_ACTE := ["bastion", "voix", "sceau"]
 # Le cycle du Bastion : rempart (bouclier, attaques lentes), ouverture (immobile,
 # l'oeil absorbe le bouclier), regard (frappe selon l'absorbe, plafonne), puis
 # resistance (le cavalier referme la porte : sans protection un moment).
@@ -373,6 +377,29 @@ const BASTION_REGARD_MULT := 1.5
 const BASTION_REGARD_MAX := 90.0
 const BASTION_RESISTANCE_DUREE := 3.0
 const BASTION_RESISTANCE_FRAGILE := 1.25  # degats recus sans protection
+# Acte II, la Voix du Gouffre : l'eveil ouvre des yeux sur ses bras, la
+# communion les charge (les degats recus les referment), la maree noire frappe
+# une fois par oeil ouvert plus une, puis le silence la laisse vulnerable.
+const VOIX_YEUX_MAX := 8
+const VOIX_EVEIL_DUREE := 9.0
+const VOIX_OEIL_TOUS := 1.2           # un oeil s'ouvre toutes les 1,2 s d'eveil
+const VOIX_COMMUNION_DUREE := 3.0
+const VOIX_RUPTURE := 0.04            # part des PV max a infliger pour fermer un oeil
+const VOIX_FRAPPE := 12.0             # par oeil, x la force de la manche
+const VOIX_SILENCE_DUREE := 3.0
+const VOIX_SILENCE_FRAGILE := 1.25
+# Acte III, le Dernier Sceau : trois etats qui s'ajoutent a chaque tiers de vie
+# perdu (le Gardien, la Fissure, l'Emprise) ; chaque sceau brise donne un repit.
+const SCEAU_LENTEUR := 1.6            # attaques ordinaires plus lentes
+const SCEAU_COUP_TOUS := 6.0          # un grand coup toutes les 6 s...
+const SCEAU_PREPARATION := 1.5        # ...annonce 1,5 s avant
+const SCEAU_COUP := 40.0              # x la force de la manche
+const SCEAU_FISSURE_FRAPPES := 4      # apres chaque grand coup, des que la Fissure est ouverte
+const SCEAU_FISSURE := 6.0
+const SCEAU_EMPRISE := 3.0            # degats par seconde au debut de l'Emprise...
+const SCEAU_EMPRISE_RAMPE := 1.0      # ...qui grandissent de tant par seconde
+const SCEAU_REPIT := 2.5
+const SCEAU_REPIT_FRAGILE := 1.25
 
 # Les chiffres d'une elite grandissent avec la manche.
 const ELITE_PAR_MANCHE := 0.05

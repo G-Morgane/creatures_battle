@@ -219,6 +219,26 @@ func _jouer(e: Dictionary) -> void:
 			_texte(moi, 2, "Le Regard %d" % roundi(e["valeur"]), Color("#e0c8ff"))
 		"resistance":
 			_texte(moi, 1, "Le cavalier referme la porte", Palette.TEXTE)
+		"oeil_ouvert":
+			_texte(moi, 1, "Un œil s'ouvre (%d)" % e["n"], Color("#ff8a8a"))
+		"communion":
+			_texte(moi, 1, "Communion : tous les yeux te regardent", Color("#c79bff"))
+		"oeil_ferme":
+			_texte(moi, 2, "Un œil se ferme", Palette.TEXTE)
+		"maree":
+			_texte(moi, 2, "Marée noire : %d frappes" % e["n"], Color("#e0c8ff"))
+		"silence":
+			_texte(moi, 1, "Silence : le cavalier reprend la main", Palette.TEXTE)
+		"sceau_brise":
+			_texte(moi, 1, "Un sceau se brise (%d/2)" % e["n"], Color("#f2c94c"))
+		"sceau_libere":
+			_texte(moi, 1, {"fissure": "La Fissure s'ouvre", "emprise": "L'Emprise s'éveille"}.get(e["nom"], ""), Color("#c79bff"))
+		"prepare":
+			_texte(moi, 1, "Il se dresse…", Palette.TEXTE)
+		"grand_coup":
+			_texte(moi, 2, "Grand coup %d" % roundi(e["valeur"]), Color("#ffb070"))
+		"fissure":
+			_texte(moi, 2, "Fissure : %d frappes" % e["n"], Color("#c79bff"))
 		"entraves":
 			_texte(moi, 1, "Entraves brisées !", Palette.ELEMENTS["feu"]["vif"])
 		"renaissance":
@@ -303,8 +323,18 @@ func _dessiner() -> void:
 		if img[20 + i] != "":
 			v.oeil = img[18 + i]
 			v.phase = img[20 + i]
-			var noms_phase := {"rempart": "Rempart", "ouverture": "L'œil s'ouvre", "resistance": "Sans protection"}
-			etats.append(["%s, œil %d %%" % [noms_phase[img[20 + i]], roundi(img[18 + i] * 100)], Color("#c79bff")])
+			var noms_phase := {"rempart": "Rempart", "ouverture": "L'œil s'ouvre", "resistance": "Sans protection",
+				"eveil": "Éveil", "communion": "Communion", "silence": "Silence",
+				"gardien": "Le Gardien", "fissure": "La Fissure", "emprise": "L'Emprise", "repit": "Répit"}
+			var g: String = cr.get("elite", "")
+			var detail := ""
+			if g == "voix":
+				detail = ", yeux %d" % roundi(img[18 + i] * Data.VOIX_YEUX_MAX)
+			elif g == "sceau":
+				detail = ", sceaux brisés %d/2" % roundi(img[18 + i] * 2)
+			else:
+				detail = ", œil %d %%" % roundi(img[18 + i] * 100)
+			etats.append([noms_phase.get(img[20 + i], img[20 + i]) + detail, Color("#c79bff")])
 		# cadre sombre sous le nom, la barre et les etats : lisible sur le fond peint
 		var demi := maxf(162.0, 75.0 * etats.size() + 20.0)
 		var bas := 62.0 if img[14 + i] != "" else 44.0
@@ -463,6 +493,7 @@ class Recap extends Control:
 		"~combustion": "Combustion", "~epines": "Épines", "~eclat": "Éclat",
 		"~regen": "Régénération", "~illusion": "Illusions", "~renaissance": "Renaissance", "~racines": "Racines",
 		"~charge": "Charge", "~trait": "Trait de l'Ouest", "~rempart": "Rempart", "~regard": "Le Regard",
+		"~maree": "Marée noire", "~gardien": "Grand coup", "~fissure": "Fissure", "~emprise": "Emprise",
 		"~faiblesse": "Faiblesse", "~fletrissure": "Flétrissure", "~stigmate": "Stigmate", "~givre": "Givre", "~gel": "Gel"}
 	# Ce que chaque malus a fait a l'adversaire, en clair.
 	const IMPACTS := {"~faiblesse": "%d dégâts évités", "~fletrissure": "%d soins empêchés",

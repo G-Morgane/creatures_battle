@@ -43,3 +43,31 @@ Actes II et III : encore un boss fantôme (5 manches d'avance) en attendant leur
 - **Les Avaleurs de Joie** : aspirent soins et boucliers.
 - **Le Seigneur à Collier** : prend le contrôle d'une relique adverse au début du combat.
 - **La Reine du Fléau** (boss) : empile des malédictions qu'on ne peut pas soigner.
+
+
+## Gardien de l'acte II : la Voix du Gouffre (fait, 2026-10-30)
+
+La Gardienne des Marées, une pieuvre suspendue dans un sanctuaire englouti, devenue le relais du Rêveur. Image `images/boss_2.png`. Cycle :
+
+| Moment | Règle |
+|---|---|
+| Éveil (9 s) | Un œil s'ouvre sur un bras toutes les 1,2 s (8 au plus) |
+| Communion (3 s) | Plus d'attaques ; chaque 4 % de ses PV max perdus ferme un œil |
+| Marée noire | Une frappe de 12 par œil ouvert, plus une |
+| Silence (3 s) | Plus d'attaques, +25 % de dégâts reçus |
+
+**Pourquoi :** la tortue menace d'un gros coup, la pieuvre d'une salve ; frapper pendant la communion réduit la pression sans être obligatoire.
+
+## Gardien de l'acte III : le Dernier Sceau (fait, 2026-10-30)
+
+Le serpent sacré enroulé autour de la porte du Rêveur. Image `images/boss3.png`. Trois sceaux qui cèdent par tiers de vie, les pouvoirs s'ajoutent :
+
+| Sceau | Pouvoir |
+|---|---|
+| Le Gardien | Attaques plus lentes ; un grand coup de 40 toutes les 6 s, annoncé 1,5 s avant |
+| La Fissure (2/3 de vie) | Chaque grand coup est suivi de 4 frappes de 6 |
+| L'Emprise (1/3) | Dégâts continus de 3/s, qui montent de 1/s chaque seconde |
+
+Chaque sceau brisé donne un répit de 2,5 s (pas d'attaque, +25 % de dégâts reçus). **Pourquoi :** il reprend les exigences des deux premiers boss puis ajoute une urgence finale.
+
+Chiffres multipliés par la force de la manche. Simulation (100 runs) : boss gagnés 49 %, runs 39 %. Les fonds de carte changent par acte (`map_2` gelé, `map_3` lave).

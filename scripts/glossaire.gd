@@ -173,6 +173,8 @@ static func contenu() -> String:
 	for g in Data.GARDIENS:
 		t += _terme(Data.GARDIENS[g]["nom"], Data.GARDIENS[g]["texte"])
 	t += _terme("Le cycle du Bastion", "Rempart : il gagne du bouclier et frappe lentement. Ouverture : il s'immobilise et l'œil du temple absorbe son bouclier. Le Regard : une attaque selon le bouclier absorbé (plafonnée). Résistance : son cavalier referme la porte, il reste sans protection et encaisse plus. Entamer son bouclier affaiblit le Regard.")
+	t += _terme("Le cycle de la Voix", "Éveil : un œil s'ouvre sur ses bras toutes les %s s. Communion : elle cesse d'attaquer ; chaque %d %% de ses PV perdus ferme un œil. Marée noire : une frappe par œil ouvert, plus une. Silence : elle reste vulnérable un instant." % [str(Data.VOIX_OEIL_TOUS).replace(".", ","), roundi(Data.VOIX_RUPTURE * 100)])
+	t += _terme("Les sceaux du Dernier Sceau", "Le Gardien : grands coups lents, annoncés. À deux tiers de vie, la Fissure : chaque grand coup est suivi de petites frappes. À un tiers, l'Emprise : une mâchoire étrangère frappe de plus en plus fort jusqu'à la fin. Chaque sceau brisé lui laisse un bref répit, vulnérable.")
 	t += _section("Le Rêveur")
 	t += "Un dieu ancien qui possède les créatures à travers son rêve. Une seule run ne suffit pas : chaque run gagnée le rapproche de sa fin, et ce qui est détruit reste perdu pour lui.\n\n"
 	t += _terme("Incarnation", "%s run%s gagnée%s pour la détruire." % [Progression.INCARNATION, "s" if Progression.INCARNATION > 1 else "", "s" if Progression.INCARNATION > 1 else ""])

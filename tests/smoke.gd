@@ -24,6 +24,7 @@ func _ready() -> void:
 	ok = _elites() and ok
 	ok = _cavaliers() and ok
 	ok = _impact_malus() and ok
+	ok = _gardiens_2_3() and ok
 	ok = _carte() and ok
 	ok = _run() and ok
 	ok = _fusion() and ok
@@ -450,6 +451,39 @@ func _impact_malus() -> bool:
 	var g := Combat.new(Exemples.nid_glace().eclore(), Exemples.nid_feu().eclore())
 	g.simuler()
 	ok = _verifier(g.stats[0].get("~givre", {}).get("impact", 0.0) > 0.0, "givre : secondes volees comptees") and ok
+	return ok
+
+func _gardiens_2_3() -> bool:
+	var ok := true
+	var base := Exemples.nid_feu().eclore()
+	var v := Exemples.nid_aube().eclore()
+	v["elite"] = "voix"
+	var c := Combat.new(v, base)
+	c.simuler()
+	var tv := c.evenements.map(func(x): return x["type"])
+	ok = _verifier("oeil_ouvert" in tv and "communion" in tv and "maree" in tv and "silence" in tv, "Voix : eveil, communion, maree, silence")
+	# la rupture ferme un oeil par palier de degats pendant la communion
+	var r := Combat.new(v, base)
+	r.cotes[0]["phase"] = "communion"
+	r.cotes[0]["oeil"] = 3.0
+	r._blesser(r.cotes[0], r.cotes[0]["cr"]["pv_max"] * Data.VOIX_RUPTURE * 2.0 + 1.0)
+	ok = _verifier(r.cotes[0]["oeil"] == 1.0, "Voix : deux paliers de rupture ferment deux yeux") and ok
+	var s := Exemples.nid_aube().eclore()
+	s["elite"] = "sceau"
+	var cs := Combat.new(s, base)
+	cs.simuler()
+	var ts := cs.evenements.map(func(x): return x["type"])
+	ok = _verifier("grand_coup" in ts and "sceau_brise" in ts, "Sceau : grands coups et sceaux brises") and ok
+	var p := Partie.new(17)
+	p.acte = 1
+	p.entrer(p.accessibles()[0])
+	p.noeud()["type"] = "boss"
+	ok = _verifier(p.creature_adverse()["elite"] == "voix", "boss de l'acte II : la Voix") and ok
+	p.acte = 2
+	p.position = -1
+	p.entrer(p.accessibles()[0])
+	p.noeud()["type"] = "boss"
+	ok = _verifier(p.creature_adverse()["elite"] == "sceau", "boss de l'acte III : le Dernier Sceau") and ok
 	return ok
 
 func _carte() -> bool:

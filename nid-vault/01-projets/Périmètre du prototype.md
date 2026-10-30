@@ -14,7 +14,7 @@
 - Huit Dynasties jouables, 10 objets chacune (7 de monture, 3 armes d'une seule famille), un principe par Dynastie ([[2026-10-29 Archétypes resserrés]]).
 - Hybrides (28 images) dès 2 objets d'une seconde Dynastie.
 - Run sur carte : 3 actes de 10 étages, Ferveur, niveau passif, boutique facultative, trois rencontres.
-- Trois élites à règle, gardien de l'acte I (Bastion endormi).
+- Trois élites à règle, trois gardiens : Bastion endormi, Voix du Gouffre, Dernier Sceau.
 - Sac qui grandit case par case, formes, rotation, rareté, fusion en 3 puis 2 copies, verrou par offre, soldes, réserve.
 - Choix des dynasties, choix du cavalier et talents, glossaire, blasons.
 - Récap de combat : sources, et effet des malus (dégâts évités, soins empêchés, dégâts ajoutés, secondes volées).
@@ -23,7 +23,6 @@
 
 ## Reste
 
-- Gardiens des actes II et III (encore des fantômes en avance).
 - Règle « actif ou renfort » sur les essences : [[2026-10-30 Actif ou renfort]] (proposition à valider).
 - Effet concret de chaque étape du Rêveur dans le jeu (aujourd'hui : affichage seulement).
 - 28 objets sans image (Automne, Jour, plusieurs armes) : placeholders à venir.

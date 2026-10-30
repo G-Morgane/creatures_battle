@@ -185,7 +185,10 @@ const ANIMAUX := {"cerf": "nature", "phenix": "feu", "renard": "automne", "ours"
 # retournes pour regarder a droite comme les montures.
 const ENNEMIS := {"sanglier.png": "sanglier", "phalène.png": "phalene", "wyverne.png": "vouivre"}
 # Gardiens : (fichier, id, retourner).
-const GARDIENS := [["../boss_tortue.png", "bastion", true]]
+# Gardiens : (fichier, id, retourner, recadrer). La Voix n'est pas recadree :
+# ses yeux sont places en fraction de l'image d'origine (CreatureVue.YEUX_VOIX).
+const GARDIENS := [["../boss_tortue.png", "bastion", true, true], ["../boss_2.png", "voix", true, false],
+	["../boss3.png", "sceau", true, true]]
 # Icones d'interface : planche coupee en quatre (images/ui).
 const UI := ["vie", "victoires", "or", "glossaire"]
 
@@ -258,7 +261,8 @@ func _initialize() -> void:
 		var m := Image.load_from_file("res://images/ennemis/" + g[0])
 		m.convert(Image.FORMAT_RGBA8)
 		_poussiere(m, POUSSIERE_MONTURE)
-		m = m.get_region(m.get_used_rect())
+		if g[3]:
+			m = m.get_region(m.get_used_rect())
 		if g[2]:
 			m.flip_x()
 		_reduire(m, TAILLE_MONTURE)

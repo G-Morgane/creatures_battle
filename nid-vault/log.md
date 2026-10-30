@@ -30,3 +30,4 @@ _Ajout seulement. Une ligne par ingestion, question, discussion ou passe de nett
 | 2026-10-30 | maj | Récap : effet des malus (Faiblesse, Flétrissure, Stigmate, givre et gel) → Combat |
 | 2026-10-30 | discussion | Actif ou renfort : relecture des 80 objets, proposition pour les essences → discussion seule, à valider |
 | 2026-10-30 | nettoyage | Périmètre du prototype réaligné (Automne et Jour faits, arène x2, progression) ; page Notion de la Nuit renvoyée au vault → Périmètre du prototype |
+| 2026-10-30 | maj | Gardiens des actes II (Voix du Gouffre) et III (Dernier Sceau), fonds de carte par acte → Élites et gardiens |

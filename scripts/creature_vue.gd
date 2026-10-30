@@ -98,6 +98,8 @@ func _draw() -> void:
 			_sprite("ennemis/" + elite)
 		if elite == "bastion":
 			_oeil()
+		elif elite == "voix":
+			_yeux_voix()
 		draw_set_transform(Vector2.ZERO)
 		return
 	# deux dynasties ou plus : l'hybride des deux premieres
@@ -155,6 +157,33 @@ func _oeil() -> void:
 		draw_circle(OEIL_BASTION, 6.0 + (k + 1) * 7.0 * (0.4 + force), Color(c, 0.12 * force + 0.04))
 	if ouvert:
 		draw_circle(OEIL_BASTION, 7.0, Color(1, 0.9, 1, 0.6))
+
+# Les yeux peints sur les bras de la Voix, en fraction de l'image retournee : ceux qui
+# sont ouverts rougeoient, les autres sont clos d'une paupiere sombre.
+const YEUX_VOIX := [Vector2(0.769, 0.170), Vector2(0.620, 0.438), Vector2(0.793, 0.569), Vector2(0.817, 0.740), Vector2(0.206, 0.285), Vector2(0.120, 0.599), Vector2(0.337, 0.726), Vector2(0.749, 0.323)]
+
+func _yeux_voix() -> void:
+	var tex := Palette.image("res://images/montures/ennemis/voix.png")
+	if tex == null:
+		return
+	var taille := Vector2(SPRITE_LARGEUR, SPRITE_LARGEUR * tex.get_height() / tex.get_width())
+	var origine := Vector2(-taille.x / 2, 95 - taille.y)
+	var ouverts := roundi(oeil * YEUX_VOIX.size())
+	var maree := phase == "communion"
+	for k in YEUX_VOIX.size():
+		var p: Vector2 = origine + YEUX_VOIX[k] * taille
+		if k < ouverts:
+			var c := Color(1.0, 0.2, 0.2, 0.55 if maree else 0.3)
+			draw_circle(p, 9.0 if maree else 6.0, c)
+		else:
+			draw_colored_polygon(_paupiere(p), Color("#2b4f55"))
+
+func _paupiere(p: Vector2) -> PackedVector2Array:
+	var pts := PackedVector2Array()
+	for k in 12:
+		var a := TAU * k / 12.0
+		pts.append(p + Vector2(cos(a) * 7.0, sin(a) * 4.5))
+	return pts
 
 # Place du cavalier sur un sprite sans reglage a la main : le haut du dos,
 # releve dans l'image (premier pixel opaque d'une colonne un peu a gauche
