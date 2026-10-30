@@ -41,10 +41,25 @@ func aller_carte() -> void:
 	var c := CarteScreen.new()
 	c.partie = partie
 	c.combat.connect(_combattre)
-	c.fini.connect(aller_nid)
+	c.fini.connect(_apres_noeud)
 	c.retour.connect(aller_nid)
 	ecran = c
 	add_child(c)
+
+# Run perdue : la banniere de defaite au lieu du Nid.
+func _apres_noeud() -> void:
+	if partie.terminee() and not partie.gagnee:
+		aller_defaite()
+	else:
+		aller_nid()
+
+func aller_defaite() -> void:
+	_vider()
+	var d := DefaiteScreen.new()
+	d.partie = partie
+	d.nouvelle_partie.connect(aller_choix)
+	ecran = d
+	add_child(d)
 
 func _combattre() -> void:
 	_vider()
@@ -54,6 +69,6 @@ func _combattre() -> void:
 		var adverse: Dictionary = c.combat.cotes[1]
 		partie.conclure_combat(c.vainqueur, adverse["pv"] / adverse["cr"]["pv_max"])
 		Progression.compter_run(partie)
-		aller_nid())
+		_apres_noeud())
 	ecran = c
 	add_child(c)
