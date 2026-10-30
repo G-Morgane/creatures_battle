@@ -24,7 +24,6 @@ var fini := false
 var calque: Control
 var bandeau: Label
 var bouton_vitesse: Button
-var bouton_recap: Button
 var boutons_ui: Control
 var nids: Array = []      # MiniNid de chaque cote
 var recap: Recap
@@ -76,18 +75,15 @@ func _ready() -> void:
 	bandeau.visible = false
 	add_child(bandeau)
 
-	# boutons en 2 x 2 au centre du bas : les Nids prennent les deux coins
+	# boutons au centre du bas : les Nids prennent les deux coins
 	var boutons := GridContainer.new()
-	boutons.columns = 2
+	boutons.columns = 3
 	boutons.add_theme_constant_override("h_separation", 10)
 	boutons.add_theme_constant_override("v_separation", 8)
 	boutons_ui = boutons
 	bouton_vitesse = _bouton("Vitesse x%d" % vitesse, _changer_vitesse)
 	boutons.add_child(bouton_vitesse)
 	boutons.add_child(_bouton("Rejouer", _rejouer))
-	bouton_recap = _bouton("Récap", func(): recap.visible = not recap.visible)
-	bouton_recap.visible = false
-	boutons.add_child(bouton_recap)
 	boutons.add_child(_bouton("Retour au Nid", func(): retour.emit()))
 	add_child(boutons)
 	for i in 2:
@@ -132,7 +128,6 @@ func _rejouer() -> void:
 	fini = false
 	bandeau.visible = false
 	recap.visible = false
-	bouton_recap.visible = false
 
 # --- lecture ---------------------------------------------------------------
 
@@ -274,7 +269,6 @@ func _texte(v: CreatureVue, ligne: int, texte: String, couleur: Color) -> void:
 func _fin() -> void:
 	bandeau.visible = true
 	recap.visible = true
-	bouton_recap.visible = true
 	if vainqueur == -1:
 		bandeau.text = "Égalité"
 		bandeau.add_theme_color_override("font_color", Palette.TEXTE)
