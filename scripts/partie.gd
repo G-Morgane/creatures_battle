@@ -30,6 +30,7 @@ const SOLDE_CHANCE := 0.10
 # case a la fois, au choix du joueur, collee au sac : en boutique (2 or, puis
 # +1 a chaque case achetee) ou gratuitement (boss battu, Croissance).
 const COLONNES_DEPART := [2, 3, 4, 5]
+const RANGEES_DEPART := [1, 2, 3, 4]
 const PRIX_CASE := 2
 const CROISSANCE_CASES := 4
 const TAILLE_BOUTIQUE := 9   # un carre de 3 x 3 sur le comptoir
@@ -99,7 +100,7 @@ func _init(g := 0, dyn := []) -> void:
 	graine = g if g != 0 else randi()
 	rng.seed = graine
 	carte = Carte.new(graine)
-	nid.ouvertes = Nid.toutes().filter(func(c): return c.x in COLONNES_DEPART)
+	nid.ouvertes = Nid.toutes().filter(func(c): return c.x in COLONNES_DEPART and c.y in RANGEES_DEPART)
 	nid.encombrement = true
 	for k in TAILLE_RESERVE:
 		reserve.append({})
@@ -342,10 +343,18 @@ func agrandir(c: Vector2i) -> bool:
 	if cases_offertes > 0:
 		cases_offertes -= 1
 	else:
+		# un achat ouvre deux cases : la seconde est offerte, a placer
 		bourse -= prix
 		cases_achetees += 1
+		cases_offertes += 1
 	nid.ouvertes.append(c)
+	if nid.bordure().is_empty():
+		cases_offertes = 0
 	return true
+
+# Premier emplacement libre de la reserve, -1 s'il n'y en a pas.
+func reserve_libre() -> int:
+	return reserve.find({})
 
 # --- glisser-deposer : sources et destinations --------------------------------
 # Une source est le dictionnaire du glisser : {"offre": i}, {"depuis": ancre du

@@ -1,10 +1,11 @@
 class_name Data
 extends RefCounted
 
-# Le sac : un damier de 8 colonnes sur 4 rangees, dont la partie n'ouvre
-# d'abord que le centre (Partie.COLONNES_DEPART).
+# Le sac : un damier de 8 colonnes sur 6 rangees, dont la partie n'ouvre
+# d'abord qu'un carre de 4 x 4 au centre (Partie.COLONNES_DEPART, RANGEES_DEPART) :
+# il peut grandir dans tous les sens.
 const NID_L := 8
-const NID_H := 4
+const NID_H := 6
 
 # --- creature --------------------------------------------------------------
 
@@ -412,8 +413,34 @@ const NOMS_RARETE := {"commun": "Commun", "rare": "Rare", "epique": "Épique", "
 
 # --- formes ----------------------------------------------------------------
 # Cases qu'occupe une relique dans le sac, en decalages depuis son ancre (coin
-# haut gauche). Regle : les armes selon leur famille, les autres selon leur
-# rarete ; FORMES_OBJETS corrige a la main ceux qui le meritent.
+# haut gauche). Chaque dynastie a son gabarit (FORMES_DYNASTIE) : l'Automne
+# loge beaucoup de petits objets, la Nuit et l'Hiver peu de gros. Les objets
+# neutres gardent la regle d'avant (armes selon leur famille, le reste selon
+# la rarete). FORMES_OBJETS corrige a la main ceux qui le meritent.
+# Dessins : une chaine par rangee, separees par « / », « # » = case prise.
+const FORMES_DYNASTIE := {
+	"automne":    {"commun": "#", "rare": "#", "epique": "##", "legendaire": "##/#.",
+		"arme": {"commun": "#", "rare": "#", "legendaire": "#/#"}},
+	"jour":       {"commun": "#", "rare": "##", "epique": "###", "legendaire": "###/.#.",
+		"arme": {"commun": "#", "rare": "##", "legendaire": "###"}},
+	"crepuscule": {"commun": "#", "rare": "##", "epique": ".##/##.", "legendaire": "#.#/###",
+		"arme": {"commun": "#/#", "rare": "#/#", "legendaire": "#/#/#"}},
+	"feu":        {"commun": "#", "rare": "#/#", "epique": ".#./###", "legendaire": ".#./###/.#.",
+		"arme": {"commun": "#/#", "rare": "#/#/#", "legendaire": "#/#/#"}},
+	"nature":     {"commun": "##", "rare": "###", "epique": "#../###", "legendaire": "#.../####",
+		"arme": {"commun": "#/#", "rare": "#/#/#", "legendaire": "#/#/#"}},
+	"aube":       {"commun": "#", "rare": "#/#", "epique": "#/#/#", "legendaire": "#/#/#/#",
+		"arme": {"commun": "#/#/#", "rare": "#/#/#", "legendaire": "#/#/#/#"}},
+	"glace":      {"commun": "##", "rare": "##/#.", "epique": "##/##", "legendaire": "###/##.",
+		"arme": {"commun": "##/##", "rare": "##/##", "legendaire": "##/##/##"}},
+	"nuit":       {"commun": "##", "rare": "##/#.", "epique": "###/.#.", "legendaire": ".#./###/.#.",
+		"arme": {"commun": "#/#", "rare": "#/#/#", "legendaire": "##/#./#."}},
+}
+# La puissance suit la place prise : (cases / cases de l'ancienne regle) a
+# cette puissance. Un peu moins que proportionnel, car un gros objet touche
+# aussi plus de catalyseurs. Les catalyseurs n'y sont pas soumis : leur taille
+# leur donne deja plus de voisines.
+const PUISSANCE_PAR_CASE := 0.5
 const FORMES_FAMILLE := {
 	"hast": [Vector2i(0, 0), Vector2i(0, 1), Vector2i(0, 2)],
 	"faux": [Vector2i(0, 0), Vector2i(0, 1), Vector2i(0, 2)],
@@ -430,10 +457,40 @@ const FORMES_RARETE := {
 }
 const FORMES_OBJETS := {}
 
+static func _dessin(d: String) -> Array:
+	var f := []
+	var rangees := d.split("/")
+	for y in rangees.size():
+		for x in rangees[y].length():
+			if rangees[y][x] == "#":
+				f.append(Vector2i(x, y))
+	return f
+
+# Forme de id avant rotation.
+static func forme_objet(id: String) -> Array:
+	if FORMES_OBJETS.has(id):
+		return FORMES_OBJETS[id]
+	var r: Dictionary = RELIQUES[id]
+	var g: Dictionary = FORMES_DYNASTIE.get(r["element"], {})
+	if g.is_empty():
+		return _forme_neutre(id)
+	if r["type"] == "arme":
+		return _dessin(g["arme"][rarete(id)])
+	return _dessin(g[rarete(id)])
+
+static func _forme_neutre(id: String) -> Array:
+	var r: Dictionary = RELIQUES[id]
+	return FORMES_FAMILLE[r["famille"]] if r.has("famille") else FORMES_RARETE[rarete(id)]
+
+# Multiplicateur de puissance d'une relique selon sa taille.
+static func puissance_forme(id: String) -> float:
+	if RELIQUES[id]["type"] == "catalyseur":
+		return 1.0
+	return pow(float(forme_objet(id).size()) / _forme_neutre(id).size(), PUISSANCE_PAR_CASE)
+
 # Forme de id tournee de rot quarts de tour (sens horaire), ramenee en (0, 0).
 static func empreinte(id: String, rot := 0) -> Array:
-	var r: Dictionary = RELIQUES[id]
-	var f: Array = FORMES_OBJETS.get(id, FORMES_FAMILLE[r["famille"]] if r.has("famille") else FORMES_RARETE[rarete(id)])
+	var f: Array = forme_objet(id)
 	for k in posmod(rot, 4):
 		f = f.map(func(d): return Vector2i(-d.y, d.x))
 	var mini := Vector2i(999, 999)

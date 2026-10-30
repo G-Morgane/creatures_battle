@@ -131,16 +131,18 @@ func _placer() -> void:
 	vente.size = Vector2(droite - 2 * marge, aide_ui.position.y - 10 - 70)
 	boutique_ui.reset_size()
 	boutique_ui.position = vente.position + (vente.size - boutique_ui.size) / 2
-	reserve_ui.reset_size()
-	reserve_ui.position = Vector2(size.x - reserve_ui.size.x - marge, 80)
 	bouton_combat.reset_size()
 	var largeur := size.x - marge - droite
 	bouton_combat.position = Vector2(droite + (largeur - bouton_combat.size.x) / 2, size.y - bouton_combat.size.y - marge)
-	# le sac prend la place libre entre les deux, en cases carrees : tout le
-	# damier, pour qu'on voie ou il peut grandir
-	var dessus := reserve_ui.position.y + reserve_ui.size.y + 14
+	# le sac prend la place libre, en cases carrees : tout le damier, pour qu'on
+	# voie ou il peut grandir ; la reserve, une rangee juste au-dessus, a portee
 	var dessous := bouton_combat.position.y - 14
-	var cote := minf((dessous - dessus) / Data.NID_H, largeur / Data.NID_L)
+	var cote := minf((dessous - 70 - 74) / (Data.NID_H + 1), largeur / Data.NID_L)
+	for c in reserve_cases:
+		c.custom_minimum_size = Vector2.ONE * (cote - 8)
+	reserve_ui.reset_size()
+	reserve_ui.position = Vector2(droite + (largeur - reserve_ui.size.x) / 2, 70)
+	var dessus := reserve_ui.position.y + reserve_ui.size.y + 14
 	sac.cote = cote
 	sac.position = Vector2(droite + (largeur - Data.NID_L * cote) / 2, dessus + (dessous - dessus - Data.NID_H * cote) / 2)
 	sac.size = Vector2(Data.NID_L, Data.NID_H) * cote
@@ -216,11 +218,11 @@ func _reserve() -> Control:
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 6)
 	var t := Label.new()
-	t.text = "Réserve (sans effet)"
+	t.text = "Réserve (sans effet). Clic droit sur un objet du sac : il y va."
 	t.add_theme_color_override("font_color", Palette.TEXTE_DOUX)
 	col.add_child(t)
 	var g := GridContainer.new()
-	g.columns = 4
+	g.columns = Partie.TAILLE_RESERVE
 	g.add_theme_constant_override("h_separation", 6)
 	g.add_theme_constant_override("v_separation", 6)
 	for k in Partie.TAILLE_RESERVE:
@@ -328,7 +330,7 @@ func rafraichir() -> void:
 	elif partie.cases_offertes > 0:
 		agrandir.text = "Agrandir (offert x%d)" % partie.cases_offertes
 	else:
-		agrandir.text = "Agrandir (%d or)" % prix_sac
+		agrandir.text = "Agrandir : 2 cases (%d or)" % prix_sac
 	agrandir.disabled = prix_sac < 0 or partie.bourse < prix_sac or partie.terminee()
 	barre.text = "Acte %d" % (partie.acte + 1)
 	compteurs["vie"].text = "%d / %d" % [maxi(partie.ferveur, 0), Partie.FERVEUR]
@@ -839,10 +841,15 @@ class CaseNid extends Control:
 	# ancre de la relique qui couvre cette case, null si vide
 	func _ancre():
 		return ecran.nid.ancre(position_nid)
-	# Agrandir : un clic sur une case fermee l'ouvre.
+	# Agrandir : un clic sur une case fermee l'ouvre. Clic droit sur une
+	# relique : elle file en reserve.
 	func _gui_input(ev: InputEvent) -> void:
 		if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT and not ecran.nid.ouverte(position_nid):
 			ecran.ouvrir(position_nid)
+			accept_event()
+		elif ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_RIGHT and _ancre() != null:
+			if ecran.partie.ranger({"depuis": _ancre()}, ecran.partie.reserve_libre()):
+				ecran.apres_pose()
 			accept_event()
 	func _get_tooltip(_p: Vector2) -> String:
 		var a = _ancre()

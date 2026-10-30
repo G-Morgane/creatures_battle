@@ -38,6 +38,9 @@ func _simple(p: Partie) -> void:
 	# sac plein : on l'agrandit si l'on peut, avant d'acheter
 	if p.nid.occupation().size() >= p.nid.places() - 1 and p.prix_agrandir() >= 0 and p.bourse >= p.prix_agrandir() + 3:
 		p.agrandir(JoueurAuto.case_agrandir(p))
+		# l'achat ouvre deux cases : la seconde, offerte
+		while p.cases_offertes > 0 and p.agrandir(JoueurAuto.case_agrandir(p)):
+			pass
 	# Achete tout ce qui sert, puis relance tant qu'il reste de quoi acheter.
 	for relances in RELANCES_MAX + 1:
 		for i in _ordre(p):

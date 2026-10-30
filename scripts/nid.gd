@@ -218,9 +218,10 @@ func voisins(c: Vector2i) -> Array:
 func influents(c: Vector2i) -> Array:
 	return voisins(c).filter(func(v): return Data.RELIQUES[cases[v]]["type"] == "catalyseur")
 
-# Multiplicateur d'une relique : son niveau.
+# Multiplicateur d'une relique : son niveau, et sa taille dans le sac (sans
+# encombrement, chaque relique tient sur une case et garde sa puissance de base).
 func mult(c: Vector2i) -> float:
-	return Data.NIVEAU_MULT[niveau(c)]
+	return Data.NIVEAU_MULT[niveau(c)] * (Data.puissance_forme(cases[c]) if encombrement else 1.0)
 
 func affinites() -> Dictionary:
 	var a := {}
