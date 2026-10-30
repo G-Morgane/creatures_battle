@@ -159,12 +159,19 @@ func _jouer(e: Dictionary) -> void:
 			var couleurs: Dictionary = Palette.ELEMENTS[e["element"]]
 			var de: Vector2 = moi.position + moi.source(e["cavalier"])
 			var a: Vector2 = cible.position + cible.size / 2 + Vector2(0, 20)
+			var famille: String = e.get("famille", "")
+			# l'arc tire des fleches (des plumes pour le Jour), les autres sorts leur comete
+			var anim: String = "fleche" if famille == "tir" and e["element"] != "jour" else ANIM_PROJECTILE.get(e["element"], "")
 			for k in maxi(e["coups"], 1):
+				# arme de corps a corps : le coup se voit sur la cible, sans projectile
+				if ANIM_ARME.has(famille):
+					_animer(ANIM_ARME[famille], a, 0.08 + k * ECART_COUPS, 0.3, 260.0 if e["coups"] <= 1 else 180.0, moi.miroir)
+					continue
 				effets.append({"type": "projectile", "de": de, "a": a, "t0": lecture + k * ECART_COUPS,
 					"duree": VOL_PROJECTILE, "couleur": couleurs["vif"], "coeur": couleurs["clair"],
-					"taille": 12.0 if e["coups"] <= 1 else 6.0, "anim": ANIM_PROJECTILE.get(e["element"], "")})
+					"taille": 12.0 if e["coups"] <= 1 else 6.0, "anim": anim})
 				# un sort qui n'a pas sa propre comete eclate a l'arrivee
-				if not ANIM_PROJECTILE.has(e["element"]):
+				if anim == "":
 					_animer("coup", a, k * ECART_COUPS + VOL_PROJECTILE, 0.3, 150.0 if e["coups"] <= 1 else 90.0)
 			var qui := "Cavalier : " if e["cavalier"] else ""
 			_texte(moi, 0 if e["cavalier"] else 1, qui + e["nom"], couleurs["clair"])
@@ -253,7 +260,10 @@ func _jouer(e: Dictionary) -> void:
 
 # Sorts qui ont leur propre comete (images/spells) ; les autres eclatent en
 # « coup » a l'arrivee.
-const ANIM_PROJECTILE := {"feu": "feu", "crepuscule": "arcane"}
+const ANIM_PROJECTILE := {"feu": "feu", "crepuscule": "arcane", "glace": "glace", "aube": "lumiere",
+	"nuit": "ombre", "nature": "poison", "jour": "plume"}
+# Armes de corps a corps : leur coup joue sur la cible.
+const ANIM_ARME := {"lame": "entaille_fine", "faux": "fauche", "hache": "hache", "hast": "epee"}
 
 # Une animation de 4 images a pos, dans delai secondes, pendant duree.
 func _animer(nom: String, pos: Vector2, delai: float, duree: float, taille: float, miroir := false) -> void:

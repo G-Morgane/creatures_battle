@@ -225,7 +225,7 @@ func _lancer(moi: Dictionary, cible: Dictionary, s: Dictionary, renfort := 1.0, 
 	_noter("%s lance %s." % [qui, s["nom"]])
 	var coups: int = s["coups"] + (int(moi["eventail"]) if s["coups_par_eventail"] else 0)
 	_evenement(moi, {"type": "sort", "nom": s["nom"], "cavalier": s["cavalier"],
-		"element": s["element"], "coups": coups})
+		"element": s["element"], "famille": s["famille"], "coups": coups})
 	if s["bouclier"] > 0.0:
 		_proteger(moi, s["bouclier"] * renfort)
 		_evenement(moi, {"type": "bouclier", "valeur": s["bouclier"] * renfort})
@@ -602,7 +602,7 @@ func _riposter(moi: Dictionary, attaquant: Dictionary) -> void:
 			_blesser(attaquant, s["degats"], moi)
 			if s["poison"] > 0.0:
 				_empoisonner(attaquant, s["poison"])
-			_evenement(moi, {"type": "sort", "nom": s["nom"], "cavalier": true, "element": s["element"], "coups": 1})
+			_evenement(moi, {"type": "sort", "nom": s["nom"], "cavalier": true, "element": s["element"], "famille": s["famille"], "coups": 1})
 	origine = avant
 
 # Le poison s'empile, jusqu'au plafond.

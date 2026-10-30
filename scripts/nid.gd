@@ -478,6 +478,7 @@ func _sort(c: Vector2i, r: Dictionary, aff: Dictionary) -> Dictionary:
 		"roue": r.get("roue", 0.0) * m,
 		"eventail_gain": r.get("eventail_gain", 1.0),
 		"coups_par_eventail": r.get("coups_par_eventail", false),
+		"famille": r.get("famille", ""),
 		"signature": Data.SIGNATURES.get(r["element"], 0.0) * m,
 	}
 	return s
