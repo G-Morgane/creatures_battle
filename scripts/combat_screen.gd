@@ -176,6 +176,7 @@ func _jouer(e: Dictionary) -> void:
 			var qui := "Cavalier : " if e["cavalier"] else ""
 			_texte(moi, 0 if e["cavalier"] else 1, qui + e["nom"], couleurs["clair"])
 		"bouclier":
+			_animer("shield", _centre(moi), 0.0, 0.45, moi.size.x * 0.7)
 			_texte(moi, 2, "+%d bouclier" % roundi(e["valeur"]), Palette.ELEMENTS["terre"]["clair"])
 		"epines":
 			# petite epine qui repart vers l'attaquant, sans texte (trop frequent)
@@ -185,11 +186,7 @@ func _jouer(e: Dictionary) -> void:
 				"duree": VOL_PROJECTILE * 0.6, "couleur": n["vif"], "coeur": n["clair"], "taille": 5.0})
 		"combustion":
 			var f: Dictionary = Palette.ELEMENTS["feu"]
-			for k in 10:
-				var a := TAU * k / 10.0
-				effets.append({"type": "projectile", "de": moi.position + moi.size / 2 + Vector2(0, 20),
-					"a": moi.position + moi.size / 2 + Vector2(0, 20) + Vector2(cos(a), sin(a)) * 120, "t0": lecture,
-					"duree": VOL_PROJECTILE, "couleur": f["vif"], "coeur": f["clair"], "taille": 9.0 if e["totale"] else 6.0})
+			_animer("combustion", _centre(moi), 0.0, 0.5, moi.size.x * (0.8 if e["totale"] else 0.55))
 			_texte(moi, 2, ("Combustion totale !" if e["totale"] else "Combustion") + " %d" % roundi(e["valeur"]), f["clair"])
 		"eclat":
 			# rayon de lumiere : beaucoup de petites lueurs en ligne, de l'autre monture vers moi
@@ -208,16 +205,21 @@ func _jouer(e: Dictionary) -> void:
 		"illusion":
 			_texte(moi, 2, "Illusion %d" % e["n"], Palette.ELEMENTS["crepuscule"]["clair"])
 		"malediction":
+			_animer("curse", _centre(moi), 0.0, 0.5, moi.size.x * 0.4)
 			_texte(moi, 2, Data.NOMS_MALEDICTION[e["nom"]], Palette.ELEMENTS["nuit"]["clair"])
 		"crit":
 			_texte(moi, 2, "Critique !", Color("#f2c94c"))
+		"soin":
+			_animer("heal", _centre(moi), 0.0, 0.5, moi.size.x * 0.6)
 		"relique":
 			nids[e["cote"]].flash[e["id"]] = lecture
 		"esquive":
+			_animer("esquive", _centre(moi), 0.0, 0.4, moi.size.x * 0.7, moi.miroir)
 			_texte(moi, 2, "Esquive", Palette.ELEMENTS["automne"]["clair"])
 		"bourrasque":
 			_texte(moi, 1, "Bourrasque", Palette.ELEMENTS["automne"]["clair"])
 		"gel":
+			_animer("freeze", _centre(moi), 0.0, 0.45, moi.size.x * 0.6)
 			_texte(moi, 2, "Gel !", Palette.ELEMENTS["glace"]["clair"])
 		"charge":
 			_texte(moi, 1, "Charge ! %d" % roundi(e["valeur"]), Palette.ELEMENTS["nature"]["clair"])
@@ -261,7 +263,7 @@ func _jouer(e: Dictionary) -> void:
 # Sorts qui ont leur propre comete (images/spells) ; les autres eclatent en
 # « coup » a l'arrivee.
 const ANIM_PROJECTILE := {"feu": "feu", "crepuscule": "arcane", "glace": "glace", "aube": "lumiere",
-	"nuit": "ombre", "nature": "poison", "jour": "plume"}
+	"nuit": "ombre", "nature": "poison", "jour": "plume", "automne": "automne_projectile"}
 # Armes de corps a corps : leur coup joue sur la cible.
 const ANIM_ARME := {"lame": "entaille_fine", "faux": "fauche", "hache": "hache", "hast": "epee"}
 
@@ -269,6 +271,14 @@ const ANIM_ARME := {"lame": "entaille_fine", "faux": "fauche", "hache": "hache",
 func _animer(nom: String, pos: Vector2, delai: float, duree: float, taille: float, miroir := false) -> void:
 	effets.append({"type": "anim", "anim": nom, "pos": pos, "t0": lecture + delai, "duree": duree,
 		"taille": taille, "miroir": miroir})
+
+# Une image d'animation fait `largeur` pour une case d'origine (3/4 de sa
+# hauteur) ; les cases elargies par l'outil gardent la meme echelle.
+static func _taille_anim(tex: Texture2D, largeur: float) -> Vector2:
+	return tex.get_size() * largeur / (tex.get_height() * 0.75)
+
+func _centre(v: CreatureVue) -> Vector2:
+	return v.position + v.size / 2 + Vector2(0, 20)
 
 func _elan(v: CreatureVue, qui: String) -> void:
 	var tw := create_tween()
@@ -405,8 +415,7 @@ func _dessiner() -> void:
 					# la comete, tete vers la cible, en boucle sur ses 4 images
 					var suivant: Vector2 = e["de"].lerp(e["a"], minf(p + 0.05, 1.0)) + Vector2(0, -sin(minf(p + 0.05, 1.0) * PI) * 50)
 					var tex: Texture2D = images[int(lecture * 16.0) % images.size()]
-					var l: float = e["taille"] * 14.0
-					var taille := Vector2(l, l * tex.get_height() / tex.get_width())
+					var taille := _taille_anim(tex, e["taille"] * 14.0)
 					calque.draw_set_transform(pos, (suivant - pos).angle(), Vector2.ONE)
 					calque.draw_texture_rect(tex, Rect2(Vector2(-taille.x * 0.8, -taille.y / 2), taille), false)
 					calque.draw_set_transform(Vector2.ZERO)
@@ -415,7 +424,7 @@ func _dessiner() -> void:
 				var images: Array = Palette.anim(e["anim"])
 				if not images.is_empty():
 					var tex: Texture2D = images[mini(int(p * images.size()), images.size() - 1)]
-					var taille := Vector2(e["taille"], e["taille"] * tex.get_height() / tex.get_width())
+					var taille := _taille_anim(tex, e["taille"])
 					calque.draw_set_transform(e["pos"], 0.0, Vector2(-1.0 if e["miroir"] else 1.0, 1.0))
 					calque.draw_texture_rect(tex, Rect2(-taille / 2, taille), false)
 					calque.draw_set_transform(Vector2.ZERO)

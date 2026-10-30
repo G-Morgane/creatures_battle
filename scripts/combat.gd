@@ -267,6 +267,7 @@ func _lancer(moi: Dictionary, cible: Dictionary, s: Dictionary, renfort := 1.0, 
 				_maudire(moi, cible, manquantes[0])
 		if s["soin"] > 0.0:
 			_soigner(moi, cible, s["soin"])
+			_evenement(moi, {"type": "soin"})
 		if s["eclat_moitie"] and moi["cr"]["eclat"] and moi["eclat_jauge"] >= _seuil_eclat(moi) / 2.0:
 			moi["eclat_jauge"] = 0.0
 			_eclat(moi, cible)
@@ -508,6 +509,7 @@ func _eclat(moi: Dictionary, adverse: Dictionary) -> void:
 		moi["dans_eclat"] = true
 		origine = "carillon"
 		_soigner(moi, adverse, moi["cr"]["carillon"])
+		_evenement(moi, {"type": "soin"})
 		moi["dans_eclat"] = false
 	origine = avant
 

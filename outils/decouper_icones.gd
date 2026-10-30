@@ -279,6 +279,7 @@ func _initialize() -> void:
 		ic.save_png("res://images/ui/%s.png" % UI[k])
 	_bouton()
 	_fenetre()
+	_anims()
 	_blasons()
 	_cavaliers()
 	for feuille in PLANCHES_AUTO:
@@ -502,6 +503,49 @@ func _cavaliers() -> void:
 			if CAVALIERS[r][c] in CAVALIERS_A_RETOURNER:
 				img.flip_x()
 			img.save_png("res://images/cavaliers/%s.png" % CAVALIERS[r][c])
+
+# Planches d'animation (images/spells, 4 images en ligne) vers images/anims :
+# les dessins ne tombent pas toujours dans leur quart (une explosion deborde
+# chez sa voisine). On coupe dans le vide le plus proche de chaque quart, et
+# chaque image va dans une case elargie, a sa place d'origine, sans voisine.
+func _anims() -> void:
+	DirAccess.make_dir_recursive_absolute("res://images/anims")
+	for f in DirAccess.get_files_at("res://images/spells"):
+		if not f.ends_with(".png") or f == "window.png":
+			continue
+		var img := Image.load_from_file("res://images/spells/" + f)
+		img.convert(Image.FORMAT_RGBA8)
+		var w := img.get_width()
+		var quart := w / 4
+		var vide := []
+		for x in w:
+			var v := true
+			for y in range(0, img.get_height(), 2):
+				if img.get_pixel(x, y).a > 0.08:
+					v = false
+					break
+			vide.append(v)
+		var bords := [0]
+		for k in range(1, 4):
+			var b := k * quart
+			for d in quart / 3:
+				if vide[b - d]:
+					b -= d
+					break
+				if vide[b + d]:
+					b += d
+					break
+			bords.append(b)
+		bords.append(w)
+		var marge := 0
+		for k in 4:
+			marge = maxi(marge, maxi(k * quart - bords[k], bords[k + 1] - (k + 1) * quart))
+		var case := quart + marge * 2
+		var out := Image.create(case * 4, img.get_height(), false, Image.FORMAT_RGBA8)
+		for k in 4:
+			var r := Rect2i(bords[k], 0, bords[k + 1] - bords[k], img.get_height())
+			out.blit_rect(img, r, Vector2i(k * case + marge + bords[k] - k * quart, 0))
+		out.save_png("res://images/anims/" + f)
 
 # Fond des fenetres de dialogue : le cadre de images/spells/window.png, sans le
 # vide autour, a moitie taille (etire en 9 tranches par Palette.fenetre()).

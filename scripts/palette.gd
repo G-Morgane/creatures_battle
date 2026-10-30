@@ -143,7 +143,7 @@ static var _anims := {}
 static func anim(nom: String) -> Array:
 	if not _anims.has(nom):
 		var l := []
-		var tex := image("res://images/spells/%s.png" % nom)
+		var tex := image("res://images/anims/%s.png" % nom)
 		if tex != null:
 			var w := tex.get_width() / 4.0
 			for k in 4:
