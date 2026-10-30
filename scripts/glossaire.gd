@@ -173,6 +173,12 @@ static func contenu() -> String:
 	for g in Data.GARDIENS:
 		t += _terme(Data.GARDIENS[g]["nom"], Data.GARDIENS[g]["texte"])
 	t += _terme("Le cycle du Bastion", "Rempart : il gagne du bouclier et frappe lentement. Ouverture : il s'immobilise et l'œil du temple absorbe son bouclier. Le Regard : une attaque selon le bouclier absorbé (plafonnée). Résistance : son cavalier referme la porte, il reste sans protection et encaisse plus. Entamer son bouclier affaiblit le Regard.")
+	t += _section("Le Rêveur")
+	t += "Un dieu ancien qui possède les créatures à travers son rêve. Une seule run ne suffit pas : chaque run gagnée le rapproche de sa fin, et ce qui est détruit reste perdu pour lui.\n\n"
+	t += _terme("Incarnation", "%s run%s gagnée%s pour la détruire." % [Progression.INCARNATION, "s" if Progression.INCARNATION > 1 else "", "s" if Progression.INCARNATION > 1 else ""])
+	t += _terme("Ancrages", "%d ancrages le retiennent dans le monde, un par run gagnée ensuite." % Progression.ANCRAGES)
+	t += _terme("Le rêve", "sans ancrage, on l'atteint dans son rêve : %d run%s gagnée%s de plus pour le vaincre." % [Progression.REVE, "s" if Progression.REVE > 1 else "", "s" if Progression.REVE > 1 else ""])
+	t += _terme("État", "affiché sur l'écran de départ ; la fin d'une run gagnée dit ce qui vient de tomber.")
 	t += _section("Les dynasties")
 	for e in Data.DYNASTIES:
 		# sans le nom de la monture : elle se decouvre en jouant

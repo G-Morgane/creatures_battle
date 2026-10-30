@@ -19,7 +19,7 @@ const TEXTES := {
 	# Nuit : affaiblir avant de frapper
 	"aiguille": "Une attaque sur 4 pose Stigmate.",
 	"sablier": "Tes malédictions durent 2 s de plus.",
-	"sceau": "Sort Sceau : pose Faiblesse toutes les 5 s.",
+	"sceau": "Sort Sceau : pose Faiblesse toutes les 4 s.",
 	"poupee": "Catalyseur : les sorts et armes voisins posent une malédiction manquante à chaque activation.",
 	"grimoire": "Chaque nouvelle malédiction posée inflige 20 dégâts.",
 	"masque": "Quand la cible porte les trois malédictions, elles ne s'effacent plus.",

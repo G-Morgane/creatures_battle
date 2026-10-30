@@ -2,7 +2,7 @@
 
 **Résumé :** Royaume fae de Sylvaën partagé entre Dynasties, et une trame de dark fantasy : purifier des gardiens possédés par un dieu qui rêve.
 **Tags :** #univers, #narration
-**Mis à jour :** 2026-10-28
+**Mis à jour :** 2026-10-30
 **Liens :** [[Dynasties]], [[Élites et gardiens]], [[Rencontres et objets neutres]], [[Run et carte]], [[Cavaliers et armes]]
 
 ---
@@ -30,4 +30,4 @@ Un dieu ancien possède les créatures à travers son rêve. Les boss de fin d'a
 - Il faut **plusieurs runs victorieuses** pour le tuer : son incarnation, puis ses ancrages, puis le dieu dans son rêve. Chaque étape change visiblement le monde.
 - Tant que le dieu existe, il peut reprendre les gardiens entre deux expéditions ; un ancrage détruit reste perdu pour lui.
 
-**Ouvert :** le nombre de victoires nécessaires.
+**Décision (2026-10-30) :** 4 runs gagnées : 1 pour l'incarnation, 2 ancrages, 1 dans le rêve. Réglable, voir [[Run et carte#Progression entre les runs : le Rêveur (2026-10-30)]].

@@ -337,6 +337,8 @@ func rafraichir() -> void:
 	var suivant := partie.xp_suivant()
 	niveau_ui.text = "Niveau %d" % partie.niveau() + ("" if suivant < 0 else "  (%d / %d XP)" % [partie.xp(), suivant])
 	message_ui.text = partie.message
+	if partie.terminee() and partie.gagnee:
+		message_ui.text += " " + Progression.recit(Progression.charger())
 	if partie.terminee():
 		bouton_combat.text = ("Run gagnée !" if partie.gagnee else "Run perdue.") + " Nouvelle partie"
 	else:

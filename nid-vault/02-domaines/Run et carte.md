@@ -2,7 +2,7 @@
 
 **Résumé :** Une run, c'est 3 actes de 10 étages sur une carte à embranchements, avec une jauge de Ferveur et une boutique facultative entre chaque nœud.
 **Tags :** #run, #carte, #roguelike
-**Mis à jour :** 2026-10-29
+**Mis à jour :** 2026-10-30
 **Liens :** [[Boutique et économie]], [[Élites et gardiens]], [[Rencontres et objets neutres]], [[Adversaire fantôme et PvP]], [[Sac et formes]], [[Équilibrage]], [[Cavaliers et armes]]
 
 ---
@@ -54,3 +54,20 @@ Bouton Glossaire (ou F1) en haut à droite de tous les écrans. Ses chiffres vie
 **Pourquoi :** demandé par l'utilisatrice ; l'or et la boutique récompensent les combats.
 **Fantômes :** une manche sur trois sans or ni relance (environ un tiers des nœuds sont des feux ou des rencontres), pour garder la même économie que le joueur.
 **À surveiller :** deux reliques offertes d'affilée sans passer par une boutique : la seconde prend la place de la première si la boutique est pleine.
+
+## Progression entre les runs : le Rêveur (2026-10-30)
+
+**Décision :** une sauvegarde `user://progression.json` ne garde que le nombre de runs gagnées ; les étapes s'en déduisent (`scripts/progression.gd`, constantes `INCARNATION`, `ANCRAGES`, `REVE`).
+
+| Runs gagnées | Étape franchie | État affiché |
+|---|---|---|
+| 0 | | Incarnation intacte |
+| 1 | l'incarnation est détruite | Incarnation détruite, ancrages 0/2 |
+| 2, 3 | un ancrage par victoire | ancrages 1/2, puis « Ancrages détruits, le rêve est ouvert » |
+| 4 | vaincu dans son rêve | Le Rêveur est vaincu |
+
+- Seule une run gagnée compte (dernier boss battu), une seule fois : `Progression.compter_run` dans `main.gd` après `conclure_combat`, gardé par `Partie.victoire_comptee`. Une défaite ne fait jamais reculer : un ancrage détruit reste perdu pour lui.
+- Visible : bandeau « Le Rêveur » sur l'écran de départ (survol : ce qu'il reste à abattre), et la fin d'une run gagnée dit ce qui vient de tomber. Chapitre « Le Rêveur » dans le glossaire.
+- Fichier absent ou illisible : on repart de 0.
+**Pourquoi :** trame de [[Univers et histoire#Le Rêveur]] ; le compte de victoires seul suffit et laisse régler les seuils sans migrer la sauvegarde.
+**Ouvert :** ce que change chaque étape dans le jeu lui-même (carte, gardiens, fond) au-delà du texte ; que faire après la victoire finale.

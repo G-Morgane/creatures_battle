@@ -83,6 +83,7 @@ var chemin: Array = []   # noeuds deja visites dans l'acte
 var ferveur := FERVEUR
 var finie := false
 var gagnee := false
+var victoire_comptee := false   # deja comptee dans la Progression
 var message := ""        # resultat du dernier noeud, affiche au Nid
 var rencontre := {}      # rencontre en cours : {id, titre, texte, choix, ...}
 

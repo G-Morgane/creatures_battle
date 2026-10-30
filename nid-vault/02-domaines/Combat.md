@@ -2,7 +2,7 @@
 
 **Résumé :** Le combat est simulé en entier, de façon déterministe par pas de 0,1 s, puis rejoué à l'écran ; aucun élément n'a d'avantage, le contre-jeu passe par les mécaniques.
 **Tags :** #combat, #simulation
-**Mis à jour :** 2026-10-28
+**Mis à jour :** 2026-10-30
 **Liens :** [[Dynasties]], [[Adversaire fantôme et PvP]], [[Équilibrage]], [[Reliques]], [[Carte du code]]
 
 ---
@@ -34,7 +34,10 @@ Les contre-jeux sont lisibles à l'écran :
 | Poison | Printemps | S'empile, dure tout le combat, traverse le bouclier, 100 doses au plus |
 | Brûlure | Été | S'empile, chaque charge s'éteint après 4 s, la combustion la consume |
 | Givre et gel | Hiver | Ralentit attaques **et** recharges, gèle à 10 charges |
-| Malédictions | Nuit | Faiblesse, Langueur, Flétrissure, Stigmate ; 6 s |
+| Malédictions | Nuit | Faiblesse, Flétrissure, Stigmate ; 6 s |
 | Bouclier | Hiver, Crépuscule, élites, gardien | Se vole, se brise |
-| Braise (hâte) | Été | L'inverse du givre |
 | Coup critique | Famille Lame | x1,75, aucune chance de base |
+
+## Récap de fin de combat
+
+Chaque source (relique ou mécanique) a sa ligne : dégâts, soins, bouclier, activations. **Décision (2026-10-30) :** un malus montre aussi son effet sur l'adversaire, au compte de celui qui l'a posé : Faiblesse, dégâts évités ; Flétrissure, soins empêchés ; Stigmate, dégâts ajoutés ; givre et gel, secondes de recharge volées. **Pourquoi :** sans chiffre, un objet qui pose un malus semble ne rien faire.

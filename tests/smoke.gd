@@ -23,6 +23,7 @@ func _ready() -> void:
 	ok = _reserve() and ok
 	ok = _elites() and ok
 	ok = _cavaliers() and ok
+	ok = _impact_malus() and ok
 	ok = _carte() and ok
 	ok = _run() and ok
 	ok = _fusion() and ok
@@ -37,6 +38,7 @@ func _ready() -> void:
 	ok = _automne() and ok
 	ok = _jour() and ok
 	ok = _vitesses() and ok
+	ok = _progression() and ok
 	print("SMOKE: ", "OK" if ok else "ECHEC")
 	get_tree().quit(0 if ok else 1)
 
@@ -431,6 +433,23 @@ func _cavaliers() -> bool:
 	n.placer(Vector2i(0, 0), "dague_feuille")
 	var c := Combat.new(Partie.avec_cavalier(n.eclore(), "ombre"), Nid.new().eclore())
 	ok = _verifier(is_equal_approx(c.cotes[0]["sorts"][0]["prochain"], Data.EMBUSCADE_DELAI), "Embuscade : l'arme part tout de suite") and ok
+	return ok
+
+func _impact_malus() -> bool:
+	var c := Combat.new(Nid.new().eclore(), Nid.new().eclore())
+	c.cotes[0]["maledictions"]["faiblesse"] = {"n": 1, "fin": 99.0}
+	c._frapper(c.cotes[0], c.cotes[1], 20.0, 0.0)
+	var ok := _verifier(is_equal_approx(c.stats[1]["~faiblesse"]["impact"], 20.0 * Data.FAIBLESSE), "faiblesse : degats evites au compte de celui qui l'a posee")
+	c.cotes[1]["maledictions"]["stigmate"] = {"n": 1, "fin": 99.0}
+	c._blesser(c.cotes[1], 20.0)
+	ok = _verifier(is_equal_approx(c.stats[0]["~stigmate"]["impact"], 20.0 * Data.STIGMATE), "stigmate : degats ajoutes") and ok
+	c.cotes[0]["pv"] = 100.0
+	c.cotes[0]["maledictions"]["fletrissure"] = {"n": 1, "fin": 99.0}
+	c._soigner(c.cotes[0], c.cotes[1], 10.0)
+	ok = _verifier(is_equal_approx(c.stats[1]["~fletrissure"]["impact"], 10.0 * Data.FLETRISSURE), "fletrissure : soins empeches") and ok
+	var g := Combat.new(Exemples.nid_glace().eclore(), Exemples.nid_feu().eclore())
+	g.simuler()
+	ok = _verifier(g.stats[0].get("~givre", {}).get("impact", 0.0) > 0.0, "givre : secondes volees comptees") and ok
 	return ok
 
 func _carte() -> bool:
@@ -913,3 +932,29 @@ func _vitesses() -> bool:
 	e.queue_free()
 	return _verifier(vues == [[1.0, "Vitesse x1"], [2.0, "Vitesse x2"], [1.0, "Vitesse x1"]], "vitesse x1, x2 puis x1")
 
+
+func _progression() -> bool:
+	var avant := Progression.chemin
+	Progression.chemin = "user://progression_test.json"
+	DirAccess.remove_absolute(Progression.chemin)
+	var ok := _verifier(Progression.charger() == 0 and Progression.etape()["nom"] == "incarnation", "progression : sans sauvegarde, 0 victoire")
+	ok = _verifier(Progression.etat() == "Incarnation intacte", "progression : etat de depart") and ok
+	var p := Partie.new(3)
+	ok = _verifier(not Progression.compter_run(p) and Progression.charger() == 0, "progression : run non gagnee pas comptee") and ok
+	p.gagnee = true
+	ok = _verifier(Progression.compter_run(p) and not Progression.compter_run(p) and Progression.charger() == 1, "progression : une run gagnee comptee une fois") and ok
+	ok = _verifier(Progression.etape()["nom"] == "ancrages" and Progression.etat() == "Incarnation détruite, ancrages 0/2", "progression : incarnation detruite") and ok
+	var noms := []
+	for v in 6:
+		noms.append(Progression.etape(v)["nom"])
+	ok = _verifier(noms == ["incarnation", "ancrages", "ancrages", "reve", "vaincu", "vaincu"], "progression : etapes 1, 3, 4") and ok
+	ok = _verifier(Progression.etat(2) == "Incarnation détruite, ancrages 1/2" and Progression.etat(4) == "Le Rêveur est vaincu", "progression : etats") and ok
+	for v in 6:
+		ok = _verifier(not "—" in Progression.etat(v) + Progression.recit(v) + Progression.etape(v)["texte"], "progression : pas de tiret cadratin") and ok
+	var f := FileAccess.open(Progression.chemin, FileAccess.WRITE)
+	f.store_string("{pas du json")
+	f = null
+	ok = _verifier(Progression.charger() == 0 and Progression.enregistrer_victoire() == 1, "progression : fichier corrompu, repart de 0") and ok
+	DirAccess.remove_absolute(Progression.chemin)
+	Progression.chemin = avant
+	return ok

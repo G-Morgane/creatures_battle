@@ -26,3 +26,7 @@ _Ajout seulement. Une ligne par ingestion, question, discussion ou passe de nett
 | 2026-10-29 | discussion | Archétypes resserrés codés (80 objets, un principe par Dynastie, Automne et Jour jouables), réglage par simulation, fusion 3 puis 2 → Dynasties, 8 pages de dynastie, Reliques, Cavaliers et armes, Boutique et économie, Équilibrage, Éléments abandonnés, CONCEPTION.md |
 | 2026-10-29 | question | Difficulté (viser 40 %) et comparaison Backpack Battles / Oaken Tower ; 4 simulations de 200 runs → syntheses/Difficulté et leçons de Backpack Battles et Oaken Tower |
 | 2026-10-29 | maj | Difficulté à 40 % : fantômes en avance (1, 3, 5), boutique à arbitrages (relance qui s'enchérit, verrou par offre, soldes) → Boutique et économie, Adversaire fantôme et PvP, Équilibrage, Élites et gardiens, synthèse, CONCEPTION.md |
+| 2026-10-30 | maj | Progression entre les runs (le Rêveur : incarnation 1, ancrages 2, rêve 1 victoire ; sauvegarde user://progression.json) → Run et carte, Univers et histoire |
+| 2026-10-30 | maj | Récap : effet des malus (Faiblesse, Flétrissure, Stigmate, givre et gel) → Combat |
+| 2026-10-30 | discussion | Actif ou renfort : relecture des 80 objets, proposition pour les essences → discussion seule, à valider |
+| 2026-10-30 | nettoyage | Périmètre du prototype réaligné (Automne et Jour faits, arène x2, progression) ; page Notion de la Nuit renvoyée au vault → Périmètre du prototype |

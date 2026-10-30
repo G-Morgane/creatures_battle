@@ -462,7 +462,12 @@ class Recap extends Control:
 	const MECANIQUES := {"~attaque": "Attaques", "~poison": "Poison", "~brulure": "Brûlure",
 		"~combustion": "Combustion", "~epines": "Épines", "~eclat": "Éclat",
 		"~regen": "Régénération", "~illusion": "Illusions", "~renaissance": "Renaissance", "~racines": "Racines",
-		"~charge": "Charge", "~trait": "Trait de l'Ouest", "~rempart": "Rempart", "~regard": "Le Regard"}
+		"~charge": "Charge", "~trait": "Trait de l'Ouest", "~rempart": "Rempart", "~regard": "Le Regard",
+		"~faiblesse": "Faiblesse", "~fletrissure": "Flétrissure", "~stigmate": "Stigmate", "~givre": "Givre", "~gel": "Gel"}
+	# Ce que chaque malus a fait a l'adversaire, en clair.
+	const IMPACTS := {"~faiblesse": "%d dégâts évités", "~fletrissure": "%d soins empêchés",
+		"~stigmate": "+%d dégâts", "~givre": "%.1f s volées", "~gel": "%.1f s volées"}
+	const MALUS := Color("#c79bff")
 	const LIGNES := 10
 	const LARGEUR := 470.0
 	const HAUTEUR_LIGNE := 34.0
@@ -478,14 +483,16 @@ class Recap extends Control:
 			var l := []
 			for source in c.stats[i]:
 				l.append([source, c.stats[i][source]])
-			l.sort_custom(func(a, b): return _poids(a[1]) > _poids(b[1]))
+			l.sort_custom(func(a, b): return _poids(a[0], a[1]) > _poids(b[0], b[1]))
 			lignes[i] = l.slice(0, LIGNES)
 			n = maxi(n, lignes[i].size())
 		size = Vector2(LARGEUR * 2 + 60, 84 + n * HAUTEUR_LIGNE + 34)
 		tooltip_text = " "
 		mouse_filter = Control.MOUSE_FILTER_PASS
-	static func _poids(v: Dictionary) -> float:
-		return v["degats"] + v["soins"] + v["bouclier"]
+	# Un malus pese par son impact ; une seconde volee compte comme 10 PV.
+	static func _poids(source: String, v: Dictionary) -> float:
+		var impact: float = v.get("impact", 0.0) * (10.0 if source in ["~givre", "~gel"] else 1.0)
+		return v["degats"] + v["soins"] + v["bouclier"] + impact
 	func _source_sous(p: Vector2):
 		var i := 0 if p.x < size.x / 2 else 1
 		var k := int((p.y - 84) / HAUTEUR_LIGNE)
@@ -543,13 +550,15 @@ class Recap extends Control:
 					textes.append(["%d" % roundi(v["bouclier"]), BOUCLIER])
 				if v["activations"] > 0.0:
 					textes.append(["x%d" % roundi(v["activations"]), Palette.TEXTE_DOUX])
+				if v.get("impact", 0.0) > 0.0 and IMPACTS.has(source):
+					textes.append([(IMPACTS[source] % v["impact"]).replace(".", ","), MALUS])
 				var tx: float = x0 + 350
 				for t in textes:
 					draw_string(police, Vector2(tx, y + 21), t[0], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, t[1])
 					tx += police.get_string_size(t[0], HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x + 10
 		# legende
 		var lx := 24.0
-		for l in [["Dégâts", DEGATS], ["Soins", SOINS], ["Bouclier", BOUCLIER], ["xN : activations", Palette.TEXTE_DOUX]]:
+		for l in [["Dégâts", DEGATS], ["Soins", SOINS], ["Bouclier", BOUCLIER], ["Effet des malus", MALUS], ["xN : activations", Palette.TEXTE_DOUX]]:
 			draw_rect(Rect2(lx, size.y - 20, 10, 10), l[1])
 			draw_string(police, Vector2(lx + 16, size.y - 10), l[0], HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Palette.TEXTE_DOUX)
 			lx += police.get_string_size(l[0], HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x + 40

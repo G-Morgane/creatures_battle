@@ -44,6 +44,24 @@ func _ready() -> void:
 	pile.add_theme_constant_override("separation", 14)
 	panneau.add_child(pile)
 
+	# le Reveur : ou en est la traque, d'une run a l'autre
+	var reveur := HBoxContainer.new()
+	reveur.add_theme_constant_override("separation", 12)
+	reveur.alignment = BoxContainer.ALIGNMENT_CENTER
+	var t0 := Label.new()
+	t0.text = "Le Rêveur"
+	t0.add_theme_font_size_override("font_size", 20)
+	Palette.titre(t0)
+	t0.add_theme_color_override("font_color", Color("#f2c94c"))
+	reveur.add_child(t0)
+	var etat := Label.new()
+	etat.text = Progression.etat()
+	etat.tooltip_text = Progression.etape()["texte"]
+	etat.mouse_filter = Control.MOUSE_FILTER_STOP
+	etat.add_theme_color_override("font_color", Palette.TEXTE)
+	reveur.add_child(etat)
+	pile.add_child(reveur)
+
 	var titre := Label.new()
 	titre.text = "Choisis les dynasties de ta partie"
 	titre.add_theme_font_size_override("font_size", 28)

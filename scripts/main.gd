@@ -53,6 +53,7 @@ func _combattre() -> void:
 	c.retour.connect(func():
 		var adverse: Dictionary = c.combat.cotes[1]
 		partie.conclure_combat(c.vainqueur, adverse["pv"] / adverse["cr"]["pv_max"])
+		Progression.compter_run(partie)
 		aller_nid())
 	ecran = c
 	add_child(c)

@@ -60,4 +60,5 @@ _Catalogue des pages. Mis à jour à chaque nouvelle page._
 - [[2026-10-28 Refonte de la boutique]] : 9 offres en 3 x 3, sac qui grandit case par case, plus d'aperçu de la monture
 - [[2026-10-28 Reliques de placement]] : six mécaniques de placement, plus de neutres, arène agrandie
 - [[2026-10-29 Niveau]] : niveau passif, +PV et une case de sac par niveau
+- [[2026-10-30 Actif ou renfort]] : relecture des 80 objets, proposition pour les essences (à valider)
 - [[2026-10-29 Archétypes resserrés]] : 10 objets et un principe par Dynastie, huit Dynasties jouables, fusion 3 puis 2

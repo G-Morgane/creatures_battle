@@ -77,7 +77,11 @@ func simuler() -> int:
 	while t < Data.DUREE_MAX:
 		t += Data.PAS
 		for i in 2:
-			cotes[i]["horloge"] += Data.PAS * _vitesse(cotes[i])
+			var v := _vitesse(cotes[i])
+			cotes[i]["horloge"] += Data.PAS * v
+			# givre et gel : le temps perdu par la cible, au compte de l'autre cote
+			if v < 1.0 and cotes[i]["phase"] != "ouverture":
+				_compter(1 - i, "impact", Data.PAS * (1.0 - v), "~gel" if _gele(cotes[i]) else "~givre")
 		for i in 2:
 			_agir(cotes[i], cotes[1 - i])
 		for i in 2:
@@ -120,7 +124,9 @@ func _compter(cote: int, champ: String, v: float, source := "") -> void:
 	if v <= 0.0:
 		return
 	var cle := source if source != "" else origine
-	var l: Dictionary = stats[cote].get(cle, {"degats": 0.0, "soins": 0.0, "bouclier": 0.0, "activations": 0.0})
+	# impact : ce qu'un malus a fait a l'adversaire (degats evites ou ajoutes,
+	# soins empeches, secondes de recharge volees), selon la cle ~faiblesse...
+	var l: Dictionary = stats[cote].get(cle, {"degats": 0.0, "soins": 0.0, "bouclier": 0.0, "activations": 0.0, "impact": 0.0})
 	l[champ] += v
 	stats[cote][cle] = l
 
@@ -138,6 +144,7 @@ func _proteger(moi: Dictionary, b: float, source := "") -> void:
 
 # Degats directs, qui passent le bouclier (brulure, poison, combustion...).
 func _infliger(cible: Dictionary, d: float, source := "") -> void:
+	_compter(1 - cible["cote"], "impact", d * (_stigmate(cible) - 1.0), "~stigmate")
 	d *= _stigmate(cible)
 	cible["pv"] -= d
 	_compter(1 - cible["cote"], "degats", d, source)
@@ -374,7 +381,9 @@ func _frapper(moi: Dictionary, cible: Dictionary, degats: float, perce := false)
 		degats *= moi["cr"]["bonus_gel"]
 	# Faiblesse : l'attaquant maudit frappe moins fort.
 	# Chauve-souris : plus fort contre une cible maudite.
-	degats *= maxf(0.0, 1.0 - Data.FAIBLESSE * _charges(moi, "faiblesse"))
+	var faible := minf(1.0, Data.FAIBLESSE * _charges(moi, "faiblesse"))
+	_compter(cible["cote"], "impact", degats * faible, "~faiblesse")
+	degats *= 1.0 - faible
 	degats *= 1.0 + moi["cr"]["par_malediction"] * _nb_maledictions(cible)
 	if moi["cr"].get("elite", "") == "vouivre":
 		degats *= 1.0 + minf(Data.VOUIVRE_PAR_MALUS * _malus_subis(moi), Data.VOUIVRE_MAX)
@@ -515,7 +524,9 @@ func _soigner(moi: Dictionary, adverse: Dictionary, soin: float) -> void:
 			+ exces * Data.ECLAT_PAR_EXCES * (1.0 + moi["cr"]["voile_aube"]))
 	if moi["poison"] > 0.0 and adverse["cr"]["belladone"]:
 		return
-	soin *= maxf(0.0, 1.0 - Data.FLETRISSURE * _charges(moi, "fletrissure"))
+	var fletri := minf(1.0, Data.FLETRISSURE * _charges(moi, "fletrissure"))
+	_compter(adverse["cote"], "impact", soin * fletri, "~fletrissure")
+	soin *= 1.0 - fletri
 	var applique := minf(soin, maxf(0.0, moi["cr"]["pv_max"] - moi["pv"]))
 	moi["pv"] += applique
 	_compter(moi["cote"], "soins", applique)
@@ -556,6 +567,7 @@ func _stigmate(cible: Dictionary) -> float:
 
 # Le bouclier encaisse avant les PV. Brulure, poison et fatigue passent a travers.
 func _blesser(cible: Dictionary, degats: float, source = null) -> void:
+	_compter(1 - cible["cote"], "impact", degats * (_stigmate(cible) - 1.0), "~stigmate")
 	degats *= _stigmate(cible)
 	if cible["phase"] == "resistance":
 		degats *= Data.BASTION_RESISTANCE_FRAGILE
