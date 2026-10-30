@@ -22,6 +22,7 @@ var prochain := 0          # index du prochain evenement a jouer
 var effets: Array = []     # projectiles et textes flottants en cours
 var fini := false
 var calque: Control
+var etats_ui: Array = []   # par cote : la rangee de carres d'etat
 var bandeau: Label
 var bouton_vitesse: Button
 var boutons_ui: Control
@@ -63,6 +64,10 @@ func _ready() -> void:
 	calque.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	calque.draw.connect(_dessiner)
 	add_child(calque)
+	for i in 2:
+		var e := Etats.new()
+		etats_ui.append(e)
+		add_child(e)
 
 	bandeau = Label.new()
 	bandeau.add_theme_font_size_override("font_size", 40)
@@ -267,6 +272,52 @@ const ANIM_PROJECTILE := {"feu": "feu", "crepuscule": "arcane", "glace": "glace"
 # Armes de corps a corps : leur coup joue sur la cible.
 const ANIM_ARME := {"lame": "entaille_fine", "faux": "fauche", "hache": "hache", "hast": "epee"}
 
+const MALUS_COURT := {"faiblesse": "Fa", "fletrissure": "Fl", "stigmate": "St"}
+const MALUS_COULEUR := {"faiblesse": Color("#b48cf0"), "fletrissure": Color("#7f9c5a"), "stigmate": Color("#d0587a")}
+const MALUS_VALEUR := {"faiblesse": Data.FAIBLESSE, "fletrissure": Data.FLETRISSURE, "stigmate": Data.STIGMATE}
+const MALUS_INFO := {"faiblesse": "Faiblesse : %d %% de dégâts en moins.",
+	"fletrissure": "Flétrissure : %d %% de soins reçus en moins.", "stigmate": "Stigmate : %d %% de dégâts reçus en plus."}
+
+# Rangee de carres d'etat sous la barre de vie : couleur de l'etat, valeur au
+# centre, une ombre qui balaie le temps ecoule, le detail au survol.
+class Etats extends Control:
+	const CARRE := 34.0
+	const PAS_CARRE := 40.0
+	var liste: Array = []   # [texte, couleur, part restante (-1 : pas de minuteur), infobulle]
+	func _init() -> void:
+		tooltip_text = " "
+		mouse_filter = Control.MOUSE_FILTER_PASS
+	func _sous(p: Vector2) -> int:
+		var k := int(p.x / PAS_CARRE)
+		return k if k >= 0 and k < liste.size() and p.x - k * PAS_CARRE <= CARRE else -1
+	func _get_tooltip(p: Vector2) -> String:
+		var k := _sous(p)
+		if k < 0:
+			return ""
+		return liste[k][3]
+	func _draw() -> void:
+		var police := ThemeDB.fallback_font
+		for k in liste.size():
+			var e: Array = liste[k]
+			var r := Rect2(k * PAS_CARRE, 0, CARRE, CARRE)
+			draw_rect(r, Color(e[1], 0.85))
+			# balayage : ce qui est ecoule s'assombrit, dans le sens des aiguilles
+			var part: float = e[2]
+			if part >= 0.0 and part < 1.0:
+				var c := r.get_center()
+				var pts := PackedVector2Array([c])
+				var debut := -PI / 2
+				var fin := debut + TAU * (1.0 - part)
+				for n in 25:
+					var a := lerpf(debut, fin, n / 24.0)
+					var d := Vector2(cos(a), sin(a))
+					# projete sur le bord du carre
+					pts.append(c + d * (CARRE / 2) / maxf(absf(d.x), absf(d.y)))
+				draw_colored_polygon(pts, Color(0, 0, 0, 0.55))
+			draw_rect(r, Color(0, 0, 0, 0.6), false, 2.0)
+			draw_string_outline(police, Vector2(r.position.x, 23), e[0], HORIZONTAL_ALIGNMENT_CENTER, CARRE, 15, 3, Color(0, 0, 0, 0.8))
+			draw_string(police, Vector2(r.position.x, 23), e[0], HORIZONTAL_ALIGNMENT_CENTER, CARRE, 15, Color.WHITE)
+
 # Une animation de 4 images a pos, dans delai secondes, pendant duree.
 func _animer(nom: String, pos: Vector2, delai: float, duree: float, taille: float, miroir := false) -> void:
 	effets.append({"type": "anim", "anim": nom, "pos": pos, "t0": lecture + delai, "duree": duree,
@@ -336,22 +387,37 @@ func _dessiner() -> void:
 		var v: CreatureVue = vues[i]
 		var x := v.position.x + v.size.x / 2 - 150
 		var y := v.position.y - 30
-		var etats := []
+		# etats : un carre de couleur chacun, le temps restant balaye, le
+		# detail au survol
+		var minut: Dictionary = img[24 + i]
+		var carres := []
 		if img[2 + i] > 0.0:
-			etats.append(["Brûlure %d" % roundi(img[2 + i]), Palette.ELEMENTS["feu"]["vif"]])
-		if img[12 + i] > 0:
-			etats.append(["Illusions %d" % img[12 + i], Palette.ELEMENTS["crepuscule"]["clair"]])
-		if img[22 + i] > 0.0:
-			etats.append(["Éventail %d" % roundi(img[22 + i]), Palette.ELEMENTS["jour"]["clair"]])
+			carres.append(["%d" % roundi(img[2 + i]), Palette.ELEMENTS["feu"]["vif"], minut.get("brulure", -1.0),
+				"Brûlure %d : %d dégâts par seconde, à travers le bouclier." % [roundi(img[2 + i]), roundi(img[2 + i] * Data.BRULURE_DPS_CHARGE)]])
 		if img[6 + i] > 0.0:
-			etats.append(["Poison %d" % roundi(img[6 + i]), Palette.POISON])
+			carres.append(["%d" % roundi(img[6 + i]), Palette.POISON, -1.0,
+				"Poison %d : %d dégâts par seconde, à travers le bouclier." % [roundi(img[6 + i]), roundi(img[6 + i] * Data.POISON_DPS_PAR_DOSE)]])
 		if img[10 + i]:
-			etats.append(["Gelé", Palette.ELEMENTS["glace"]["clair"]])
+			carres.append(["Gel", Palette.ELEMENTS["glace"]["clair"], minut.get("gel", -1.0),
+				"Gelé : n'attaque plus, ses recharges s'arrêtent."])
 		elif img[8 + i] > 0.0:
-			etats.append(["Givre %d" % roundi(img[8 + i]), Palette.ELEMENTS["glace"]["vif"]])
+			carres.append(["%d" % roundi(img[8 + i]), Palette.ELEMENTS["glace"]["vif"], -1.0,
+				"Givre %d : attaques et recharges ralenties de %d %%. Gèle à %d." % [roundi(img[8 + i]), roundi(img[8 + i] * Data.GIVRE_RALENTI * 100), roundi(cr.get("gel_seuil", Data.GEL_SEUIL))]])
+		for nom in Data.MALEDICTIONS:
+			if minut.has(nom):
+				carres.append([MALUS_COURT[nom], MALUS_COULEUR[nom], minut[nom],
+					MALUS_INFO[nom] % roundi(MALUS_VALEUR[nom] * 100)])
+		if img[12 + i] > 0:
+			carres.append(["x%d" % img[12 + i], Palette.ELEMENTS["crepuscule"]["clair"], -1.0,
+				"Illusions : %d double%s qui encaisse%s le prochain coup." % [img[12 + i], "s" if img[12 + i] > 1 else "", "nt" if img[12 + i] > 1 else ""]])
+		if img[22 + i] > 0.0:
+			carres.append(["%d" % roundi(img[22 + i]), Palette.ELEMENTS["jour"]["clair"], -1.0,
+				"Éventail %d : armes +%d %% de dégâts et de recharge." % [roundi(img[22 + i]), roundi(img[22 + i] * Data.EVENTAIL_BONUS * 100)]])
 		if cr["eclat"]:
 			var seuil := maxf(Data.ECLAT_SEUIL - cr["miroir"], Data.ECLAT_SEUIL_MIN)
-			etats.append(["Éclat %d/%d" % [roundi(img[16 + i]), roundi(seuil)], Palette.ELEMENTS["aube"]["vif"]])
+			carres.append(["Éc", Palette.ELEMENTS["aube"]["vif"], clampf(img[16 + i] / seuil, 0.0, 1.0),
+				"Éclat %d / %d : les soins remplissent la jauge ; pleine, elle frappe." % [roundi(img[16 + i]), roundi(seuil)]])
+		var etats := []
 		# Bastion : la phase et l'eclat de l'oeil, aussi sur la bete
 		if img[20 + i] != "":
 			v.oeil = img[18 + i]
@@ -370,7 +436,7 @@ func _dessiner() -> void:
 			etats.append([noms_phase.get(img[20 + i], img[20 + i]) + detail, Color("#c79bff")])
 		# cadre sombre sous le nom, la barre et les etats : lisible sur le fond peint
 		var demi := maxf(162.0, 75.0 * etats.size() + 20.0)
-		var bas := 62.0 if img[14 + i] != "" else 44.0
+		var bas := (64.0 if not carres.is_empty() else 26.0) + (22.0 if not etats.is_empty() else 0.0)
 		calque.draw_rect(Rect2(x + 150 - demi, y - 36, demi * 2, bas + 36), Color(Palette.FOND, 0.7))
 		calque.draw_string(Palette.police_titre(), Vector2(x, y - 12), cr["nom"], HORIZONTAL_ALIGNMENT_CENTER, 300, 20, Palette.TEXTE)
 		var part := clampf(img[i] / cr["pv_max"], 0.0, 1.0)
@@ -389,11 +455,14 @@ func _dessiner() -> void:
 			HORIZONTAL_ALIGNMENT_CENTER, 300, 13, Palette.TEXTE)
 		if img[2 + i]:
 			_brulure(v)
-		if img[14 + i] != "":
-			calque.draw_string(police, Vector2(x, y + 54), img[14 + i],
-				HORIZONTAL_ALIGNMENT_CENTER, 300, 14, Palette.ELEMENTS["nuit"]["clair"])
+		var ui: Etats = etats_ui[i]
+		ui.liste = carres
+		ui.size = Vector2(maxf(carres.size(), 1) * Etats.PAS_CARRE, Etats.CARRE)
+		ui.position = Vector2(x + 150 - ui.size.x / 2, y + 26)
+		ui.queue_redraw()
+		var ye := y + (66.0 if not carres.is_empty() else 34.0)
 		for k in etats.size():
-			calque.draw_string(police, Vector2(x + 150 * k - 75 * (etats.size() - 1), y + 34), etats[k][0],
+			calque.draw_string(police, Vector2(x + 150 * k - 75 * (etats.size() - 1), ye), etats[k][0],
 				HORIZONTAL_ALIGNMENT_CENTER, 300, 15, etats[k][1])
 		if img[10 + i]:
 			_gel(v)

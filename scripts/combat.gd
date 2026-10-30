@@ -57,11 +57,12 @@ func _etat(cr: Dictionary, i: int) -> Dictionary:
 		"renaissances": cr["renaissances"],
 		"brulures": [],            # charges de brulure : [{fin, q}], chacune s'eteint seule
 		"brulures_posees": 0.0,    # Eclat d'obsidienne
-		"maledictions": {},        # nom -> {n, fin}
+		"maledictions": {},        # nom -> {n, debut, fin}
 		"poison": 0.0,             # doses
 		"coups_recus": 0,
 		"givre": 0.0,              # charges de givre subies
 		"gele_jusqu": 0.0,
+		"gele_depuis": 0.0,
 		"eclat_jauge": 0.0,
 		"dans_eclat": false,       # un soin venu d'un Eclat ne recharge pas l'Eclat
 		"illusions": cr["illusions_depart"],
@@ -103,7 +104,7 @@ func simuler() -> int:
 			_resume_maledictions(cotes[0]), _resume_maledictions(cotes[1]),
 			cotes[0]["eclat_jauge"], cotes[1]["eclat_jauge"],
 			_oeil(cotes[0]), _oeil(cotes[1]), cotes[0]["phase"], cotes[1]["phase"],
-			cotes[0]["eventail"], cotes[1]["eventail"]])
+			cotes[0]["eventail"], cotes[1]["eventail"], _minuteurs(cotes[0]), _minuteurs(cotes[1])])
 		recharges.append([_recharges(cotes[0]), _recharges(cotes[1])])
 		if morts[0] or morts[1]:
 			var v := 1 if morts[0] else 0
@@ -174,6 +175,24 @@ func _brulure(moi: Dictionary) -> float:
 
 func _gele(moi: Dictionary) -> bool:
 	return t < moi["gele_jusqu"]
+
+# Temps restant des etats qui s'eteignent seuls, de 1 (tout frais) a 0 ; 1
+# aussi pour ceux qui ne s'eteignent plus. Brulure : la charge la plus longue.
+func _minuteurs(moi: Dictionary) -> Dictionary:
+	var m := {}
+	for b in moi["brulures"]:
+		var f := _reste(b["debut"], b["fin"])
+		m["brulure"] = maxf(m.get("brulure", 0.0), f)
+	for nom in moi["maledictions"]:
+		var x: Dictionary = moi["maledictions"][nom]
+		if x["fin"] > t:
+			m[nom] = _reste(x["debut"], x["fin"])
+	if _gele(moi):
+		m["gel"] = _reste(moi["gele_depuis"], moi["gele_jusqu"])
+	return m
+
+func _reste(debut: float, fin: float) -> float:
+	return 1.0 if fin == INF else clampf((fin - t) / maxf(fin - debut, Data.PAS), 0.0, 1.0)
 
 # Recharge d'un sort : l'Eventail accelere les armes.
 func _recharge(moi: Dictionary, s: Dictionary) -> float:
@@ -362,7 +381,7 @@ func _bruler(moi: Dictionary, cible: Dictionary, n: float) -> void:
 	if n <= 0.0:
 		return
 	var fin: float = INF if moi["cr"]["oeuf"] else t + Data.BRULURE_DUREE + moi["cr"]["brulure_duree"]
-	cible["brulures"].append({"fin": fin, "q": n})
+	cible["brulures"].append({"debut": t, "fin": fin, "q": n})
 	var seuil: float = moi["cr"]["obsidienne"]
 	if seuil > 0.0:
 		moi["brulures_posees"] += n
@@ -538,7 +557,7 @@ func _maudire(moi: Dictionary, cible: Dictionary, nom: String) -> void:
 	var m = cible["maledictions"].get(nom)
 	if m != null and m["fin"] == INF:
 		fin = INF
-	cible["maledictions"][nom] = {"n": 1, "fin": fin}
+	cible["maledictions"][nom] = {"n": 1, "debut": t, "fin": fin}
 	if not nouvelle:
 		return
 	_evenement(cible, {"type": "malediction", "nom": nom, "n": 1})
@@ -648,6 +667,7 @@ func _givrer(moi: Dictionary, cible: Dictionary, charges: float) -> void:
 # Fourrure : gel plus long ; Coeur de banquise : la cible garde la moitie de son
 # givre ; Cristal fele : le gel blesse.
 func _geler(moi: Dictionary, cible: Dictionary) -> void:
+	cible["gele_depuis"] = t
 	cible["gele_jusqu"] = t + Data.GEL_DUREE + moi["cr"]["gel_duree"]
 	cible["givre"] = cible["givre"] * 0.5 if moi["cr"]["banquise"] else 0.0
 	if moi["cr"]["banquise"] and cible["givre"] > 0.0:
