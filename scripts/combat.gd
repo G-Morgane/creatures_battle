@@ -28,6 +28,12 @@ var rng := RandomNumberGenerator.new()
 func _init(a: Dictionary, b: Dictionary) -> void:
 	rng.seed = 1
 	cotes = [_etat(a, 0), _etat(b, 1)]
+	# effets de debut de combat : Cocon (une Illusion), Plume d'ocelle (Eventail)
+	for i in 2:
+		if cotes[i]["cr"]["illusions_depart"] > 0:
+			_relique(cotes[i], "cocon")
+		if cotes[i]["cr"]["eventail_depart"] > 0.0:
+			_relique(cotes[i], "plume_ocelle")
 
 func _etat(cr: Dictionary, i: int) -> Dictionary:
 	var sorts := []
@@ -42,6 +48,7 @@ func _etat(cr: Dictionary, i: int) -> Dictionary:
 	return {
 		"cr": cr,
 		"cote": i,
+		"flash": {},               # relique -> dernier allumage a l'ecran
 		"pv": cr["pv_max"],
 		"prochaine_attaque": cr["intervalle"],
 		"sorts": sorts,
@@ -189,12 +196,16 @@ func _agir(moi: Dictionary, cible: Dictionary) -> void:
 			var tous: int = moi["cr"]["stigmate_tous"]
 			if tous > 0 and moi["coups"] % tous == 0:
 				_maudire(moi, cible, "stigmate")
+				_relique(moi, "aiguille")
 			if moi["cr"]["brulure_attaque"] > 0.0:
 				_bruler(moi, cible, moi["cr"]["brulure_attaque"])
+				_relique(moi, "charbon")
 			if moi["cr"]["poison_attaque"] > 0.0:
 				_empoisonner(cible, moi["cr"]["poison_attaque"])
+				_relique(moi, "baie")
 			if moi["cr"]["givre_attaque"] > 0.0:
 				_givrer(moi, cible, moi["cr"]["givre_attaque"])
+				_relique(moi, "flocon")
 			# signatures des essences
 			var sig: Dictionary = moi["cr"].get("signatures", {})
 			for e in sig:
@@ -286,12 +297,17 @@ func _lancer(moi: Dictionary, cible: Dictionary, s: Dictionary, renfort := 1.0, 
 	# Papillon : chaque sort de la monture cree une Illusion ; Phalene : chacune tire avec lui
 	if moi["cr"]["illusions"] and not s["cavalier"]:
 		_gagner_illusions(moi, 1)
-	if moi["cr"]["phalene"]:
+	if moi["cr"]["phalene"] and moi["illusions"] > 0:
+		_relique(moi, "phalene")
+		var av := _depuis("phalene")
 		for k in moi["illusions"]:
 			_arcane(moi, cible, Data.ILLUSION_ARCANE)
+		origine = av
 	if moi["cr"]["chrysalide"]:
+		_relique(moi, "chrysalide")
 		_lancer(moi, cible, s, renfort * Data.CHRYSALIDE_PART, true)
 	elif s["cavalier"] and moi["cr"]["zenith"] and moi["eventail"] >= Data.ZENITH_SEUIL:
+		_relique(moi, "oeil_zenith")
 		_lancer(moi, cible, s, renfort, true)
 
 # Paon : une arme lancee donne de l'Eventail. Ecu dore : du bouclier ; Miroir
@@ -300,9 +316,14 @@ func _arme_lancee(moi: Dictionary, cible: Dictionary, s: Dictionary) -> void:
 	var cr: Dictionary = moi["cr"]
 	if cr["eventail"]:
 		moi["eventail"] = minf(moi["eventail"] + s["eventail_gain"], cr["eventail_max"])
+		# Couronne de midi : l'Eventail au-dessus de 10
+		if moi["eventail"] > Data.EVENTAIL_MAX:
+			_relique(moi, "couronne_midi")
 	if cr["ecu"] > 0.0:
+		_relique(moi, "ecu_dore")
 		_proteger(moi, cr["ecu"], "ecu_dore")
 	if cr["miroir_ocelle"] > 0.0 and moi["eventail"] > 0.0:
+		_relique(moi, "miroir_ocelle")
 		var avant := _depuis("miroir_ocelle")
 		_blesser(cible, cr["miroir_ocelle"] * moi["eventail"], moi)
 		origine = avant
@@ -346,6 +367,7 @@ func _bruler(moi: Dictionary, cible: Dictionary, n: float) -> void:
 		moi["brulures_posees"] += n
 		if moi["brulures_posees"] >= seuil:
 			moi["brulures_posees"] -= seuil
+			_relique(moi, "obsidienne")
 			var avant := _depuis("obsidienne")
 			_combustion(moi, cible, 0.5, false, 1.0)
 			origine = avant
@@ -359,6 +381,9 @@ func _combustion(moi: Dictionary, cible: Dictionary, part: float, totale: bool, 
 	if consomme <= 0.0:
 		return
 	var retire := part * (0.5 if moi["cr"]["fournaise"] else 1.0)
+	if moi["cr"]["fournaise"]:
+		# charges de brulure laissees en place
+		_relique(moi, "coeur_fournaise", consomme * 0.5)
 	for b in cible["brulures"]:
 		b["q"] *= 1.0 - retire
 	cible["brulures"] = cible["brulures"].filter(func(b): return b["q"] > 0.0)
@@ -390,7 +415,11 @@ func _frapper(moi: Dictionary, cible: Dictionary, degats: float, perce := false)
 	var faible := minf(1.0, Data.FAIBLESSE * _charges(moi, "faiblesse"))
 	_compter(cible["cote"], "impact", degats * faible, "~faiblesse")
 	degats *= 1.0 - faible
-	degats *= 1.0 + moi["cr"]["par_malediction"] * _nb_maledictions(cible)
+	var bonus_nuit: float = moi["cr"]["par_malediction"] * _nb_maledictions(cible)
+	# Pacte : la moitie du bonus vient de lui
+	if moi["cr"]["pacte"] and bonus_nuit > 0.0:
+		_relique(moi, "pacte", degats * bonus_nuit / 2.0)
+	degats *= 1.0 + bonus_nuit
 	if moi["cr"].get("elite", "") == "vouivre":
 		degats *= 1.0 + minf(Data.VOUIVRE_PAR_MALUS * _malus_subis(moi), Data.VOUIVRE_MAX)
 		if moi["furie"]:
@@ -403,11 +432,15 @@ func _frapper(moi: Dictionary, cible: Dictionary, degats: float, perce := false)
 	elif moi["cr"]["crit"] > 0.0 and rng.randf() < moi["cr"]["crit"]:
 		mult = moi["cr"]["crit_mult"]
 	if mult > 0.0:
+		# Oeil du chasseur : la part du crit au-dela de x1,75
+		if mult > Data.CRIT_MULT and moi["cr"]["crit_mult"] > Data.CRIT_MULT and mult == moi["cr"]["crit_mult"]:
+			_relique(moi, "oeil_chasseur", degats * (mult - Data.CRIT_MULT))
 		degats *= mult
 		moi["dernier_crit"] = true
 		_evenement(cible, {"type": "crit"})
 		if moi["cr"]["queue"]:
 			moi["esquive_prete"] = true
+			_relique(moi, "queue_renard")
 	_blesser(cible, degats, moi)
 	_riposter(cible, moi)
 	return true
@@ -418,6 +451,7 @@ func _esquiver(moi: Dictionary, attaquant: Dictionary) -> void:
 	if moi["cr"]["feinte"]:
 		moi["feinte_prete"] = true
 	if moi["cr"]["bogue"]:
+		_relique(moi, "bogue")
 		var avant := _depuis("bogue")
 		_frapper(moi, attaquant, moi["cr"]["attaque"], true)
 		origine = avant
@@ -443,6 +477,7 @@ func _eclater_illusion(moi: Dictionary, attaquant: Dictionary) -> void:
 	_arcane(moi, attaquant, Data.ILLUSION_ARCANE)
 	origine = avant
 	if moi["cr"]["mue"]:
+		_relique(moi, "mue")
 		var proche = null
 		for s in moi["sorts"]:
 			if s["prochain"] != INF and (proche == null or s["prochain"] < proche["prochain"]):
@@ -468,6 +503,7 @@ func _eclat(moi: Dictionary, adverse: Dictionary) -> void:
 	_evenement(adverse, {"type": "eclat", "valeur": Data.ECLAT_DEGATS})
 	_blesser(adverse, Data.ECLAT_DEGATS, moi)
 	if moi["cr"]["carillon"] > 0.0:
+		_relique(moi, "carillon")
 		# sinon, le soin relancait l'Eclat sans fin
 		moi["dans_eclat"] = true
 		origine = "carillon"
@@ -479,6 +515,7 @@ func _eclat(moi: Dictionary, adverse: Dictionary) -> void:
 func _lanterne(moi: Dictionary, d: float) -> void:
 	if moi["cr"]["eclat"] and moi["cr"]["lanterne"] > 0.0 and d > 0.0 and not moi["dans_eclat"]:
 		moi["dans_eclat"] = true
+		_relique(moi, "lanterne", d * moi["cr"]["lanterne"], true)
 		_charger_eclat(moi, cotes[1 - moi["cote"]], d * moi["cr"]["lanterne"])
 		moi["dans_eclat"] = false
 
@@ -504,10 +541,12 @@ func _maudire(moi: Dictionary, cible: Dictionary, nom: String) -> void:
 		return
 	_evenement(cible, {"type": "malediction", "nom": nom, "n": 1})
 	if moi["cr"]["grimoire"] > 0.0:
+		_relique(moi, "grimoire")
 		var avant := _depuis("grimoire")
 		_blesser(cible, moi["cr"]["grimoire"], moi)
 		origine = avant
 	if moi["cr"]["masque"] and _nb_maledictions(cible) >= Data.MALEDICTIONS.size():
+		_relique(moi, "masque")
 		for k in cible["maledictions"]:
 			cible["maledictions"][k]["fin"] = INF
 
@@ -529,6 +568,7 @@ func _soigner(moi: Dictionary, adverse: Dictionary, soin: float) -> void:
 		_charger_eclat(moi, adverse, (soin - exces) * Data.ECLAT_PAR_SOIN
 			+ exces * Data.ECLAT_PAR_EXCES * (1.0 + moi["cr"]["voile_aube"]))
 	if moi["poison"] > 0.0 and adverse["cr"]["belladone"]:
+		_relique(adverse, "belladone", soin, true)
 		return
 	var fletri := minf(1.0, Data.FLETRISSURE * _charges(moi, "fletrissure"))
 	_compter(adverse["cote"], "impact", soin * fletri, "~fletrissure")
@@ -551,7 +591,9 @@ func _riposter(moi: Dictionary, attaquant: Dictionary) -> void:
 		_evenement(moi, {"type": "epines"})
 		if cr["epines_poison"] > 0.0:
 			_empoisonner(attaquant, cr["epines_poison"])
+			_relique(moi, "liane")
 	if cr["graine"] and attaquant["poison"] > 0.0:
+		_relique(moi, "graine_jardin")
 		_infliger(attaquant, attaquant["poison"] * Data.POISON_DPS_PAR_DOSE, "graine_jardin")
 	for s in moi["sorts"]:
 		if s["contre"] > 0 and moi["coups_recus"] % s["contre"] == 0:
@@ -596,6 +638,9 @@ func _givrer(moi: Dictionary, cible: Dictionary, charges: float) -> void:
 		return
 	cible["givre"] += charges
 	if cible["givre"] >= moi["cr"]["gel_seuil"]:
+		# Noyau de l'Hiver : un gel qui ne serait pas venu au seuil normal
+		if cible["givre"] < Data.GEL_SEUIL:
+			_relique(moi, "noyau_hiver")
 		_geler(moi, cible)
 
 # Fourrure : gel plus long ; Coeur de banquise : la cible garde la moitie de son
@@ -603,9 +648,12 @@ func _givrer(moi: Dictionary, cible: Dictionary, charges: float) -> void:
 func _geler(moi: Dictionary, cible: Dictionary) -> void:
 	cible["gele_jusqu"] = t + Data.GEL_DUREE + moi["cr"]["gel_duree"]
 	cible["givre"] = cible["givre"] * 0.5 if moi["cr"]["banquise"] else 0.0
+	if moi["cr"]["banquise"] and cible["givre"] > 0.0:
+		_relique(moi, "coeur_banquise", cible["givre"])
 	_evenement(cible, {"type": "gel"})
 	_noter("%s gèle." % cible["cr"]["nom"])
 	if moi["cr"]["gel_degats"] > 0.0:
+		_relique(moi, "cristal")
 		var avant := _depuis("cristal")
 		_blesser(cible, moi["cr"]["gel_degats"], moi)
 		origine = avant
@@ -825,12 +873,27 @@ func _mort(moi: Dictionary, adverse: Dictionary) -> bool:
 		moi["renaissances"] -= 1
 		moi["pv"] = moi["cr"]["pv_max"] * Data.RENAISSANCE_PV
 		_evenement(moi, {"type": "renaissance"})
+		# Oeuf du Premier Brasier : la seconde renaissance est la sienne
+		if moi["cr"]["oeuf"] and moi["renaissances"] == 0:
+			_relique(moi, "oeuf_brasier")
 		_noter("%s renaît de ses cendres !" % moi["cr"]["nom"])
 		var avant := _depuis("~renaissance")
 		_combustion(moi, adverse, 1.0, true, 1.0)
 		origine = avant
 		return false
 	return true
+
+# Une essence agit : elle compte une activation a son nom (et son effet si on
+# le mesure, dans le champ "impact"), et sa case s'allume dans le Nid de
+# l'arene, au plus une fois toutes les 0,3 s.
+# continu : un effet de chaque instant (Belladone, Lanterne), sans activations.
+func _relique(moi: Dictionary, id: String, impact := 0.0, continu := false) -> void:
+	if not continu:
+		_compter(moi["cote"], "activations", 1.0, id)
+	_compter(moi["cote"], "impact", impact, id)
+	if t - moi["flash"].get(id, -1.0) >= 0.3:
+		moi["flash"][id] = t
+		_evenement(moi, {"type": "relique", "id": id})
 
 func _evenement(moi: Dictionary, e: Dictionary) -> void:
 	e["t"] = t

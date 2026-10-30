@@ -25,6 +25,7 @@ func _ready() -> void:
 	ok = _cavaliers() and ok
 	ok = _impact_malus() and ok
 	ok = _gardiens_2_3() and ok
+	ok = _essences_visibles() and ok
 	ok = _carte() and ok
 	ok = _run() and ok
 	ok = _fusion() and ok
@@ -484,6 +485,23 @@ func _gardiens_2_3() -> bool:
 	p.entrer(p.accessibles()[0])
 	p.noeud()["type"] = "boss"
 	ok = _verifier(p.creature_adverse()["elite"] == "sceau", "boss de l'acte III : le Dernier Sceau") and ok
+	return ok
+
+func _essences_visibles() -> bool:
+	var n := Nid.new()
+	n.placer(Vector2i(0, 0), "charbon")
+	n.placer(Vector2i(1, 0), "obsidienne")
+	var c := Combat.new(n.eclore(), Exemples.nid_aube().eclore())
+	c.simuler()
+	var ok := _verifier(c.stats[0].get("charbon", {}).get("activations", 0.0) > 0.0, "Charbon : active a son nom")
+	ok = _verifier(c.stats[0].get("obsidienne", {}).get("activations", 0.0) > 0.0, "Obsidienne : active a son nom") and ok
+	ok = _verifier(c.evenements.any(func(e): return e["type"] == "relique" and e["id"] == "charbon"), "Charbon : s'allume en combat") and ok
+	var b := Nid.new()
+	b.placer(Vector2i(0, 0), "belladone")
+	b.placer(Vector2i(1, 0), "baie")
+	var cb := Combat.new(b.eclore(), Exemples.nid_aube().eclore())
+	cb.simuler()
+	ok = _verifier(cb.stats[0].get("belladone", {}).get("impact", 0.0) > 0.0, "Belladone : soins bloques comptes") and ok
 	return ok
 
 func _carte() -> bool:

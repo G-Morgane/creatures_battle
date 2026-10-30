@@ -201,6 +201,8 @@ func _jouer(e: Dictionary) -> void:
 			_texte(moi, 2, Data.NOMS_MALEDICTION[e["nom"]], Palette.ELEMENTS["nuit"]["clair"])
 		"crit":
 			_texte(moi, 2, "Critique !", Color("#f2c94c"))
+		"relique":
+			nids[e["cote"]].flash[e["id"]] = lecture
 		"esquive":
 			_texte(moi, 2, "Esquive", Palette.ELEMENTS["automne"]["clair"])
 		"bourrasque":
@@ -417,6 +419,7 @@ class MiniNid extends Control:
 	var cote: int
 	var cr: Dictionary
 	var sort_de := {}   # case -> index du sort
+	var flash := {}     # relique -> moment ou elle a agi (lecture)
 	var ouvertes: Array  # cases ouvertes du sac
 	var boite: Rect2i    # le rectangle du damier qu'elles occupent
 	var CASE := 44.0
@@ -468,6 +471,13 @@ class MiniNid extends Control:
 			for c in _cases(a):
 				cellules.append(_rect(c))
 			NidScreen.dessiner_forme(self, cellules, id, cr["niveaux"].get(a, 1), CASE + ECART)
+			# une essence qui vient d'agir s'allume un instant
+			var age: float = ecran.lecture - flash.get(id, -9.0)
+			if age >= 0.0 and age < 0.4:
+				var clair: Color = Palette.ELEMENTS[Data.RELIQUES[id]["element"]]["clair"]
+				for r in cellules:
+					draw_rect(r, Color(clair, 0.5 * (1.0 - age / 0.4)))
+					draw_rect(r, clair, false, 2.0)
 			# recharge : une seule jauge pour toute la relique, qui se devoile de bas
 			# en haut sur sa hauteur entiere, et la relique s'allume au depart
 			if sort_de.has(a):
@@ -497,7 +507,9 @@ class Recap extends Control:
 		"~faiblesse": "Faiblesse", "~fletrissure": "Flétrissure", "~stigmate": "Stigmate", "~givre": "Givre", "~gel": "Gel"}
 	# Ce que chaque malus a fait a l'adversaire, en clair.
 	const IMPACTS := {"~faiblesse": "%d dégâts évités", "~fletrissure": "%d soins empêchés",
-		"~stigmate": "+%d dégâts", "~givre": "%.1f s volées", "~gel": "%.1f s volées"}
+		"~stigmate": "+%d dégâts", "~givre": "%.1f s volées", "~gel": "%.1f s volées",
+		"pacte": "+%d dégâts", "oeil_chasseur": "+%d dégâts de crit", "belladone": "%d soins bloqués",
+		"lanterne": "%d d'Éclat chargé", "coeur_fournaise": "%.1f brûlures gardées", "coeur_banquise": "%.1f givre gardé"}
 	const MALUS := Color("#c79bff")
 	const LIGNES := 10
 	const LARGEUR := 470.0

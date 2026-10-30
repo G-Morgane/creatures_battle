@@ -54,6 +54,10 @@ Cœur de fournaise (combustion), Œuf du Premier Brasier (renaissance, brûlure 
 - Garde-t-on des PV et de l'attaque de base sur les essences communes (sinon la monture n'a presque plus de stats), ou les met-on sur le niveau et la monture ?
 - Les renforts du groupe B changent l'équilibrage du placement : à resimuler.
 
+## Fait (2026-10-30)
+
+Groupes A et C : chaque essence qui agit compte une activation à son nom dans le récap et sa case s'allume dans le Nid de l'arène (au plus toutes les 0,3 s). Effet chiffré pour Pacte (dégâts ajoutés), Œil du chasseur (dégâts de crit en plus), Belladone (soins bloqués), Lanterne (Éclat chargé), Cœur de fournaise et Cœur de banquise (charges gardées). Belladone et Lanterne, continus, ne comptent pas d'activations.
+
 ## Suite
 
 Après validation : groupe A et C d'abord (allumage et attribution au récap, sans changer l'équilibrage), puis B et D (changement de règles, simulation).
