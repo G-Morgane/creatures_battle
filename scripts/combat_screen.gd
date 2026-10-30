@@ -151,6 +151,8 @@ func _jouer(e: Dictionary) -> void:
 	match e["type"]:
 		"attaque":
 			_elan(moi, "elan")
+			# griffure sur la cible, au moment ou l'elan la touche
+			_animer("griffe", cible.position + cible.size / 2 + Vector2(0, 10), 0.08, 0.32, 240.0, moi.miroir)
 		"sort":
 			# le cavalier frappe avec ses armes, la monture avec tout le reste
 			_elan(moi, "elan_cavalier" if e["cavalier"] else "elan")
@@ -160,7 +162,10 @@ func _jouer(e: Dictionary) -> void:
 			for k in maxi(e["coups"], 1):
 				effets.append({"type": "projectile", "de": de, "a": a, "t0": lecture + k * ECART_COUPS,
 					"duree": VOL_PROJECTILE, "couleur": couleurs["vif"], "coeur": couleurs["clair"],
-					"taille": 12.0 if e["coups"] <= 1 else 6.0})
+					"taille": 12.0 if e["coups"] <= 1 else 6.0, "anim": ANIM_PROJECTILE.get(e["element"], "")})
+				# un sort qui n'a pas sa propre comete eclate a l'arrivee
+				if not ANIM_PROJECTILE.has(e["element"]):
+					_animer("coup", a, k * ECART_COUPS + VOL_PROJECTILE, 0.3, 150.0 if e["coups"] <= 1 else 90.0)
 			var qui := "Cavalier : " if e["cavalier"] else ""
 			_texte(moi, 0 if e["cavalier"] else 1, qui + e["nom"], couleurs["clair"])
 		"bouclier":
@@ -192,7 +197,7 @@ func _jouer(e: Dictionary) -> void:
 			var cp: Dictionary = Palette.ELEMENTS["crepuscule"]
 			effets.append({"type": "projectile", "de": cible.position + cible.source(false),
 				"a": moi.position + moi.size / 2 + Vector2(0, 20), "t0": lecture,
-				"duree": VOL_PROJECTILE, "couleur": Color("#7b5cff"), "coeur": cp["clair"], "taille": 10.0})
+				"duree": VOL_PROJECTILE, "couleur": Color("#7b5cff"), "coeur": cp["clair"], "taille": 10.0, "anim": "arcane"})
 		"illusion":
 			_texte(moi, 2, "Illusion %d" % e["n"], Palette.ELEMENTS["crepuscule"]["clair"])
 		"malediction":
@@ -245,6 +250,15 @@ func _jouer(e: Dictionary) -> void:
 			_texte(moi, 2, "%s renaît !" % nom, Palette.ELEMENTS["feu"]["clair"])
 			moi.modulate = Color(2.2, 1.8, 1.2)
 			create_tween().tween_property(moi, "modulate", Color.WHITE, 0.8)
+
+# Sorts qui ont leur propre comete (images/spells) ; les autres eclatent en
+# « coup » a l'arrivee.
+const ANIM_PROJECTILE := {"feu": "feu", "crepuscule": "arcane"}
+
+# Une animation de 4 images a pos, dans delai secondes, pendant duree.
+func _animer(nom: String, pos: Vector2, delai: float, duree: float, taille: float, miroir := false) -> void:
+	effets.append({"type": "anim", "anim": nom, "pos": pos, "t0": lecture + delai, "duree": duree,
+		"taille": taille, "miroir": miroir})
 
 func _elan(v: CreatureVue, qui: String) -> void:
 	var tw := create_tween()
@@ -372,9 +386,29 @@ func _dessiner() -> void:
 		match e["type"]:
 			"projectile":
 				var pos: Vector2 = e["de"].lerp(e["a"], p) + Vector2(0, -sin(p * PI) * 50)
-				calque.draw_circle(pos, e["taille"] * 1.6, Color(e["couleur"], 0.35))
-				calque.draw_circle(pos, e["taille"], e["couleur"])
-				calque.draw_circle(pos, e["taille"] * 0.45, e["coeur"])
+				var images: Array = Palette.anim(e.get("anim", ""))
+				if images.is_empty():
+					calque.draw_circle(pos, e["taille"] * 1.6, Color(e["couleur"], 0.35))
+					calque.draw_circle(pos, e["taille"], e["couleur"])
+					calque.draw_circle(pos, e["taille"] * 0.45, e["coeur"])
+				else:
+					# la comete, tete vers la cible, en boucle sur ses 4 images
+					var suivant: Vector2 = e["de"].lerp(e["a"], minf(p + 0.05, 1.0)) + Vector2(0, -sin(minf(p + 0.05, 1.0) * PI) * 50)
+					var tex: Texture2D = images[int(lecture * 16.0) % images.size()]
+					var l: float = e["taille"] * 14.0
+					var taille := Vector2(l, l * tex.get_height() / tex.get_width())
+					calque.draw_set_transform(pos, (suivant - pos).angle(), Vector2.ONE)
+					calque.draw_texture_rect(tex, Rect2(Vector2(-taille.x * 0.8, -taille.y / 2), taille), false)
+					calque.draw_set_transform(Vector2.ZERO)
+			"anim":
+				# une animation en 4 images, jouee une fois sur sa duree
+				var images: Array = Palette.anim(e["anim"])
+				if not images.is_empty():
+					var tex: Texture2D = images[mini(int(p * images.size()), images.size() - 1)]
+					var taille := Vector2(e["taille"], e["taille"] * tex.get_height() / tex.get_width())
+					calque.draw_set_transform(e["pos"], 0.0, Vector2(-1.0 if e["miroir"] else 1.0, 1.0))
+					calque.draw_texture_rect(tex, Rect2(-taille / 2, taille), false)
+					calque.draw_set_transform(Vector2.ZERO)
 			"texte":
 				var c: Color = e["couleur"]
 				c.a = 1.0 - p * p

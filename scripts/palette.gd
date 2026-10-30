@@ -115,6 +115,24 @@ static func theme_jeu() -> Theme:
 static func blason(element: String) -> Texture2D:
 	return image("res://images/blasons/%s.png" % element) if element != "" else null
 
+# Animations de sorts (images/spells/<nom>.png) : une bande de 4 images de
+# meme largeur. Renvoie les 4 images, ou [] si la planche manque.
+static var _anims := {}
+
+static func anim(nom: String) -> Array:
+	if not _anims.has(nom):
+		var l := []
+		var tex := image("res://images/spells/%s.png" % nom)
+		if tex != null:
+			var w := tex.get_width() / 4.0
+			for k in 4:
+				var a := AtlasTexture.new()
+				a.atlas = tex
+				a.region = Rect2(k * w, 0, w, tex.get_height())
+				l.append(a)
+		_anims[nom] = l
+	return _anims[nom]
+
 # Icones d'interface (images/ui) : vie, victoires, or, glossaire.
 static func ui(nom: String) -> Texture2D:
 	return image("res://images/ui/%s.png" % nom)
