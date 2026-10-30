@@ -278,6 +278,7 @@ func _initialize() -> void:
 		_reduire(ic, 96)
 		ic.save_png("res://images/ui/%s.png" % UI[k])
 	_bouton()
+	_fenetre()
 	_blasons()
 	_cavaliers()
 	for feuille in PLANCHES_AUTO:
@@ -501,6 +502,15 @@ func _cavaliers() -> void:
 			if CAVALIERS[r][c] in CAVALIERS_A_RETOURNER:
 				img.flip_x()
 			img.save_png("res://images/cavaliers/%s.png" % CAVALIERS[r][c])
+
+# Fond des fenetres de dialogue : le cadre de images/spells/window.png, sans le
+# vide autour, a moitie taille (etire en 9 tranches par Palette.fenetre()).
+func _fenetre() -> void:
+	var img := Image.load_from_file("res://images/spells/window.png")
+	img.convert(Image.FORMAT_RGBA8)
+	img = img.get_region(img.get_used_rect())
+	img.resize(img.get_width() / 2, img.get_height() / 2, Image.INTERPOLATE_LANCZOS)
+	img.save_png("res://images/ui/fenetre.png")
 
 # Fond de bouton : le cadre du milieu de images/boutons.png, sans la lueur
 # autour (un masque en pilule : bords arrondis, rayon d'une demi-hauteur).

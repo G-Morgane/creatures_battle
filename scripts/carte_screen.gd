@@ -205,12 +205,7 @@ func _apres() -> void:
 
 func _rencontre() -> void:
 	panneau = PanelContainer.new()
-	var style := StyleBoxFlat.new()
-	style.bg_color = Palette.PANNEAU
-	style.border_color = COULEURS["rencontre"]
-	style.set_border_width_all(2)
-	style.set_content_margin_all(28)
-	panneau.add_theme_stylebox_override("panel", style)
+	panneau.add_theme_stylebox_override("panel", Palette.fenetre())
 	var pile := VBoxContainer.new()
 	pile.add_theme_constant_override("separation", 16)
 	panneau.add_child(pile)
@@ -218,12 +213,12 @@ func _rencontre() -> void:
 	titre.text = partie.rencontre["titre"]
 	titre.add_theme_font_size_override("font_size", 28)
 	Palette.titre(titre)
-	titre.add_theme_color_override("font_color", Palette.TEXTE)
+	titre.add_theme_color_override("font_color", Palette.ENCRE_TITRE)
 	pile.add_child(titre)
 	var texte := Label.new()
 	texte.text = partie.rencontre["texte"]
 	texte.add_theme_font_size_override("font_size", 17)
-	texte.add_theme_color_override("font_color", Palette.TEXTE_DOUX)
+	texte.add_theme_color_override("font_color", Palette.ENCRE)
 	pile.add_child(texte)
 	for k in partie.rencontre["choix"].size():
 		var b := Button.new()

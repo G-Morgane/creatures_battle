@@ -65,6 +65,27 @@ static func titre(l: Control) -> Control:
 	l.add_theme_font_override("font", police_titre())
 	return l
 
+# Fenetres de dialogue (recap, glossaire, rencontres) : cadre bleu et
+# parchemin, ecrit a l'encre.
+const ENCRE := Color("#2e2416")
+const ENCRE_DOUCE := Color("#6b5a42")
+const ENCRE_TITRE := Color("#7a4a12")
+
+static func fenetre() -> StyleBox:
+	var tex := ui("fenetre")
+	if tex == null:
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = PANNEAU
+		return sb
+	var sb := StyleBoxTexture.new()
+	sb.texture = tex
+	sb.texture_margin_left = 46
+	sb.texture_margin_right = 46
+	sb.texture_margin_top = 46
+	sb.texture_margin_bottom = 46
+	sb.set_content_margin_all(58)
+	return sb
+
 # Theme commun : chaque bouton prend le cadre feuillage et parchemin
 # (images/ui/bouton.png), etire en 9 tranches, texte brun sur le parchemin.
 static func theme_jeu() -> Theme:

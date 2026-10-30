@@ -541,13 +541,14 @@ class Recap extends Control:
 		"~stigmate": "+%d dégâts", "~givre": "%.1f s volées", "~gel": "%.1f s volées",
 		"pacte": "+%d dégâts", "oeil_chasseur": "+%d dégâts de crit", "belladone": "%d soins bloqués",
 		"lanterne": "%d d'Éclat chargé", "coeur_fournaise": "%.1f brûlures gardées", "coeur_banquise": "%.1f givre gardé"}
-	const MALUS := Color("#c79bff")
+	const MALUS := Color("#6a3a9c")
 	const LIGNES := 10
+	const BORD := 44.0   # epaisseur du cadre de la fenetre
 	const LARGEUR := 470.0
 	const HAUTEUR_LIGNE := 34.0
-	const DEGATS := Color("#e5834f")
-	const SOINS := Color("#8fd16a")
-	const BOUCLIER := Color("#9cc8ec")
+	const DEGATS := Color("#b5461c")
+	const SOINS := Color("#3d7a1e")
+	const BOUCLIER := Color("#2d6596")
 	var combat: Combat
 	var lignes: Array = [[], []]   # par cote : [source, valeurs]
 	func _init(c: Combat) -> void:
@@ -560,7 +561,7 @@ class Recap extends Control:
 			l.sort_custom(func(a, b): return _poids(a[0], a[1]) > _poids(b[0], b[1]))
 			lignes[i] = l.slice(0, LIGNES)
 			n = maxi(n, lignes[i].size())
-		size = Vector2(LARGEUR * 2 + 60, 84 + n * HAUTEUR_LIGNE + 34)
+		size = Vector2(LARGEUR * 2 + 60, 84 + n * HAUTEUR_LIGNE + 34) + Vector2.ONE * BORD * 2
 		tooltip_text = " "
 		mouse_filter = Control.MOUSE_FILTER_PASS
 	# Un malus pese par son impact ; une seconde volee compte comme 10 PV.
@@ -568,7 +569,8 @@ class Recap extends Control:
 		var impact: float = v.get("impact", 0.0) * (10.0 if source in ["~givre", "~gel"] else 1.0)
 		return v["degats"] + v["soins"] + v["bouclier"] + impact
 	func _source_sous(p: Vector2):
-		var i := 0 if p.x < size.x / 2 else 1
+		p -= Vector2.ONE * BORD
+		var i := 0 if p.x < size.x / 2 - BORD else 1
 		var k := int((p.y - 84) / HAUTEUR_LIGNE)
 		if p.y < 84 or k >= lignes[i].size():
 			return null
@@ -584,14 +586,15 @@ class Recap extends Control:
 		return MECANIQUES.get(source, Data.RELIQUES[source]["nom"] if Data.RELIQUES.has(source) else source)
 	func _draw() -> void:
 		var police := ThemeDB.fallback_font
-		draw_rect(Rect2(Vector2.ZERO, size), Color(Palette.FOND, 0.97))
-		draw_rect(Rect2(Vector2.ZERO, size), Palette.CASE_BORD, false, 2.0)
-		draw_string(Palette.police_titre(), Vector2(0, 34), "Récap du combat", HORIZONTAL_ALIGNMENT_CENTER, size.x, 22, Palette.TEXTE)
+		draw_style_box(Palette.fenetre(), Rect2(Vector2.ZERO, size))
+		draw_set_transform(Vector2.ONE * BORD)
+		var dedans := size - Vector2.ONE * BORD * 2
+		draw_string(Palette.police_titre(), Vector2(0, 34), "Récap du combat", HORIZONTAL_ALIGNMENT_CENTER, dedans.x, 22, Palette.ENCRE_TITRE)
 		for i in 2:
 			var x0 := 24.0 + i * (LARGEUR + 12)
 			var cr: Dictionary = combat.cotes[i]["cr"]
 			draw_string(police, Vector2(x0, 70), ("Toi" if i == 0 else "Adversaire") + " (%s)" % cr["nom"],
-				HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Palette.ELEMENTS[cr["forme"]]["clair"])
+				HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Palette.ELEMENTS[cr["forme"]]["fond"])
 			var maxi := 1.0
 			for l in lignes[i]:
 				maxi = maxf(maxi, maxf(l[1]["degats"], maxf(l[1]["soins"], l[1]["bouclier"])))
@@ -604,8 +607,8 @@ class Recap extends Control:
 					var kk := minf(26.0 / tex.get_width(), 26.0 / tex.get_height())
 					draw_texture_rect(tex, Rect2(Vector2(x0, y + 3), tex.get_size() * kk), false)
 				else:
-					draw_circle(Vector2(x0 + 13, y + 16), 6, Palette.TEXTE_DOUX)
-				draw_string(police, Vector2(x0 + 34, y + 21), _nom(source), HORIZONTAL_ALIGNMENT_LEFT, 150, 14, Palette.TEXTE)
+					draw_circle(Vector2(x0 + 13, y + 16), 6, Palette.ENCRE_DOUCE)
+				draw_string(police, Vector2(x0 + 34, y + 21), _nom(source), HORIZONTAL_ALIGNMENT_LEFT, 150, 14, Palette.ENCRE)
 				# une barre par valeur, a l'echelle de la plus grande du cote
 				var bx: float = x0 + 190
 				var by: float = y + 6
@@ -623,7 +626,7 @@ class Recap extends Control:
 				if v["bouclier"] > 0.0:
 					textes.append(["%d" % roundi(v["bouclier"]), BOUCLIER])
 				if v["activations"] > 0.0:
-					textes.append(["x%d" % roundi(v["activations"]), Palette.TEXTE_DOUX])
+					textes.append(["x%d" % roundi(v["activations"]), Palette.ENCRE_DOUCE])
 				if v.get("impact", 0.0) > 0.0 and IMPACTS.has(source):
 					textes.append([(IMPACTS[source] % v["impact"]).replace(".", ","), MALUS])
 				var tx: float = x0 + 350
@@ -632,7 +635,7 @@ class Recap extends Control:
 					tx += police.get_string_size(t[0], HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x + 10
 		# legende
 		var lx := 24.0
-		for l in [["Dégâts", DEGATS], ["Soins", SOINS], ["Bouclier", BOUCLIER], ["Effet des malus", MALUS], ["xN : activations", Palette.TEXTE_DOUX]]:
-			draw_rect(Rect2(lx, size.y - 20, 10, 10), l[1])
-			draw_string(police, Vector2(lx + 16, size.y - 10), l[0], HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Palette.TEXTE_DOUX)
+		for l in [["Dégâts", DEGATS], ["Soins", SOINS], ["Bouclier", BOUCLIER], ["Effet des malus", MALUS], ["xN : activations", Palette.ENCRE_DOUCE]]:
+			draw_rect(Rect2(lx, dedans.y - 20, 10, 10), l[1])
+			draw_string(police, Vector2(lx + 16, dedans.y - 10), l[0], HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Palette.ENCRE_DOUCE)
 			lx += police.get_string_size(l[0], HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x + 40

@@ -29,13 +29,7 @@ func _ready() -> void:
 	add_child(bouton)
 
 	panneau = PanelContainer.new()
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(Palette.FOND, 0.97)
-	style.border_color = Palette.CASE_BORD
-	style.set_border_width_all(2)
-	style.set_corner_radius_all(8)
-	style.set_content_margin_all(20)
-	panneau.add_theme_stylebox_override("panel", style)
+	panneau.add_theme_stylebox_override("panel", Palette.fenetre())
 	panneau.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	for cote in ["left", "right"]:
 		panneau.set("offset_" + cote, 140 if cote == "left" else -140)
@@ -52,7 +46,7 @@ func _ready() -> void:
 	titre.text = "Glossaire"
 	titre.add_theme_font_size_override("font_size", 26)
 	Palette.titre(titre)
-	titre.add_theme_color_override("font_color", Palette.TEXTE)
+	titre.add_theme_color_override("font_color", Palette.ENCRE_TITRE)
 	titre.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	tete.add_child(titre)
 	var fermer := Button.new()
@@ -77,7 +71,7 @@ func _ready() -> void:
 	texte.bbcode_enabled = true
 	texte.fit_content = true
 	texte.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	texte.add_theme_color_override("default_color", Palette.TEXTE)
+	texte.add_theme_color_override("default_color", Palette.ENCRE)
 	texte.add_theme_font_size_override("normal_font_size", 17)
 	texte.add_theme_font_size_override("bold_font_size", 18)
 	defile.add_child(texte)
@@ -91,7 +85,7 @@ func _ready() -> void:
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		b.custom_minimum_size.y = 40
 		b.pressed.connect(func():
-			texte.text = "[font=%s][font_size=24][color=#f2c94c]%s[/color][/font_size][/font]\n\n%s" % [Palette.TITRE_POLICE, liste[k][0], liste[k][1]]
+			texte.text = "[font=%s][font_size=24][color=#%s]%s[/color][/font_size][/font]\n\n%s" % [Palette.TITRE_POLICE, Palette.ENCRE_TITRE.to_html(false), liste[k][0], liste[k][1]]
 			defile.scroll_vertical = 0)
 		signets.add_child(b)
 		if k == 0:
