@@ -276,6 +276,8 @@ func _initialize() -> void:
 	_bouton()
 	_blasons()
 	_cavaliers()
+	for feuille in PLANCHES_AUTO:
+		_decouper_auto(feuille, PLANCHES_AUTO[feuille])
 	_controle(icones, betes)
 	print("icones : ", icones.size())
 	quit()
@@ -372,6 +374,101 @@ func _blasons() -> void:
 			img = img.get_region(img.get_used_rect())
 			_reduire(img, 256)
 			img.save_png("res://images/blasons/%s.png" % BLASONS[r][c])
+
+# Planches decoupees sans zones a la main : chaque objet est repere seul
+# (taches opaques regroupees), puis lu par rangees, de gauche a droite.
+const PLANCHES_AUTO := {
+	"renard_objets": ["croc_renard", "feuille_morte", "bourrasque", "pelage_roux", "bogue",
+		"oeil_chasseur", "queue_renard", "dague_feuille", "lame_rousse", "coutelas"],
+	"paon_objets": ["plume_ocelle", "ecu_dore", "roue", "broche_soleil", "miroir_ocelle",
+		"couronne_midi", "oeil_zenith", "arc_plumes", "arbalete_doree", "arc_zenith"],
+	"missing_aube_objects": ["lance_aurore", "pique_solaire", "lance_matin"],
+	"missing_butterfly_objects": ["sceptre_ecailles", "baton_brume", "baton_entre"],
+	"missing_ours_object": ["hache_hiver"],
+}
+const AUTO_CASE := 8      # taille d'une case de la grille de reperage, en pixels
+const AUTO_LIEN := 3      # cases d'ecart qui relient deux taches du meme objet
+const AUTO_LIEN_PLANCHE := {"paon_objets": 1}   # objets serres : liens plus courts
+
+func _decouper_auto(nom: String, ids: Array) -> void:
+	var img := Image.load_from_file("res://images/%s.png" % nom)
+	img.convert(Image.FORMAT_RGBA8)
+	var fond := img.get_pixel(3, 3)
+	if fond.a > 0.5:
+		_detourer(img, fond, TOLERANCE_DEFAUT)
+	var gw := img.get_width() / AUTO_CASE + 1
+	var gh := img.get_height() / AUTO_CASE + 1
+	var plein := PackedByteArray()
+	plein.resize(gw * gh)
+	for y in range(0, img.get_height(), 2):
+		for x in range(0, img.get_width(), 2):
+			if img.get_pixel(x, y).a > 0.5:
+				plein[(y / AUTO_CASE) * gw + x / AUTO_CASE] = 1
+	# composantes, en reliant les cases pleines a moins de AUTO_LIEN cases
+	var lien: int = AUTO_LIEN_PLANCHE.get(nom, AUTO_LIEN)
+	var marque := PackedInt32Array()
+	marque.resize(gw * gh)
+	marque.fill(-1)
+	var boites := []
+	for i in gw * gh:
+		if plein[i] == 0 or marque[i] >= 0:
+			continue
+		var b := Rect2i(i % gw, i / gw, 1, 1)
+		var pile := [i]
+		marque[i] = boites.size()
+		var cases := 0
+		while not pile.is_empty():
+			var k: int = pile.pop_back()
+			cases += 1
+			var cx := k % gw
+			var cy := k / gw
+			b = b.expand(Vector2i(cx, cy))
+			for dy in range(-lien, lien + 1):
+				for dx in range(-lien, lien + 1):
+					var nx := cx + dx
+					var ny := cy + dy
+					if nx < 0 or ny < 0 or nx >= gw or ny >= gh:
+						continue
+					var j := ny * gw + nx
+					if plein[j] == 1 and marque[j] < 0:
+						marque[j] = boites.size()
+						pile.append(j)
+		# [cadre, numero de la tache] ; les poussieres sont ecartees plus bas
+		boites.append([Rect2i(b.position * AUTO_CASE, (b.size + Vector2i.ONE) * AUTO_CASE) if cases > 20 else Rect2i(), boites.size()])
+	boites = boites.filter(func(b): return b[0].has_area())
+	if boites.size() != ids.size():
+		push_error("%s : %d objets trouves, %d attendus" % [nom, boites.size(), ids.size()])
+		return
+	# rangees : deux boites sont sur la meme rangee si leurs centres sont proches
+	boites.sort_custom(func(a, b): return a[0].get_center().y < b[0].get_center().y)
+	var rangees := []
+	for b in boites:
+		if rangees.is_empty() or b[0].get_center().y - rangees[-1][0][0].get_center().y > img.get_height() / 5:
+			rangees.append([b])
+		else:
+			rangees[-1].append(b)
+	var ordre := []
+	for r in rangees:
+		r.sort_custom(func(a, b): return a[0].position.x < b[0].position.x)
+		ordre.append_array(r)
+	for k in ids.size():
+		var zone: Rect2i = ordre[k][0].intersection(Rect2i(Vector2i.ZERO, img.get_size()))
+		var ic := img.get_region(zone)
+		# un objet en diagonale deborde sur le cadre de son voisin : on efface
+		# tout ce qui n'appartient pas a sa tache
+		var num: int = ordre[k][1]
+		for y in ic.get_height():
+			for x in ic.get_width():
+				var cx := (zone.position.x + x) / AUTO_CASE
+				var cy := (zone.position.y + y) / AUTO_CASE
+				var m := marque[cy * gw + cx] if cx < gw and cy < gh else -1
+				if m != num and m >= 0:
+					ic.set_pixel(x, y, Color(0, 0, 0, 0))
+		_poussiere(ic, POUSSIERE_ICONE)
+		ic = ic.get_region(ic.get_used_rect())
+		_reduire(ic, TAILLE_ICONE)
+		ic.save_png("res://images/icones/%s.png" % ids[k])
+	print("%s : %d icones" % [nom, ids.size()])
 
 # Cavaliers : planche 2 x 2 a fond transparent (l'eclat de la Coquille
 # flotte au-dessus d'elle : la coupe horizontale passe a 625 px).
