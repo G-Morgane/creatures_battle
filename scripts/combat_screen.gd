@@ -25,6 +25,7 @@ var calque: Control
 var bandeau: Label
 var bouton_vitesse: Button
 var bouton_recap: Button
+var boutons_ui: Control
 var nids: Array = []      # MiniNid de chaque cote
 var recap: Recap
 
@@ -75,12 +76,12 @@ func _ready() -> void:
 	bandeau.visible = false
 	add_child(bandeau)
 
-	var boutons := HBoxContainer.new()
-	boutons.add_theme_constant_override("separation", 12)
-	boutons.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	boutons.offset_top = -110
-	boutons.offset_bottom = -60
-	boutons.alignment = BoxContainer.ALIGNMENT_CENTER
+	# boutons en 2 x 2 au centre du bas : les Nids prennent les deux coins
+	var boutons := GridContainer.new()
+	boutons.columns = 2
+	boutons.add_theme_constant_override("h_separation", 10)
+	boutons.add_theme_constant_override("v_separation", 8)
+	boutons_ui = boutons
 	bouton_vitesse = _bouton("Vitesse x%d" % vitesse, _changer_vitesse)
 	boutons.add_child(bouton_vitesse)
 	boutons.add_child(_bouton("Rejouer", _rejouer))
@@ -107,11 +108,13 @@ func _bouton(texte: String, f: Callable) -> Button:
 	return b
 
 func _placer() -> void:
-	var milieu := size.y * 0.52
+	var milieu := size.y * 0.45
 	vues[0].position = Vector2(size.x * 0.27 - 330, milieu - 285)
 	vues[1].position = Vector2(size.x * 0.73 - 330, milieu - 285)
-	nids[0].position = Vector2(24, size.y - nids[0].size.y - 38)
-	nids[1].position = Vector2(size.x - nids[1].size.x - 24, size.y - nids[1].size.y - 38)
+	nids[0].position = Vector2(20, size.y - nids[0].size.y - 20)
+	nids[1].position = Vector2(size.x - nids[1].size.x - 20, size.y - nids[1].size.y - 20)
+	boutons_ui.reset_size()
+	boutons_ui.position = Vector2((size.x - boutons_ui.size.x) / 2, size.y - boutons_ui.size.y - 24)
 	recap.position = (size - recap.size) / 2 - Vector2(0, 30)
 
 # x1, x2, puis retour a x1. Le bouton affiche la vitesse en cours.
@@ -431,8 +434,8 @@ class MiniNid extends Control:
 			sort_de[cr["sorts"][k]["case"]] = k
 		ouvertes = cr.get("ouvertes", Nid.toutes())
 		boite = NidScreen.boite(ouvertes)
-		# un grand sac prend des cases plus petites
-		CASE = 48.0 if boite.size.x <= 4 else 36.0
+		# le plus grand possible dans son coin : jusqu'a 440 x 210, cases de 80 au plus
+		CASE = minf(80.0, minf(440.0 / boite.size.x, 210.0 / boite.size.y))
 		size = Vector2(boite.size) * (CASE + ECART) - Vector2(ECART, ECART)
 		tooltip_text = " "
 	# Cases de la relique d'ancre a (sa forme si le sac en a).
