@@ -63,6 +63,7 @@ func _etat(cr: Dictionary, i: int) -> Dictionary:
 		"givre": 0.0,              # charges de givre subies
 		"gele_jusqu": 0.0,
 		"gele_depuis": 0.0,
+		"gels": 0,
 		"eclat_jauge": 0.0,
 		"dans_eclat": false,       # un soin venu d'un Eclat ne recharge pas l'Eclat
 		"illusions": cr["illusions_depart"],
@@ -189,6 +190,7 @@ func _minuteurs(moi: Dictionary) -> Dictionary:
 			m[nom] = _reste(x["debut"], x["fin"])
 	if _gele(moi):
 		m["gel"] = _reste(moi["gele_depuis"], moi["gele_jusqu"])
+	m["seuil_gel"] = _seuil_gel(cotes[1 - moi["cote"]], moi)
 	return m
 
 func _reste(debut: float, fin: float) -> float:
@@ -658,15 +660,20 @@ func _givrer(moi: Dictionary, cible: Dictionary, charges: float) -> void:
 	if _gele(cible):
 		return
 	cible["givre"] += charges
-	if cible["givre"] >= moi["cr"]["gel_seuil"]:
+	if cible["givre"] >= _seuil_gel(moi, cible):
 		# Noyau de l'Hiver : un gel qui ne serait pas venu au seuil normal
-		if cible["givre"] < Data.GEL_SEUIL:
+		if cible["givre"] < Data.GEL_SEUIL + cible["gels"] * Data.GEL_ACCOUTUMANCE:
 			_relique(moi, "noyau_hiver")
 		_geler(moi, cible)
+
+# Chaque gel subi monte le seuil du suivant : pas de gel en chaine.
+func _seuil_gel(moi: Dictionary, cible: Dictionary) -> float:
+	return moi["cr"]["gel_seuil"] + cible["gels"] * Data.GEL_ACCOUTUMANCE
 
 # Fourrure : gel plus long ; Coeur de banquise : la cible garde la moitie de son
 # givre ; Cristal fele : le gel blesse.
 func _geler(moi: Dictionary, cible: Dictionary) -> void:
+	cible["gels"] += 1
 	cible["gele_depuis"] = t
 	cible["gele_jusqu"] = t + Data.GEL_DUREE + moi["cr"]["gel_duree"]
 	cible["givre"] = cible["givre"] * 0.5 if moi["cr"]["banquise"] else 0.0

@@ -719,6 +719,7 @@ func _glace() -> bool:
 	var c := Combat.new(cr, Nid.new().eclore())
 	c._givrer(c.cotes[0], c.cotes[1], Data.GEL_SEUIL)
 	ok = _verifier(c._gele(c.cotes[1]) and c.cotes[1]["givre"] == 0.0 and is_equal_approx(c.cotes[1]["gele_jusqu"], Data.GEL_DUREE + 0.5), "gel au seuil, plus long avec la fourrure") and ok
+	ok = _verifier(is_equal_approx(c._seuil_gel(c.cotes[0], c.cotes[1]), Data.GEL_SEUIL + Data.GEL_ACCOUTUMANCE), "gel subi : seuil du suivant plus haut") and ok
 	# l'Ours frappe double une cible gelee
 	var pv: float = c.cotes[1]["pv"]
 	c._frapper(c.cotes[0], c.cotes[1], 10.0)

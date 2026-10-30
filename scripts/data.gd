@@ -74,7 +74,8 @@ const OURS_GIVRE := 1.0
 const OURS_BONUS_GEL := 2.0        # degats de l'Ours contre une cible gelee
 const GIVRE_RALENTI := 0.03        # par charge
 const RALENTI_MAX := 0.4
-const GEL_SEUIL := 10.0
+const GEL_SEUIL := 14.0
+const GEL_ACCOUTUMANCE := 4.0     # seuil en plus par gel deja subi dans le combat
 const GEL_DUREE := 1.5
 # Renard : l'esquive ouvre la garde, le crit punit. Les Lames donnent du crit
 # (CRIT_LAME, ou ce que l'arme precise) a toute la monture.

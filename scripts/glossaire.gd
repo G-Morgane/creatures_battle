@@ -149,7 +149,7 @@ static func contenu() -> String:
 	t += _terme("Éventail", "chaque arme lancée par le Paon en donne 1 (jusqu'à %d) : +%d %% de dégâts et de vitesse de recharge des armes par charge." % [Data.EVENTAIL_MAX, roundi(Data.EVENTAIL_BONUS * 100)])
 	t += _terme("Poison", "des doses qui blessent chaque seconde, passent à travers le bouclier et s'empilent jusqu'à %d." % Data.POISON_MAX)
 	t += _terme("Épines", "blessent celui qui frappe ; celles du Cerf l'empoisonnent aussi.")
-	t += _terme("Givre", "chaque charge ralentit attaques et recharges de %d %%. À %d charges, la cible gèle." % [roundi(Data.GIVRE_RALENTI * 100), Data.GEL_SEUIL])
+	t += _terme("Givre", "chaque charge ralentit attaques et recharges de %d %%. À %d charges, la cible gèle ; chaque gel subi monte le seuil du suivant de %d." % [roundi(Data.GIVRE_RALENTI * 100), Data.GEL_SEUIL, Data.GEL_ACCOUTUMANCE])
 	t += _terme("Gel", "la cible n'attaque plus et ses recharges s'arrêtent un moment.")
 	t += _terme("Bouclier", "absorbe les coups avant les PV.")
 	t += _terme("Malédictions", "durent %d s, renouvelées si on les repose. Faiblesse : %d %% de dégâts en moins. Flétrissure : %d %% de soins reçus en moins. Stigmate : %d %% de dégâts reçus en plus." % [Data.MALEDICTION_DUREE, roundi(Data.FAIBLESSE * 100), roundi(Data.FLETRISSURE * 100), roundi(Data.STIGMATE * 100)])

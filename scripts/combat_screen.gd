@@ -402,7 +402,7 @@ func _dessiner() -> void:
 				"Gelé : n'attaque plus, ses recharges s'arrêtent."])
 		elif img[8 + i] > 0.0:
 			carres.append(["%d" % roundi(img[8 + i]), Palette.ELEMENTS["glace"]["vif"], -1.0,
-				"Givre %d : attaques et recharges ralenties de %d %%. Gèle à %d." % [roundi(img[8 + i]), roundi(img[8 + i] * Data.GIVRE_RALENTI * 100), roundi(cr.get("gel_seuil", Data.GEL_SEUIL))]])
+				"Givre %d : attaques et recharges ralenties de %d %%. Gèle à %d." % [roundi(img[8 + i]), roundi(img[8 + i] * Data.GIVRE_RALENTI * 100), roundi(minut.get("seuil_gel", Data.GEL_SEUIL))]])
 		for nom in Data.MALEDICTIONS:
 			if minut.has(nom):
 				carres.append([MALUS_COURT[nom], MALUS_COULEUR[nom], minut[nom],
